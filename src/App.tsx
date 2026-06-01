@@ -140,6 +140,66 @@ export default function App() {
     setSources(prev => prev.filter(s => s.name !== name));
   }, []);
 
+  if (records.length === 0) {
+    return (
+      <div className="app-shell-empty-container" data-testid="app-root">
+        <div className="empty-landing-card">
+          <header className="landing-header">
+            <button
+              type="button"
+              className="landing-logo-wrap"
+              aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+              title="Changer le mode d’affichage"
+              data-testid="btn-theme-toggle"
+              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+            >
+              <Logo />
+            </button>
+            <h1 className="landing-title">SFX Planner</h1>
+            <p className="landing-subtitle">Disney Live Ent.</p>
+          </header>
+          
+          <div className="landing-uploader-wrap">
+            <Uploader
+              loading={loading}
+              drag={drag}
+              compact={false}
+              onPick={() => fileRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={onDrop}
+            />
+          </div>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            multiple
+            style={{ display: 'none' }}
+            data-testid="input-file"
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          />
+
+          {error && (
+            <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginTop: 16, marginBottom: 16 }}>
+              <div>{error}</div>
+            </div>
+          )}
+
+          <div className="landing-warning-notice">
+            <div className="footer-warning-card">
+              <span className="warning-text">
+                <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
+                Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier. Données traitées localement.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell" data-testid="app-root">
       <aside className="app-sidebar">
