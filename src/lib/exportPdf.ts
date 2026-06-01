@@ -710,16 +710,16 @@ function drawWeeklyCalendarPage(
       for (const scene of sortedScenes) {
         const color = getSceneColor(scene);
 
-        // Draw tiny colored category dot/box
+        // Draw a full background rectangle block for the scene header
         doc.setFillColor(color.rgbText[0], color.rgbText[1], color.rgbText[2]);
-        doc.rect(cardX + 3.8, currentY - 1.6 * scale, 1.4 * scale, 1.4 * scale, 'F');
+        doc.roundedRect(cardX + 2, currentY - 2.5 * scale, colW - 4, sceneLineH, 0.5, 0.5, 'F');
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(sceneFontSize);
-        doc.setTextColor(color.rgbText[0], color.rgbText[1], color.rgbText[2]);
+        doc.setTextColor(255, 255, 255); // White text over vibrant background
 
         const sceneLabel = (doc.splitTextToSize(scene, colW - 8)[0] as string) || scene;
-        doc.text(sceneLabel, cardX + 6.0, currentY);
+        doc.text(sceneLabel, cardX + 3.5, currentY);
         currentY += sceneLineH;
 
         const techs = (sceneGroups.get(scene) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr'));

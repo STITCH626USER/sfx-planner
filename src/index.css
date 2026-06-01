@@ -63,48 +63,6 @@
   color-scheme: dark;
 }
 
-:root[data-theme="light"] {
-  /* Premium Sand/Linen theme for light mode */
-  --bg-0:        #fcfaf6;
-  --bg-1:        rgba(255, 255, 255, 0.65);
-  --bg-2:        rgba(240, 235, 222, 0.7);
-  --bg-3:        rgba(224, 215, 196, 0.85);
-  --bg-soft:     rgba(247, 243, 235, 0.6);
-  --line:        rgba(40, 28, 16, 0.08);
-  --line-strong: rgba(40, 28, 16, 0.16);
-  --shadow-card: 0 8px 32px rgba(90, 75, 60, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --shadow-soft: 0 4px 16px rgba(90, 75, 60, 0.05);
-
-  /* Text & Labels */
-  --fg:        #2a1e12;
-  --fg-muted:  #706253;
-  --fg-dim:    #a0907e;
-  --chip-fg:   #ffffff;
-  --group-bg:  rgba(255, 255, 255, 0.85);
-  --subtle-row-line: rgba(40, 28, 16, 0.05);
-  --page-glow-amber: rgba(255, 125, 36, 0.08);
-  --page-glow-teal: rgba(0, 176, 152, 0.05);
-  --logo-bg: linear-gradient(135deg, #fff7eb, #f2e2cb);
-  --logo-inset: rgba(194, 92, 17, 0.12);
-  --logo-shadow: rgba(90, 75, 60, 0.12);
-
-  /* Branding / Accents */
-  --amber:     #d6680a;
-  --amber-2:   #b04900;
-  --teal:      #008f7b;
-  --teal-2:    #006e5e;
-  --rose:      #cc3b48;
-  --violet:    #6c4de0;
-  --blue:      #1a73e8;
-
-  /* Formations & Active States */
-  --off-bg:   rgba(40, 28, 16, 0.05);
-  --off-fg:   #8a7c6e;
-  --on-bg:    rgba(214, 104, 10, 0.10);
-  --on-fg:    #8f4000;
-  --on-line:  rgba(214, 104, 10, 0.25);
-
-  color-scheme: light;
 }
 
 * {
@@ -2550,3 +2508,24 @@ nav.seg button[aria-selected="true"] {
 }
 
 
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-stagger-1 { animation-delay: 0.05s; }
+.animate-stagger-2 { animation-delay: 0.1s; }
+.animate-stagger-3 { animation-delay: 0.15s; }
+.animate-stagger-4 { animation-delay: 0.2s; }
+.animate-stagger-5 { animation-delay: 0.25s; }

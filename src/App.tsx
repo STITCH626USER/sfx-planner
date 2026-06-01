@@ -46,10 +46,7 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('daily');
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  });
+  const [theme, setTheme] = useState<Theme>('dark');
   const [records, setRecords] = useState<PlanningRecord[]>([]);
   const [sources, setSources] = useState<SourceFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -989,6 +986,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                   key={scene}
                   data-testid={`scene-group-${scene}`}
                   aria-label={`Équipe de ${scene} (${sceneRecords.length} personnes)`}
+                  style={{ animationDelay: `${sIndex * 0.05}s` }}
                 >
                   <button
                     type="button"
@@ -996,7 +994,12 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                     data-testid={`scene-card-${scene}`}
                     aria-label={`Ouvrir le détail de ${scene}`}
                     onClick={() => setOpenScene(scene)}
-                    style={{ width: '100%', cursor: 'pointer', borderLeft: `4.5px solid ${getSceneColor(scene).accent}` }}
+                    style={{ 
+                      width: '100%', 
+                      cursor: 'pointer', 
+                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}30, transparent)`,
+                      borderLeft: `4.5px solid ${getSceneColor(scene).accent}` 
+                    }}
                   >
                     <div className="daily-group-scene">{scene}</div>
                     <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
