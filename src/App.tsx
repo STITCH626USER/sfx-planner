@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
-import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes } from './lib/exportPdf';
+import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
@@ -1184,7 +1184,7 @@ function IconDownload() {
 }
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [mode, setMode] = useState<'day' | 'scene'>('day');
+  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
   const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
 
@@ -1201,8 +1201,10 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     try {
       if (mode === 'day') {
         await exportDayPdf(date, records);
-      } else if (selectedScene) {
+      } else if (mode === 'scene' && selectedScene) {
         await exportScenePdf(selectedScene, records);
+      } else if (mode === 'global') {
+        await exportGlobalRecapPdf(records);
       }
       onClose();
     } catch (e) {
@@ -1238,6 +1240,16 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
           >
             <span className="export-opt-title">Scène sur période</span>
             <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
+          </button>
+          <button
+            type="button"
+            className={'export-opt' + (mode === 'global' ? ' on' : '')}
+            aria-pressed={mode === 'global'}
+            onClick={() => setMode('global')}
+            data-testid="export-mode-global"
+          >
+            <span className="export-opt-title">Rapport Cockpit (3 pages)</span>
+            <span className="export-opt-sub">Synthèse, rotation des scènes et calendrier FO complet</span>
           </button>
           {mode === 'scene' && (
             <select
