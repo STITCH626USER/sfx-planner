@@ -511,12 +511,12 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
     const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
     const dayAssoc = getFOAssociations(dayRecs);
     
-    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[] }> = [...activeRegs];
+    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
     for (const fo of activeFOs) {
       const assoc = dayAssoc.get(fo.employee) ?? [];
-      result.push({ ...fo, assocScenes: assoc });
+      result.push({ ...fo, assocScenes: assoc, originalScene: fo.scene });
       for (const scene of assoc) {
-        result.push({ ...fo, scene, isFOVirtual: true, assocScenes: assoc });
+        result.push({ ...fo, scene, isFOVirtual: true, assocScenes: assoc, originalScene: fo.scene });
       }
     }
     
@@ -685,6 +685,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
           {team.map(rec => {
             const isFOVirtual = (rec as any).isFOVirtual;
             const assocScenes = (rec as any).assocScenes;
+            const originalScene = (rec as any).originalScene;
             const isFO = isTrainingScene(rec.scene) || isFOVirtual;
             return (
               <div className="team-row" key={rec.employee} data-testid={`team-${rec.employee}`}>
@@ -696,6 +697,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                   <div className="team-meta">
                     {rec.weekLabel}
                     {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · Associé à : ${assocScenes.join(', ')}`}
+                    {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
                   </div>
                 </div>
                 <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
@@ -763,13 +765,14 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
 
     const dayAssoc = getFOAssociations(dayRecs);
     
-    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[] }> = [...activeRegs];
+    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
     
     for (const fo of activeFOs) {
       const assoc = dayAssoc.get(fo.employee) ?? [];
       result.push({
         ...fo,
-        assocScenes: assoc
+        assocScenes: assoc,
+        originalScene: fo.scene
       });
       
       for (const scene of assoc) {
@@ -777,7 +780,8 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
           ...fo,
           scene,
           isFOVirtual: true,
-          assocScenes: assoc
+          assocScenes: assoc,
+          originalScene: fo.scene
         });
       }
     }
@@ -790,7 +794,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
   }, [records, date]);
 
   const byScene = useMemo(() => {
-    const groups = new Map<string, Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[] }>>();
+    const groups = new Map<string, Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }>>();
     for (const rec of present) {
       if (!groups.has(rec.scene)) groups.set(rec.scene, []);
       groups.get(rec.scene)!.push(rec);
@@ -881,6 +885,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                     {sceneRecords.map(rec => {
                       const isFOVirtual = (rec as any).isFOVirtual;
                       const assocScenes = (rec as any).assocScenes;
+                      const originalScene = (rec as any).originalScene;
                       const isFO = isTrainingScene(rec.scene) || isFOVirtual;
                       return (
                         <div
@@ -896,6 +901,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                             <div className="team-meta compact-meta">
                               {rec.weekLabel}
                               {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · ${assocScenes.join(', ')}`}
+                              {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
                             </div>
                           </div>
                           <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
