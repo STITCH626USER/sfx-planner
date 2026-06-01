@@ -3,7 +3,7 @@
 
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene, getSceneColor } from './utils';
+import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene } from './utils';
 
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
@@ -576,7 +576,7 @@ function drawWeeklyCalendarPage(
 ) {
   // 1. Draw consistent premium header
   const layout: LayoutChoice = { orientation: 'landscape', cols: 4, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false };
-  const contentY = drawHeader(doc, pageW, marginX, 9, "Rapport Roster Hebdomadaire", weekLabel, layout, logo);
+  const contentY = drawHeader(doc, pageW, marginX, 9, "Rapport Cockpit SFX — Calendrier Hebdomadaire", weekLabel, layout, logo);
   
   // Helper to parse ISO date strictly as UTC to avoid local timezone shifting
   const parseIsoDateUtc = (iso: string): Date => {
@@ -599,127 +599,132 @@ function drawWeeklyCalendarPage(
     datesOfWeek.push(`${yyyy}-${mm}-${dd}`);
   }
 
-  // 3. Find all unique active employees in this week (who have worked shifts)
-  const activeEmployees = Array.from(
-    new Set(weekRecs.filter(r => r.time !== 'OFF' && r.employee).map(r => r.employee))
-  ).sort((a, b) => prettyName(a).localeCompare(prettyName(b), 'fr'));
-
-  // Calculate table layout geometry
+  // Calculate card layout geometry
   const availW = pageW - marginX * 2;
-  const colNameW = 38; // 38mm for the technician column
-  const colDayW = (availW - colNameW) / 7; // ~34.14mm for each day column
-  
-  const bottom = pageH - 14; // 14mm reserved for the safety footer
-  const availH = bottom - contentY;
-  
-  const N = activeEmployees.length;
-  const totalRows = N + 1; // Header + technicians
-  const rawRowH = availH / totalRows;
-  const rowH = Math.max(6.8, Math.min(12, rawRowH)); // Harmonious row height
-  
-  let y = contentY;
+  const colW = (availW - 15) / 4; // 4 columns, 5mm gutters
+  const availH = pageH - 14 - contentY; // 14mm reserved for safety footer
+  const cardH = (availH - 6) / 2; // 2 rows, 6mm vertical gutter
 
-  // Precompute training (FO) associations for virtual scene support
-  const dayAssoc = computeAllFOAssociations(weekRecs);
+  // 3. Draw the 7 Day Cards
+  for (let t = 0; t < 7; t++) {
+    const dateStr = datesOfWeek[t];
+    const col = t % 4;
+    const row = Math.floor(t / 4);
+    const cardX = marginX + col * (colW + 5);
+    const cardY = contentY + row * (cardH + 6);
 
-  // --- DRAW HEADER ROW ---
-  doc.setFillColor(13, 20, 35); // Premium midnight blue header background
-  doc.rect(marginX, y, availW, rowH, 'F');
-  
-  doc.setDrawColor(220, 220, 224);
-  doc.setLineWidth(0.15);
-  doc.line(marginX, y, marginX + availW, y);
-  doc.line(marginX, y + rowH, marginX + availW, y + rowH);
-  
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text("Technicien", marginX + 3, y + rowH * 0.58);
-  
-  for (let d = 0; d < 7; d++) {
-    const dStr = datesOfWeek[d];
-    const wd = weekdayFromIso(dStr);
-    const dayLabel = wd !== null ? DAY_FR_SHORT[wd] : '';
-    const m = dStr.match(/-(\d{2})-(\d{2})$/);
-    const dateLabel = m ? `${m[2]}/${m[1]}` : '';
-    const label = `${dayLabel} ${dateLabel}`;
-    
-    const cx = marginX + colNameW + d * colDayW;
-    doc.line(cx, y, cx, y + rowH);
-    doc.text(label, cx + 3, y + rowH * 0.58);
-  }
-  doc.line(marginX + availW, y, marginX + availW, y + rowH);
-  
-  y += rowH;
-
-  // --- DRAW EMPLOYEE ROWS ---
-  for (let i = 0; i < N; i++) {
-    if (y + rowH > bottom) break;
-
-    const emp = activeEmployees[i];
-    const namePretty = prettyName(emp);
-    
-    doc.setDrawColor(220, 220, 224);
+    // Draw rounded card container background
+    doc.setFillColor(252, 252, 254);
+    doc.setDrawColor(218, 224, 233);
     doc.setLineWidth(0.15);
-    doc.line(marginX, y + rowH, marginX + availW, y + rowH);
-    
-    // Draw Employee Name Cell
-    doc.setFillColor(248, 250, 252);
-    doc.rect(marginX, y, colNameW, rowH, 'F');
-    doc.line(marginX, y, marginX, y + rowH);
-    doc.line(marginX + colNameW, y, marginX + colNameW, y + rowH);
-    
+    doc.roundedRect(cardX, cardY, colW, cardH, 1.2, 1.2, 'FD');
+
+    // Draw header bar
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(cardX, cardY, colW, 6, 1.2, 1.2, 'F');
+    doc.rect(cardX, cardY + 3, colW, 3, 'F');
+    doc.setDrawColor(218, 224, 233);
+    doc.line(cardX, cardY + 6, cardX + colW, cardY + 6);
+
+    // Card title: e.g. "Dimanche 14 juin 2026"
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(8.5);
     doc.setTextColor(40, 40, 44);
-    
-    const textName = (doc.splitTextToSize(namePretty, colNameW - 5)[0] as string) || namePretty;
-    doc.text(textName, marginX + 3, y + rowH * 0.58);
-    
-    // Draw 7 Day Cells
-    for (let d = 0; d < 7; d++) {
-      const dStr = datesOfWeek[d];
-      const cx = marginX + colNameW + d * colDayW;
-      
-      doc.line(cx + colDayW, y, cx + colDayW, y + rowH);
-      
-      const shift = weekRecs.find(r => r.employee === emp && r.date === dStr);
-      
-      if (!shift || shift.time === 'OFF') {
-        doc.setFillColor(255, 255, 255);
-        doc.rect(cx, y, colDayW, rowH, 'F');
-      } else {
-        const isFO = isTrainingScene(shift.scene);
-        const color = getSceneColor(shift.scene);
+    doc.text(fmtDate(dateStr), cardX + 3, cardY + 4.2);
+
+    const dayRecs = weekRecs.filter(r => r.date === dateStr && r.time !== 'OFF');
+    let currentY = cardY + 10.5;
+
+    if (dayRecs.length === 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7.5);
+      doc.setTextColor(110, 110, 116);
+      doc.text('Aucun poste planifié', cardX + 4, currentY);
+    } else {
+      const sceneGroups = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
+      const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
+      const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
+      const dayAssoc = getFOAssociations(dayRecs);
+
+      for (const r of activeRegs) {
+        if (!sceneGroups.has(r.scene)) sceneGroups.set(r.scene, []);
+        sceneGroups.get(r.scene)!.push({ name: prettyName(r.employee), time: r.time });
+      }
+
+      for (const r of activeFOs) {
+        const assoc = dayAssoc.get(r.employee) ?? [];
+        const groupKey = isTrainingScene(r.scene) ? r.scene : 'FO';
+        if (!sceneGroups.has(groupKey)) sceneGroups.set(groupKey, []);
         
-        doc.setFillColor(color.rgbBg[0], color.rgbBg[1], color.rgbBg[2]);
-        doc.rect(cx, y, colDayW, rowH, 'F');
-        
-        let sceneLabel = shift.scene || '';
-        if (isFO) {
-          const key = getFOAssociationKey(dStr, emp);
-          const assoc = dayAssoc.get(key) ?? [];
-          const assocSuffix = assoc.length > 0 ? ` (${assoc.join(', ')})` : '';
-          sceneLabel = `(FO) ${shift.scene}${assocSuffix}`;
+        const assocSuffix = assoc.length > 0 ? ` (Assoc. ${assoc.join(', ')})` : '';
+        sceneGroups.get(groupKey)!.push({
+          name: `${prettyName(r.employee)}${assocSuffix}`,
+          time: r.time,
+          isFO: true
+        });
+
+        for (const scene of assoc) {
+          if (!sceneGroups.has(scene)) sceneGroups.set(scene, []);
+          sceneGroups.get(scene)!.push({
+            name: `${prettyName(r.employee)} (FO ${r.scene || 'FO'})`,
+            time: r.time,
+            isFO: true
+          });
         }
-        
+      }
+
+      const sortedScenes = Array.from(sceneGroups.keys())
+        .sort((a, b) => a.localeCompare(b, 'fr'));
+
+      // Dynamic Font Scaling and Spacing Calculations to prevent card overflow
+      let totalHeightNeeded = 0;
+      for (const s of sortedScenes) {
+        totalHeightNeeded += 3.4; // scene title height
+        const techs = sceneGroups.get(s) ?? [];
+        totalHeightNeeded += techs.length * 3.1; // tech rows height
+        totalHeightNeeded += 1.2; // group gap
+      }
+      if (sortedScenes.length > 0) {
+        totalHeightNeeded -= 1.2; // remove trailing gap
+      }
+
+      const maxContentH = cardH - 6.0 - 4.5; // leaving padding at header and bottom
+      const scale = totalHeightNeeded > maxContentH ? Math.max(0.52, maxContentH / totalHeightNeeded) : 1.0;
+
+      const sceneFontSize = 7.5 * scale;
+      const techFontSize = 6.5 * scale;
+      const sceneLineH = 3.4 * scale;
+      const techLineH = 3.1 * scale;
+      const groupGap = 1.2 * scale;
+
+      for (const scene of sortedScenes) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(5.5);
-        doc.setTextColor(color.rgbText[0], color.rgbText[1], color.rgbText[2]);
-        
-        const sceneText = (doc.splitTextToSize(sceneLabel, colDayW - 4)[0] as string) || sceneLabel;
-        doc.text(sceneText, cx + 2, y + rowH * 0.42);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(5.5);
-        doc.setTextColor(60, 60, 64);
-        doc.text(shift.time || '', cx + 2, y + rowH * 0.78);
+        doc.setFontSize(sceneFontSize);
+        doc.setTextColor(31, 122, 112);
+
+        const sceneLabel = (doc.splitTextToSize(scene, colW - 6)[0] as string) || scene;
+        doc.text(sceneLabel, cardX + 3, currentY);
+        currentY += sceneLineH;
+
+        const techs = (sceneGroups.get(scene) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+        for (const tech of techs) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(techFontSize);
+          doc.setTextColor(40, 40, 44);
+
+          const foPrefix = tech.isFO ? '(FO) ' : '';
+          const rowText = `  • ${foPrefix}${tech.name} [${tech.time}]`;
+          const maxW = colW - 6;
+          const techLabel = (doc.splitTextToSize(rowText, maxW)[0] as string) || rowText;
+          doc.text(techLabel, cardX + 4, currentY);
+          currentY += techLineH;
+        }
+
+        currentY += groupGap;
       }
     }
-    
-    y += rowH;
   }
 
-  // 4. Draw consistent footer
+  // 4. Draw consistent safety footer
   drawFooter(doc, pageW, pageH, marginX, false, false);
 }

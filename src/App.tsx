@@ -45,7 +45,7 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('recherche');
+  const [tab, setTab] = useState<Tab>('daily');
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'dark';
     return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
@@ -555,6 +555,9 @@ function countActiveDays(records: PlanningRecord[], name: string): number {
 function EmployeeDetail({ name, records, allRecords, onBack }: {
   name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; onBack: () => void;
 }) {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [name]);
   // Group by weekLabel
   const byWeek = useMemo(() => {
     const m = new Map<string, PlanningRecord[]>();
