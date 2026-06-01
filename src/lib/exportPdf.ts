@@ -346,13 +346,27 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 
 export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
   const empRecs = records.filter(r => r.employee === employee);
+  const dayAssoc = computeAllFOAssociations(records);
+  
   // Group by date (one block per date), include OFF discreetly.
-  const dateMap = new Map<string, Array<{ name: string; time: string }>>();
+  const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
+    
+    let name = r.scene || '—';
+    let isFO = false;
+    
+    if (isTrainingScene(r.scene)) {
+      isFO = true;
+      const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
+      if (assoc.length > 0) {
+        name = `${r.scene} (${assoc.join(', ')})`;
+      }
+    }
+    
     const row = r.time === 'OFF'
       ? { name: 'Repos / congé', time: 'OFF' }
-      : { name: r.scene || '—', time: r.time };
+      : { name, time: r.time, isFO };
     dateMap.get(r.date)!.push(row);
   }
   const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
@@ -387,14 +401,28 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   
   for (const r of sceneRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-    dateMap.get(r.date)!.push({ name: prettyName(r.employee), time: r.time });
+    let isFO = false;
+    let name = prettyName(r.employee);
+    if (isTrainingScene(r.scene)) {
+      isFO = true;
+      const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
+      if (assoc.length > 0) {
+        name = `${prettyName(r.employee)} (${assoc.join(', ')})`;
+      }
+    }
+    dateMap.get(r.date)!.push({ name, time: r.time, isFO });
   }
 
   for (const r of foRecs) {
     const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
     if (assoc.includes(scene)) {
       if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-      dateMap.get(r.date)!.push({ name: prettyName(r.employee), time: r.time, isFO: true });
+      const label = r.scene ? ` (${r.scene})` : '';
+      dateMap.get(r.date)!.push({
+        name: `${prettyName(r.employee)}${label}`,
+        time: r.time,
+        isFO: true
+      });
     }
   }
 
@@ -420,6 +448,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     filename: `sfx-planning-${slug(scene)}.pdf`,
   });
 }
+
 
 function slug(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'scene';
