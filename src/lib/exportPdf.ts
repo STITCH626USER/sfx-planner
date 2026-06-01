@@ -169,7 +169,7 @@ function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
+  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
 }
 
 function drawBlocks(

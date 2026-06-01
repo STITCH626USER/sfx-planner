@@ -2447,3 +2447,106 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(255, 176, 58, 0.1) !important;
 }
 
+/* 11. Sticky bottom bar HUD with subtle drifting smoke SFX */
+.app-footer-notice {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: calc(38px + env(safe-area-inset-bottom)) !important;
+  padding: 0 16px calc(env(safe-area-inset-bottom)) 16px !important;
+  background: rgba(13, 20, 35, 0.85) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+}
+
+:root[data-theme="light"] .app-footer-notice {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+
+.app-footer-notice .footer-warning-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  width: 100% !important;
+  text-align: center !important;
+  display: block !important;
+}
+
+.app-footer-notice .warning-text {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+}
+
+:root[data-theme="light"] .app-footer-notice .warning-text {
+  color: rgba(40, 40, 44, 0.85) !important;
+}
+
+/* Extremely light dynamic heavy smoke drifting inside the bottom bar */
+.footer-smoke-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.12;
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="light"] .footer-smoke-bg {
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+}
+
+.footer-smoke-cloud {
+  position: absolute;
+  width: 250px;
+  height: 60px;
+  background: radial-gradient(ellipse at center, rgba(255, 176, 58, 0.25) 0%, rgba(255, 176, 58, 0) 70%);
+  filter: blur(15px);
+  border-radius: 50%;
+}
+
+.footer-smoke-cloud-1 {
+  left: -20px;
+  top: -10px;
+  animation: footerSmokeFloat1 25s infinite ease-in-out;
+}
+
+.footer-smoke-cloud-2 {
+  right: -20px;
+  bottom: -10px;
+  background: radial-gradient(ellipse at center, rgba(31, 180, 160, 0.2) 0%, rgba(31, 180, 160, 0) 70%);
+  animation: footerSmokeFloat2 30s infinite ease-in-out;
+}
+
+@keyframes footerSmokeFloat1 {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(80px) scale(1.15); }
+}
+
+@keyframes footerSmokeFloat2 {
+  0%, 100% { transform: translateX(0) scale(1.1); }
+  50% { transform: translateX(-80px) scale(0.9); }
+}
+
+

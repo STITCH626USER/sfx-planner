@@ -200,7 +200,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier. Données traitées localement.
+                Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
               </span>
             </div>
           </div>
@@ -346,10 +346,14 @@ export default function App() {
         </div>
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
+          <div className="footer-smoke-bg" aria-hidden="true">
+            <div className="footer-smoke-cloud footer-smoke-cloud-1" />
+            <div className="footer-smoke-cloud footer-smoke-cloud-2" />
+          </div>
           <div className="footer-warning-card">
             <span className="warning-text">
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-              Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier. Données traitées localement.
+              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
             </span>
           </div>
         </footer>
