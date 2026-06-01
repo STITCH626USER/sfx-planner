@@ -3,7 +3,7 @@
 
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene } from './utils';
+import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene, getSceneColor } from './utils';
 
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
@@ -576,128 +576,150 @@ function drawWeeklyCalendarPage(
 ) {
   // 1. Draw consistent premium header
   const layout: LayoutChoice = { orientation: 'landscape', cols: 4, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false };
-  const contentY = drawHeader(doc, pageW, marginX, 9, "Rapport Cockpit SFX — Calendrier Hebdomadaire", weekLabel, layout, logo);
+  const contentY = drawHeader(doc, pageW, marginX, 9, "Rapport Roster Hebdomadaire", weekLabel, layout, logo);
   
-  // 2. Get all dates in this week sorted chronologically
-  const dates = Array.from(new Set(weekRecs.map(r => r.date).filter(Boolean))).sort();
+  // Helper to parse ISO date strictly as UTC to avoid local timezone shifting
+  const parseIsoDateUtc = (iso: string): Date => {
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return new Date(iso);
+    return new Date(Date.UTC(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
+  };
+
+  // 2. Determine all dates for the 7 columns in this week chronologically
+  const uniqueDates = Array.from(new Set(weekRecs.map(r => r.date).filter(Boolean))).sort();
+  if (uniqueDates.length === 0) return;
   
-  // 3. Grid coordinates (4 columns, 2 rows)
-  const cols = 4;
-  const gutterX = 5;
-  const gutterY = 6;
+  const startDate = parseIsoDateUtc(uniqueDates[0]);
+  const datesOfWeek: string[] = [];
+  for (let d = 0; d < 7; d++) {
+    const nextDate = new Date(startDate.getTime() + d * 24 * 60 * 60 * 1000);
+    const yyyy = nextDate.getUTCFullYear();
+    const mm = String(nextDate.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(nextDate.getUTCDate()).padStart(2, '0');
+    datesOfWeek.push(`${yyyy}-${mm}-${dd}`);
+  }
+
+  // 3. Find all unique active employees in this week (who have worked shifts)
+  const activeEmployees = Array.from(
+    new Set(weekRecs.filter(r => r.time !== 'OFF' && r.employee).map(r => r.employee))
+  ).sort((a, b) => prettyName(a).localeCompare(prettyName(b), 'fr'));
+
+  // Calculate table layout geometry
   const availW = pageW - marginX * 2;
-  const colW = (availW - gutterX * (cols - 1)) / cols;
+  const colNameW = 38; // 38mm for the technician column
+  const colDayW = (availW - colNameW) / 7; // ~34.14mm for each day column
   
-  const availH = pageH - 14 - contentY; // 14mm reserved for footer
-  const cardH = (availH - gutterY) / 2;
+  const bottom = pageH - 14; // 14mm reserved for the safety footer
+  const availH = bottom - contentY;
   
-  for (let i = 0; i < dates.length; i++) {
-    const date = dates[i];
-    const colIdx = i % cols;
-    const rowIdx = Math.floor(i / cols);
+  const N = activeEmployees.length;
+  const totalRows = N + 1; // Header + technicians
+  const rawRowH = availH / totalRows;
+  const rowH = Math.max(6.8, Math.min(12, rawRowH)); // Harmonious row height
+  
+  let y = contentY;
+
+  // Precompute training (FO) associations for virtual scene support
+  const dayAssoc = computeAllFOAssociations(weekRecs);
+
+  // --- DRAW HEADER ROW ---
+  doc.setFillColor(13, 20, 35); // Premium midnight blue header background
+  doc.rect(marginX, y, availW, rowH, 'F');
+  
+  doc.setDrawColor(220, 220, 224);
+  doc.setLineWidth(0.15);
+  doc.line(marginX, y, marginX + availW, y);
+  doc.line(marginX, y + rowH, marginX + availW, y + rowH);
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Technicien", marginX + 3, y + rowH * 0.58);
+  
+  for (let d = 0; d < 7; d++) {
+    const dStr = datesOfWeek[d];
+    const wd = weekdayFromIso(dStr);
+    const dayLabel = wd !== null ? DAY_FR_SHORT[wd] : '';
+    const m = dStr.match(/-(\d{2})-(\d{2})$/);
+    const dateLabel = m ? `${m[2]}/${m[1]}` : '';
+    const label = `${dayLabel} ${dateLabel}`;
     
-    const x = marginX + colIdx * (colW + gutterX);
-    const y = contentY + rowIdx * (cardH + gutterY);
+    const cx = marginX + colNameW + d * colDayW;
+    doc.line(cx, y, cx, y + rowH);
+    doc.text(label, cx + 3, y + rowH * 0.58);
+  }
+  doc.line(marginX + availW, y, marginX + availW, y + rowH);
+  
+  y += rowH;
+
+  // --- DRAW EMPLOYEE ROWS ---
+  for (let i = 0; i < N; i++) {
+    if (y + rowH > bottom) break;
+
+    const emp = activeEmployees[i];
+    const namePretty = prettyName(emp);
     
-    // Draw day card container with a very soft, light bordered card (high contrast, clean)
-    doc.setFillColor(252, 252, 254);
-    doc.setDrawColor(218, 224, 233);
+    doc.setDrawColor(220, 220, 224);
     doc.setLineWidth(0.15);
-    doc.roundedRect(x, y, colW, cardH, 1.2, 1.2, 'FD');
+    doc.line(marginX, y + rowH, marginX + availW, y + rowH);
     
-    // Day header bar in a very soft light grey background
-    doc.setFillColor(241, 245, 249);
-    doc.roundedRect(x, y, colW, 6.0, 1.2, 1.2, 'F');
-    doc.rect(x, y + 3, colW, 3.0, 'F');
-    doc.setDrawColor(218, 224, 233);
-    doc.line(x, y + 6.0, x + colW, y + 6.0);
+    // Draw Employee Name Cell
+    doc.setFillColor(248, 250, 252);
+    doc.rect(marginX, y, colNameW, rowH, 'F');
+    doc.line(marginX, y, marginX, y + rowH);
+    doc.line(marginX + colNameW, y, marginX + colNameW, y + rowH);
     
-    // Day title in bold dark grey
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
+    doc.setFontSize(6.5);
     doc.setTextColor(40, 40, 44);
-    doc.text(fmtDate(date), x + 3, y + 4.2);
     
-    // Filter active records for this day
-    const dayRecs = weekRecs.filter(r => r.date === date && r.time !== 'OFF');
+    const textName = (doc.splitTextToSize(namePretty, colNameW - 5)[0] as string) || namePretty;
+    doc.text(textName, marginX + 3, y + rowH * 0.58);
     
-    let ty = y + 10.5;
-    doc.setFontSize(7.5);
-    
-    if (dayRecs.length === 0) {
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(110, 110, 116);
-      doc.text("Aucun poste planifié", x + 4, ty);
-    } else {
-      // Group by scene
-      const sceneMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
+    // Draw 7 Day Cells
+    for (let d = 0; d < 7; d++) {
+      const dStr = datesOfWeek[d];
+      const cx = marginX + colNameW + d * colDayW;
       
-      const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-      const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
-      const dayAssoc = getFOAssociations(dayRecs);
+      doc.line(cx + colDayW, y, cx + colDayW, y + rowH);
       
-      for (const r of activeRegs) {
-        if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
-        sceneMap.get(r.scene)!.push({ name: prettyName(r.employee), time: r.time });
-      }
+      const shift = weekRecs.find(r => r.employee === emp && r.date === dStr);
       
-      for (const r of activeFOs) {
-        const assoc = dayAssoc.get(r.employee) ?? [];
-        const groupKey = r.scene || 'Formation (FO)';
-        if (!sceneMap.has(groupKey)) sceneMap.set(groupKey, []);
-        const assocSuffix = assoc.length > 0 ? ` (Assoc. ${assoc.join(', ')})` : '';
-        sceneMap.get(groupKey)!.push({
-          name: `${prettyName(r.employee)}${assocSuffix}`,
-          time: r.time,
-          isFO: true
-        });
+      if (!shift || shift.time === 'OFF') {
+        doc.setFillColor(255, 255, 255);
+        doc.rect(cx, y, colDayW, rowH, 'F');
+      } else {
+        const isFO = isTrainingScene(shift.scene);
+        const color = getSceneColor(shift.scene);
         
-        // Also map to virtual scenes
-        for (const scene of assoc) {
-          if (!sceneMap.has(scene)) sceneMap.set(scene, []);
-          sceneMap.get(scene)!.push({
-            name: `${prettyName(r.employee)} (FO ${r.scene})`,
-            time: r.time,
-            isFO: true
-          });
+        doc.setFillColor(color.rgbBg[0], color.rgbBg[1], color.rgbBg[2]);
+        doc.rect(cx, y, colDayW, rowH, 'F');
+        
+        let sceneLabel = shift.scene || '';
+        if (isFO) {
+          const key = getFOAssociationKey(dStr, emp);
+          const assoc = dayAssoc.get(key) ?? [];
+          const assocSuffix = assoc.length > 0 ? ` (${assoc.join(', ')})` : '';
+          sceneLabel = `(FO) ${shift.scene}${assocSuffix}`;
         }
-      }
-      
-      const sortedScenes = Array.from(sceneMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
-      
-      for (const scene of sortedScenes) {
-        if (ty + 5.0 > y + cardH) break; // Truncate if overflowing card
         
-        // Render Scene title
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(31, 122, 112); // Clean teal color for scene header
+        doc.setFontSize(5.5);
+        doc.setTextColor(color.rgbText[0], color.rgbText[1], color.rgbText[2]);
         
-        // Truncate scene title if too long
-        const sceneText = (doc.splitTextToSize(scene, colW - 6)[0] as string) || scene;
-        doc.text(sceneText, x + 3, ty);
-        ty += 3.4;
+        const sceneText = (doc.splitTextToSize(sceneLabel, colDayW - 4)[0] as string) || sceneLabel;
+        doc.text(sceneText, cx + 2, y + rowH * 0.42);
         
-        // Render Technicians
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(40, 40, 44);
-        
-        const peers = sceneMap.get(scene)!.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-        for (const peer of peers) {
-          if (ty + 3.4 > y + cardH) break;
-          
-          let techText = `${peer.name} [${peer.time}]`;
-          if (peer.isFO) {
-            techText = `(FO) ${peer.name} [${peer.time}]`;
-          }
-          
-          doc.text(`  • ${techText}`, x + 4, ty);
-          ty += 3.1;
-        }
-        ty += 1.2; // Extra gap between scenes
+        doc.setFontSize(5.5);
+        doc.setTextColor(60, 60, 64);
+        doc.text(shift.time || '', cx + 2, y + rowH * 0.78);
       }
     }
+    
+    y += rowH;
   }
-  
+
   // 4. Draw consistent footer
   drawFooter(doc, pageW, pageH, marginX, false, false);
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey } from './lib/utils';
+import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey, getSceneColor } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
@@ -705,7 +705,11 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
         <span className="n">{dayPart}</span>
       </div>
       <div style={{ minWidth: 0 }}>
-        <div className={'day-scene' + (isOff ? ' off' : '')} data-testid={`scene-${rec.date}`}>
+        <div
+          className={'day-scene' + (isOff ? ' off' : '')}
+          data-testid={`scene-${rec.date}`}
+          style={!isOff ? { borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' } : undefined}
+        >
           {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
         </div>
         {assocScenes && assocScenes.length > 0 && (
@@ -967,7 +971,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                     data-testid={`scene-card-${scene}`}
                     aria-label={`Ouvrir le détail de ${scene}`}
                     onClick={() => setOpenScene(scene)}
-                    style={{ width: '100%', cursor: 'pointer' }}
+                    style={{ width: '100%', cursor: 'pointer', borderLeft: `4.5px solid ${getSceneColor(scene).accent}` }}
                   >
                     <div className="daily-group-scene">{scene}</div>
                     <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
@@ -1248,8 +1252,8 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             onClick={() => setMode('global')}
             data-testid="export-mode-global"
           >
-            <span className="export-opt-title">Rapport Hebdomadaire (Calendrier)</span>
-            <span className="export-opt-sub">Un planning aéré (1 page par semaine) avec scènes et équipes</span>
+            <span className="export-opt-title">Rapport Roster Hebdomadaire (Tableau)</span>
+            <span className="export-opt-sub">Grille tabulaire couleur ultra-lisible (1 page par semaine), aucun technicien masqué</span>
           </button>
           {mode === 'scene' && (
             <select
