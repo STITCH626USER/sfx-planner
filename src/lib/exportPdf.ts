@@ -197,7 +197,15 @@ function drawBlocks(
   const colYs: number[] = new Array(layout.cols).fill(startY);
 
   for (const block of blocks) {
-    const blockHeight = layout.fontSection + 1.5 + block.rows.length * (layout.rowHeight + layout.rowGap) + layout.sectionGap;
+    const cardPaddingTop = 2.0;
+    const cardPaddingBottom = 2.0;
+    const cardPaddingLeftRight = 3.0;
+    const cardHeaderHeight = layout.fontSection * 0.45;
+    const cardHeaderSpacing = 2.5;
+    
+    const rowsLen = Math.max(1, block.rows.length);
+    const cardHeight = cardPaddingTop + cardHeaderHeight + cardHeaderSpacing + rowsLen * (layout.rowHeight + layout.rowGap) + cardPaddingBottom;
+    const blockHeight = cardHeight + layout.sectionGap;
 
     // Try to fit in current column; otherwise move to next column
     let placed = false;
@@ -217,24 +225,36 @@ function drawBlocks(
 
     const x = marginX + col * (colW + gutter);
 
-    // Section header — teal underline
+    // Draw rounded card container
+    doc.setFillColor(252, 252, 253);
+    doc.setDrawColor(220, 221, 226);
+    doc.setLineWidth(0.15);
+    doc.roundedRect(x, y, colW, cardHeight, 1.8, 1.8, 'FD');
+    
+    // Draw elegant teal left-accent tag on the top of the card
+    doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
+    doc.roundedRect(x, y, 2.5, cardHeaderHeight + cardPaddingTop * 0.7, 0.4, 0.4, 'F');
+
+    // Section header text
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(layout.fontSection);
     doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]);
-    const headerText = doc.splitTextToSize(block.header, colW)[0] as string;
-    doc.text(headerText, x, y + layout.fontSection * 0.36);
-    doc.setDrawColor(TEAL[0], TEAL[1], TEAL[2]);
-    doc.setLineWidth(0.4);
-    const underlineY = y + layout.fontSection * 0.42 + 0.6;
-    doc.line(x, underlineY, x + Math.min(colW, layout.fontSection * 0.6 * headerText.length * 0.45 + 6), underlineY);
+    const headerText = doc.splitTextToSize(block.header, colW - cardPaddingLeftRight * 2 - 4)[0] as string;
+    doc.text(headerText, x + cardPaddingLeftRight + 1, y + cardPaddingTop + cardHeaderHeight * 0.7);
 
-    let ry = underlineY + 2.2;
+    // Separator line under card header
+    const sepY = y + cardPaddingTop + cardHeaderHeight + 1.0;
+    doc.setDrawColor(235, 236, 240);
+    doc.setLineWidth(0.12);
+    doc.line(x + cardPaddingLeftRight, sepY, x + colW - cardPaddingLeftRight, sepY);
+
+    let ry = sepY + 1.8;
 
     if (block.rows.length === 0) {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(layout.fontRow);
       doc.setTextColor(GREY_MED[0], GREY_MED[1], GREY_MED[2]);
-      doc.text('Aucun technicien', x, ry + layout.rowHeight * 0.55);
+      doc.text('Aucun technicien', x + cardPaddingLeftRight, ry + layout.rowHeight * 0.55);
       ry += layout.rowHeight + layout.rowGap;
     } else {
       doc.setFont('helvetica', 'normal');
@@ -245,25 +265,25 @@ function drawBlocks(
         const timeW = doc.getTextWidth(timeStr) + 4;
         
         const pillW = isFO ? 7.5 : 0;
-        const nameMax = colW - timeW - pillW - 2.5;
+        const nameMax = colW - cardPaddingLeftRight * 2 - timeW - pillW - 2.5;
         const nameTxt = (doc.splitTextToSize(row.name, nameMax)[0] as string) || row.name;
 
-        let nameX = x;
+        let nameX = x + cardPaddingLeftRight;
         if (isFO) {
           const foPillW = 6;
           const foPillH = layout.rowHeight * 0.85;
           const foPillY = ry + (layout.rowHeight - foPillH) / 2;
           doc.setFillColor(120, 90, 230);
-          doc.roundedRect(x, foPillY, foPillW, foPillH, 0.5, 0.5, 'F');
+          doc.roundedRect(x + cardPaddingLeftRight, foPillY, foPillW, foPillH, 0.5, 0.5, 'F');
           
           doc.setTextColor(255, 255, 255);
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(layout.fontRow - 1.5);
-          doc.text('FO', x + foPillW / 2, foPillY + foPillH * 0.72, { align: 'center' });
+          doc.text('FO', x + cardPaddingLeftRight + foPillW / 2, foPillY + foPillH * 0.72, { align: 'center' });
           
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(layout.fontRow);
-          nameX = x + foPillW + 1.5;
+          nameX = x + cardPaddingLeftRight + foPillW + 1.5;
         }
 
         doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]);
@@ -274,7 +294,7 @@ function drawBlocks(
         doc.setFillColor(pillColor[0], pillColor[1], pillColor[2]);
         const pillH = layout.rowHeight * 0.85;
         const pillY = ry + (layout.rowHeight - pillH) / 2;
-        const pillX = x + colW - timeW;
+        const pillX = x + colW - cardPaddingLeftRight - timeW;
         doc.roundedRect(pillX, pillY, timeW, pillH, 0.8, 0.8, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFont('helvetica', 'bold');
@@ -286,7 +306,7 @@ function drawBlocks(
       }
     }
 
-    colYs[col] = ry + layout.sectionGap;
+    colYs[col] = y + blockHeight;
   }
 
   return true;

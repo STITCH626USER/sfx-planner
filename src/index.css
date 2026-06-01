@@ -1458,11 +1458,81 @@ input:focus, select:focus {
   }
 }
 
-/* Tablet & desktop mobile-first responsive constraint */
-@media (min-width: 720px) {
+/* Tablet responsive constraint */
+@media (min-width: 720px) and (max-width: 1023px) {
   .app-shell {
-    max-width: 520px;
+    max-width: 540px;
     padding-top: 30px;
+  }
+}
+
+/* Desktop split-grid dashboard layout */
+@media (min-width: 1024px) {
+  .app-shell {
+    max-width: 1080px;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
+    gap: 16px 32px;
+    align-items: start;
+    padding-top: 36px;
+  }
+
+  .app-header {
+    grid-column: 1;
+    grid-row: 1;
+    position: static;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: none;
+    margin-inline: 0;
+    padding: 0;
+  }
+
+  .uploader {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .sources-strip {
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 4px;
+  }
+
+  .tabs-block {
+    grid-column: 1;
+    grid-row: 4;
+    position: sticky;
+    top: 24px;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Right column views placement */
+  .banner-error {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 0 !important;
+  }
+
+  .app-shell > .empty,
+  .app-shell > [data-testid="panel-recherche"],
+  .app-shell > [data-testid="panel-daily"],
+  .app-shell > [data-testid="panel-employee"],
+  .app-shell > [data-testid="panel-scene-detail"] {
+    grid-column: 2;
+    grid-row: 1 / 6;
+    margin-top: 0;
+  }
+
+  /* Hide mobile spacing elements in grid to avoid layout shifts */
+  .app-shell > div[style*="height"] {
+    display: none !important;
   }
 }
 
