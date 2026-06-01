@@ -551,7 +551,9 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
     return;
   }
 
-  for (let i = 0; i < sortedWeeks.length; i++) {
+  // Strict 4-page maximum limit as per user specifications
+  const maxWeeks = Math.min(sortedWeeks.length, 4);
+  for (let i = 0; i < maxWeeks; i++) {
     const [weekLabel, weekRecs] = sortedWeeks[i];
     
     // Add page for subsequent weeks
