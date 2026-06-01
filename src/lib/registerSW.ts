@@ -27,10 +27,37 @@ export function registerOfflineSW(): void {
         // Surface readiness in the console only — no UI noise.
         // eslint-disable-next-line no-console
         console.info('[sfx-planner] offline cache ready (scope:', reg.scope, ')');
+
+        // Check for updates
+        reg.addEventListener('updatefound', () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // New update is ready (skipWaiting in sw.js will activate it immediately,
+                  // triggering controllerchange below).
+                  // eslint-disable-next-line no-console
+                  console.info('[sfx-planner] New update found and installing...');
+                }
+              }
+            });
+          }
+        });
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
         console.warn('[sfx-planner] SW registration failed:', err);
       });
   });
+
+  // Reload the page when the controlling service worker changes
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
 }
+
