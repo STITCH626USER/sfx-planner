@@ -526,243 +526,178 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 10;
-  const marginTop = 9;
 
-  // Gather general statistics
-  const uniqueTechs = new Set(records.map(r => r.employee)).size;
-  const uniqueScenes = new Set(records.filter(r => r.scene && r.time !== 'OFF').map(r => r.scene)).size;
-  const totalShifts = records.filter(r => r.time !== 'OFF').length;
-  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
-  const periodStart = allDates[0] ? fmtDate(allDates[0]) : '';
-  const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
-  const period = periodStart && periodEnd && periodStart !== periodEnd
-    ? `${periodStart} au ${periodEnd}`
-    : periodStart;
-
-  // PAGE 1: TABLEAU DE BORD GÉNÉRAL
-  {
-    const layout: LayoutChoice = { orientation: 'landscape', cols: 2, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9.5, rowHeight: 4.6, sectionGap: 3.2, rowGap: 0.4, dense: false };
-    const contentY = drawHeader(doc, pageW, marginX, marginTop, "Rapport Cockpit SFX — Synthèse", period ? `Période du ${period}` : 'Période globale', layout, logo);
-    
-    // Draw 3 KPI Blocks on the left (width: 80mm)
-    const kpiX = marginX;
-    const kpiW = 80;
-    const kpiH = 14;
-    let kpiY = contentY + 2;
-    
-    drawKpiCard(doc, kpiX, kpiY, kpiW, kpiH, String(uniqueTechs), "TECHNICIENS ACTIFS");
-    kpiY += kpiH + 4;
-    drawKpiCard(doc, kpiX, kpiY, kpiW, kpiH, String(uniqueScenes), "SCENES & FORMATIONS (FO)");
-    kpiY += kpiH + 4;
-    drawKpiCard(doc, kpiX, kpiY, kpiW, kpiH, String(totalShifts), "POSTES PLANIFIES SUR LA PERIODE");
-    
-    // Draw a nice bordered box on the left below KPIs for imported weeks
-    kpiY += kpiH + 6;
-    doc.setFillColor(248, 250, 252);
-    doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.15);
-    const weeksBoxH = pageH - 14 - kpiY;
-    doc.roundedRect(kpiX, kpiY, kpiW, weeksBoxH, 1.6, 1.6, 'FD');
-    doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
-    doc.roundedRect(kpiX, kpiY, kpiW, 5.5, 1.6, 1.6, 'F');
-    doc.rect(kpiX, kpiY + 3, kpiW, 2.5, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.setTextColor(255, 255, 255);
-    doc.text("Plannings importés", kpiX + 3, kpiY + 4);
-    
-    // List unique weeks
-    const uniqueWeeks = Array.from(new Set(records.map(r => r.weekLabel).filter(Boolean))).sort();
-    let wy = kpiY + 9;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]);
-    if (uniqueWeeks.length === 0) {
-      doc.text("Aucun planning", kpiX + 4, wy);
-    } else {
-      for (const w of uniqueWeeks) {
-        if (wy + 4 > kpiY + weeksBoxH) break;
-        doc.setFillColor(31, 122, 112);
-        doc.circle(kpiX + 5, wy - 1.2, 0.7, 'F');
-        doc.text(w, kpiX + 8, wy);
-        wy += 4.5;
-      }
-    }
-
-    // Draw the big technicians roster in 2 columns on the right (width: 185mm)
-    const listX = marginX + kpiW + 6;
-    const listW = pageW - marginX * 2 - kpiW - 6;
-    const listH = pageH - 14 - contentY;
-    doc.setFillColor(248, 250, 252);
-    doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.15);
-    doc.roundedRect(listX, contentY, listW, listH, 1.6, 1.6, 'FD');
-    doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
-    doc.roundedRect(listX, contentY, listW, 6.5, 1.6, 1.6, 'F');
-    doc.rect(listX, contentY + 3, listW, 3.5, 'F');
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.setTextColor(255, 255, 255);
-    doc.text("Roster des Techniciens Actifs", listX + 4, contentY + 4.5);
-
-    // Get list of employees sorted alphabetically
-    const employees = Array.from(new Set(records.map(r => r.employee))).sort((a, b) => prettyName(a).localeCompare(prettyName(b), 'fr'));
-    
-    // Split into 2 sub-columns inside the right box
-    const subColW = (listW - 8) / 2;
-    let rx = listX + 4;
-    let ry = contentY + 11;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    
-    for (let i = 0; i < employees.length; i++) {
-      const emp = employees[i];
-      const activeDays = records.filter(r => r.employee === emp && r.time !== 'OFF').length;
-      const totalWeeks = new Set(records.filter(r => r.employee === emp).map(r => r.weekLabel)).size;
-      
-      const txt = `${prettyName(emp)}`;
-      const statsTxt = `${activeDays}j / ${totalWeeks}sem`;
-      
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]);
-      doc.text(txt, rx, ry);
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(GREY_MED[0], GREY_MED[1], GREY_MED[2]);
-      doc.text(statsTxt, rx + subColW - 2, ry, { align: 'right' });
-      
-      // Light row divider
-      doc.setDrawColor(235, 235, 240);
-      doc.setLineWidth(0.1);
-      doc.line(rx, ry + 1.2, rx + subColW, ry + 1.2);
-      
-      ry += 5.2;
-      
-      // If we hit the bottom, switch to the second column
-      if (ry + 4 > contentY + listH) {
-        if (rx === listX + 4) {
-          rx = listX + 4 + subColW + 4;
-          ry = contentY + 11;
-        } else {
-          // If we overflow the second column as well, truncate
-          break;
-        }
-      }
-    }
-
-    drawFooter(doc, pageW, pageH, marginX, false, false);
+  // Group records by weekLabel
+  const weekMap = new Map<string, PlanningRecord[]>();
+  for (const r of records) {
+    if (!r.weekLabel) continue;
+    if (!weekMap.has(r.weekLabel)) weekMap.set(r.weekLabel, []);
+    weekMap.get(r.weekLabel)!.push(r);
   }
 
-  // PAGE 2: ROTATION DES SCÈNES (DAILY ROSTER)
-  {
-    doc.addPage();
-    const layout: LayoutChoice = { orientation: 'landscape', cols: 3, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false };
-    const contentY = drawHeader(doc, pageW, marginX, marginTop, "Rapport Cockpit SFX — Affectations", "Rotation des équipes sur les différentes scènes", layout, logo);
-    
-    // Group records by Scene, then list technicians per Date
-    // Group only scenes that are active (excluding OFF)
-    const sceneMap = new Map<string, Map<string, string[]>>();
-    for (const r of records) {
-      if (r.time === 'OFF' || !r.scene || isTrainingScene(r.scene)) continue;
-      if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, new Map());
-      const dateMap = sceneMap.get(r.scene)!;
-      if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-      dateMap.get(r.date)!.push(prettyName(r.employee));
-    }
-    
-    // Convert to block format for drawBlocks
-    const blocks: Array<{ header: string; rows: Array<{ name: string; time: string }> }> = [];
-    const sortedScenes = Array.from(sceneMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
-    
-    for (const scene of sortedScenes) {
-      const dateMap = sceneMap.get(scene)!;
-      const sortedDates = Array.from(dateMap.keys()).sort();
-      const rows = sortedDates.map(date => {
-        const names = dateMap.get(date)!;
-        const shortNames = names.map(n => {
-          const parts = n.split(' ');
-          return parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : n;
-        }).join(', ');
-        return {
-          name: fmtDateShort(date),
-          time: shortNames
-        };
-      });
-      blocks.push({ header: scene, rows });
-    }
+  // Sort weeks by their first date chronologically
+  const sortedWeeks = Array.from(weekMap.entries()).sort((a, b) => {
+    const firstA = a[1].find(r => r.date)?.date || '';
+    const firstB = b[1].find(r => r.date)?.date || '';
+    return firstA.localeCompare(firstB);
+  });
 
-    drawBlocks(doc, blocks, contentY, marginX, marginX, pageW, pageH, layout);
+  if (sortedWeeks.length === 0) {
+    // Empty state fallback page
+    const layout: LayoutChoice = { orientation: 'landscape', cols: 1, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9.5, rowHeight: 4.6, sectionGap: 3.2, rowGap: 0.4, dense: false };
+    drawHeader(doc, pageW, marginX, 9, "Rapport Cockpit SFX", "Aucune donnée de planning chargée", layout, logo);
     drawFooter(doc, pageW, pageH, marginX, false, false);
+    doc.save("sfx-planning-cockpit.pdf");
+    return;
   }
 
-  // PAGE 3: SUIVI DES FORMATIONS (CALENDRIER FO)
-  {
-    doc.addPage();
-    const layout: LayoutChoice = { orientation: 'landscape', cols: 2, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9.5, rowHeight: 4.6, sectionGap: 3.2, rowGap: 0.4, dense: false };
-    const contentY = drawHeader(doc, pageW, marginX, marginTop, "Rapport Cockpit SFX — Calendrier FO", "Suivi détaillé des formations et scènes associées", layout, logo);
+  for (let i = 0; i < sortedWeeks.length; i++) {
+    const [weekLabel, weekRecs] = sortedWeeks[i];
     
-    // Group FO (Training) records
-    const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF');
-    const dayAssoc = computeAllFOAssociations(records);
-
-    // Group by Date for chronological display
-    const dateMap = new Map<string, Array<{ tech: string; scene: string; assoc: string[]; time: string }>>();
-    for (const r of foRecs) {
-      if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-      const key = getFOAssociationKey(r.date, r.employee);
-      const assoc = dayAssoc.get(key) ?? [];
-      dateMap.get(r.date)!.push({
-        tech: prettyName(r.employee),
-        scene: r.scene,
-        assoc,
-        time: r.time
-      });
+    // Add page for subsequent weeks
+    if (i > 0) {
+      doc.addPage();
     }
-
-    const blocks: Array<{ header: string; rows: Array<{ name: string; time: string; isFO?: boolean }> }> = [];
-    const sortedDates = Array.from(dateMap.keys()).sort();
     
-    for (const date of sortedDates) {
-      const daySessions = dateMap.get(date)!;
-      const rows = daySessions.map(s => {
-        const assocTxt = s.assoc.length > 0 ? ` ➔ Associé à : ${s.assoc.join(', ')}` : '';
-        return {
-          name: `${s.tech} — ${s.scene}${assocTxt}`,
-          time: s.time,
-          isFO: true
-        };
-      });
-      blocks.push({ header: fmtDate(date), rows });
-    }
-
-    drawBlocks(doc, blocks, contentY, marginX, marginX, pageW, pageH, layout);
-    drawFooter(doc, pageW, pageH, marginX, false, false);
+    drawWeeklyCalendarPage(doc, weekLabel, weekRecs, pageW, pageH, marginX, logo);
   }
 
-  doc.save("sfx-planning-cockpit-3pages.pdf");
+  doc.save("sfx-planning-cockpit-hebdo.pdf");
 }
 
-function drawKpiCard(doc: jsPDF, x: number, y: number, w: number, h: number, value: string, label: string) {
-  // Rounded card container background
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.15);
-  doc.roundedRect(x, y, w, h, 1.6, 1.6, 'FD');
+function drawWeeklyCalendarPage(
+  doc: jsPDF,
+  weekLabel: string,
+  weekRecs: PlanningRecord[],
+  pageW: number,
+  pageH: number,
+  marginX: number,
+  logo: string | null
+) {
+  // 1. Draw consistent premium header
+  const layout: LayoutChoice = { orientation: 'landscape', cols: 4, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false };
+  const contentY = drawHeader(doc, pageW, marginX, 9, "Rapport Cockpit SFX — Calendrier Hebdomadaire", weekLabel, layout, logo);
   
-  // Progress bottom highlight line
-  doc.setFillColor(255, 176, 58);
-  doc.rect(x + 2, y + h - 1.2, w - 4, 0.4, 'F');
+  // 2. Get all dates in this week sorted chronologically
+  const dates = Array.from(new Set(weekRecs.map(r => r.date).filter(Boolean))).sort();
   
-  // Value text centered
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(255, 176, 58);
-  doc.text(value, x + w / 2, y + h * 0.52, { align: 'center' });
+  // 3. Grid coordinates (4 columns, 2 rows)
+  const cols = 4;
+  const gutterX = 5;
+  const gutterY = 6;
+  const availW = pageW - marginX * 2;
+  const colW = (availW - gutterX * (cols - 1)) / cols;
   
-  // Label text centered
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(110, 110, 116);
-  doc.text(label, x + w / 2, y + h * 0.82, { align: 'center' });
+  const availH = pageH - 14 - contentY; // 14mm reserved for footer
+  const cardH = (availH - gutterY) / 2;
+  
+  for (let i = 0; i < dates.length; i++) {
+    const date = dates[i];
+    const colIdx = i % cols;
+    const rowIdx = Math.floor(i / cols);
+    
+    const x = marginX + colIdx * (colW + gutterX);
+    const y = contentY + rowIdx * (cardH + gutterY);
+    
+    // Draw day card container with a very soft, light bordered card (high contrast, clean)
+    doc.setFillColor(252, 252, 254);
+    doc.setDrawColor(218, 224, 233);
+    doc.setLineWidth(0.15);
+    doc.roundedRect(x, y, colW, cardH, 1.2, 1.2, 'FD');
+    
+    // Day header bar in a very soft light grey background
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(x, y, colW, 6.0, 1.2, 1.2, 'F');
+    doc.rect(x, y + 3, colW, 3.0, 'F');
+    doc.setDrawColor(218, 224, 233);
+    doc.line(x, y + 6.0, x + colW, y + 6.0);
+    
+    // Day title in bold dark grey
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(40, 40, 44);
+    doc.text(fmtDate(date), x + 3, y + 4.2);
+    
+    // Filter active records for this day
+    const dayRecs = weekRecs.filter(r => r.date === date && r.time !== 'OFF');
+    
+    let ty = y + 10.5;
+    doc.setFontSize(7.5);
+    
+    if (dayRecs.length === 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(110, 110, 116);
+      doc.text("Aucun poste planifié", x + 4, ty);
+    } else {
+      // Group by scene
+      const sceneMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
+      
+      const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
+      const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
+      const dayAssoc = getFOAssociations(dayRecs);
+      
+      for (const r of activeRegs) {
+        if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
+        sceneMap.get(r.scene)!.push({ name: prettyName(r.employee), time: r.time });
+      }
+      
+      for (const r of activeFOs) {
+        const assoc = dayAssoc.get(r.employee) ?? [];
+        const groupKey = r.scene || 'Formation (FO)';
+        if (!sceneMap.has(groupKey)) sceneMap.set(groupKey, []);
+        const assocSuffix = assoc.length > 0 ? ` (Assoc. ${assoc.join(', ')})` : '';
+        sceneMap.get(groupKey)!.push({
+          name: `${prettyName(r.employee)}${assocSuffix}`,
+          time: r.time,
+          isFO: true
+        });
+        
+        // Also map to virtual scenes
+        for (const scene of assoc) {
+          if (!sceneMap.has(scene)) sceneMap.set(scene, []);
+          sceneMap.get(scene)!.push({
+            name: `${prettyName(r.employee)} (FO ${r.scene})`,
+            time: r.time,
+            isFO: true
+          });
+        }
+      }
+      
+      const sortedScenes = Array.from(sceneMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
+      
+      for (const scene of sortedScenes) {
+        if (ty + 5.0 > y + cardH) break; // Truncate if overflowing card
+        
+        // Render Scene title
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 122, 112); // Clean teal color for scene header
+        
+        // Truncate scene title if too long
+        const sceneText = (doc.splitTextToSize(scene, colW - 6)[0] as string) || scene;
+        doc.text(sceneText, x + 3, ty);
+        ty += 3.4;
+        
+        // Render Technicians
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(40, 40, 44);
+        
+        const peers = sceneMap.get(scene)!.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+        for (const peer of peers) {
+          if (ty + 3.4 > y + cardH) break;
+          
+          let techText = `${peer.name} [${peer.time}]`;
+          if (peer.isFO) {
+            techText = `🎓 ${peer.name} [${peer.time}]`;
+          }
+          
+          doc.text(`  • ${techText}`, x + 4, ty);
+          ty += 3.1;
+        }
+        ty += 1.2; // Extra gap between scenes
+      }
+    }
+  }
+  
+  // 4. Draw consistent footer
+  drawFooter(doc, pageW, pageH, marginX, false, false);
 }

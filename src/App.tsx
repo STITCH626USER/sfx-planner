@@ -1248,8 +1248,8 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             onClick={() => setMode('global')}
             data-testid="export-mode-global"
           >
-            <span className="export-opt-title">Rapport Cockpit (3 pages)</span>
-            <span className="export-opt-sub">Synthèse, rotation des scènes et calendrier FO complet</span>
+            <span className="export-opt-title">Rapport Hebdomadaire (Calendrier)</span>
+            <span className="export-opt-sub">Un planning aéré (1 page par semaine) avec scènes et équipes</span>
           </button>
           {mode === 'scene' && (
             <select
