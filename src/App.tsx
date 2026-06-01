@@ -356,12 +356,12 @@ function Uploader({
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
-  const title = loading
-    ? <><span className="spinner" /> Lecture du planning…</>
+  const cta = loading
+    ? 'Lecture...'
     : compact
-      ? 'Ajouter d’autres PDF'
-      : 'Importer vos PDF de planning';
-  const cta = compact ? 'Ajouter' : 'Choisir des PDF';
+      ? 'Ajouter PDF Chronos'
+      : 'Importer PDF Chronos';
+
   return (
     <div
       className="uploader"
@@ -370,18 +370,18 @@ function Uploader({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: compact ? '12px' : '24px 16px' }}
     >
-      <div className="uploader-icon" aria-hidden>
-        <IconUpload />
-      </div>
-      <div className="uploader-body">
-        <div className="uploader-title">{title}</div>
-      </div>
-      <div className="uploader-cta">
-        <button className={'btn' + (compact ? ' btn-sm' : '')} onClick={onPick} disabled={loading} data-testid="btn-pick">
-          {cta}
-        </button>
-      </div>
+      <button
+        className={'btn' + (compact ? ' btn-sm' : '')}
+        onClick={onPick}
+        disabled={loading}
+        data-testid="btn-pick"
+        style={{ width: '100%', maxWidth: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+      >
+        {loading && <span className="spinner" style={{ borderColor: 'rgba(0,0,0,0.1)', borderTopColor: 'currentColor' }} />}
+        {cta}
+      </button>
     </div>
   );
 }
@@ -1151,13 +1151,6 @@ function IconCalendar() {
       <path d="M8 2v4M16 2v4M3 10h18" />
       <rect x="3" y="4" width="18" height="18" rx="3" />
       <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
-    </svg>
-  );
-}
-function IconUpload({ size = 22 }: { size?: number } = {}) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3v12" /><path d="m7 8 5-5 5 5" /><path d="M5 21h14" />
     </svg>
   );
 }
