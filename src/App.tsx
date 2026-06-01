@@ -980,9 +980,9 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
             </div>
           ) : (
             <div className="daily-groups" data-testid="list-daily-scenes">
-              {byScene.map(([scene, sceneRecords]) => (
+              {byScene.map(([scene, sceneRecords], sIndex) => (
                 <section
-                  className="daily-scene-group"
+                  className="daily-scene-group animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
                   aria-label={`Équipe de ${scene} (${sceneRecords.length} personnes)`}
