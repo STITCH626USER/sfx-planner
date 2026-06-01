@@ -11,8 +11,6 @@ const GREY_DARK: [number, number, number] = [40, 40, 44];
 const GREY_MED: [number, number, number] = [110, 110, 116];
 const GREY_LINE: [number, number, number] = [220, 220, 224];
 
-const FOOTER = "Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG";
-
 const MONTH_FR: Record<string, string> = {
   '01': 'janv.', '02': 'févr.', '03': 'mars', '04': 'avril', '05': 'mai',
   '06': 'juin', '07': 'juil.', '08': 'août', '09': 'sept.', '10': 'oct.',
@@ -161,19 +159,13 @@ function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _
   // Divider line
   doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]);
   doc.setLineWidth(0.2);
-  doc.line(marginX, pageH - 14, pageW - marginX, pageH - 14);
+  doc.line(marginX, pageH - 11, pageW - marginX, pageH - 11);
   
-  // Condense warning in bold orange
+  // Single permanent warning in bold orange
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier.", pageW / 2, pageH - 10.2, { align: 'center' });
-  
-  // Standard footer in grey
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(_dense ? 7.5 : 8);
-  doc.setTextColor(GREY_MED[0], GREY_MED[1], GREY_MED[2]);
-  doc.text(FOOTER, pageW / 2, pageH - 5, { align: 'center' });
+  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
 }
 
 function drawBlocks(
@@ -186,8 +178,8 @@ function drawBlocks(
   pageH: number,
   layout: LayoutChoice,
 ): boolean {
-  // Save 17mm of space at the bottom for the warning and footer
-  const bottom = pageH - 17;
+  // Save 14mm of space at the bottom for the warning and footer
+  const bottom = pageH - 14;
   const availW = pageW - marginX - marginRight;
   const gutter = 4;
   const colW = (availW - gutter * (layout.cols - 1)) / layout.cols;
