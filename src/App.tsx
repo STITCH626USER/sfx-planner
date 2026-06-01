@@ -556,7 +556,9 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; onBack: () => void;
 }) {
   useEffect(() => {
-    window.scrollTo(0, 0);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
   }, [name]);
   // Group by weekLabel
   const byWeek = useMemo(() => {
