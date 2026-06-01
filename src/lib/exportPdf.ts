@@ -124,6 +124,10 @@ function drawHeader(doc: jsPDF, pageW: number, marginX: number, marginTop: numbe
   doc.setFillColor(13, 20, 35);
   doc.roundedRect(marginX, marginTop, pageW - marginX * 2, bannerH, 2, 2, 'F');
 
+  // Gold highlight line at the bottom of the banner
+  doc.setFillColor(255, 176, 58);
+  doc.rect(marginX + 2, marginTop + bannerH - 0.8, pageW - marginX * 2 - 4, 0.4, 'F');
+
   let textX = marginX + 4;
   if (logo) {
     try {
