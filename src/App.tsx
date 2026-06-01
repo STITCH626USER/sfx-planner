@@ -142,141 +142,139 @@ export default function App() {
 
   return (
     <div className="app-shell" data-testid="app-root">
-      <header className="app-header">
-        <button
-          type="button"
-          className="app-logo"
-          aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-          title="Changer le mode d’affichage"
-          data-testid="btn-theme-toggle"
-          onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
-        >
-          <Logo />
-        </button>
-        <div style={{ minWidth: 0 }}>
-          <div className="app-title">SFX Planner</div>
-          <div className="app-sub">Planning</div>
-        </div>
-        <div className="spacer" />
-        {records.length > 0 && (
-          <div className="chip" data-testid="chip-records">
-            <strong>{records.length}</strong>
-            <span className="x">entrées</span>
+      <aside className="app-sidebar">
+        <header className="app-header">
+          <button
+            type="button"
+            className="app-logo"
+            aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            title="Changer le mode d’affichage"
+            data-testid="btn-theme-toggle"
+            onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+          >
+            <Logo />
+          </button>
+          <div style={{ minWidth: 0 }}>
+            <div className="app-title">SFX Planner</div>
+            <div className="app-sub">Disney Live Ent.</div>
+          </div>
+        </header>
+
+        <Uploader
+          loading={loading}
+          drag={drag}
+          compact={records.length > 0}
+          onPick={() => fileRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={onDrop}
+        />
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,application/pdf"
+          multiple
+          style={{ display: 'none' }}
+          data-testid="input-file"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        />
+
+        {sources.length > 0 && (
+          <div className="sources-strip" data-testid="sources-strip">
+            {sources.map(s => (
+              <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
+                <span className="dot" />
+                <span title={s.name}>{shortName(s.name)}</span>
+                <span style={{ color: 'var(--fg-dim)' }}>· {s.recordCount}</span>
+                <button
+                  aria-label={`Retirer ${s.name}`}
+                  data-testid={`btn-remove-${s.name}`}
+                  onClick={() => removeSource(s.name)}
+                >×</button>
+              </span>
+            ))}
           </div>
         )}
-      </header>
 
-      <Uploader
-        loading={loading}
-        drag={drag}
-        compact={records.length > 0}
-        onPick={() => fileRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={onDrop}
-      />
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".pdf,application/pdf"
-        multiple
-        style={{ display: 'none' }}
-        data-testid="input-file"
-        onChange={(e) => e.target.files && handleFiles(e.target.files)}
-      />
-
-      {error && (
-        <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginTop: 12 }}>
-          <div>{error}</div>
-          {errorHint === 'safari' && (
-            <div style={{ marginTop: 8, fontSize: 13 }}>
-              <a
-                href={typeof window !== 'undefined' ? window.location.href : '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: 'inherit', textDecoration: 'underline' }}
-                data-testid="link-open-safari"
-              >
-                Ouvrir dans le navigateur →
-              </a>
-              <div style={{ marginTop: 4, opacity: 0.85 }}>
-                Astuce : bouton Partager <span aria-hidden>↑</span> puis « Ouvrir dans Safari ».
-              </div>
-            </div>
-          )}
+        <div className="sidebar-nav-block">
+          <nav className="seg" role="tablist" aria-label="Catégories">
+            <button
+              role="tab"
+              aria-selected={tab === 'recherche'}
+              data-testid="tab-recherche"
+              title="Planning individuel"
+              aria-label="Planning individuel"
+              onClick={() => setTab('recherche')}
+            >
+              <IconSearch />
+              <span className="tab-label-full">Planning individuel</span>
+              <span className="tab-label-short">Planning indiv.</span>
+            </button>
+            <button
+              role="tab"
+              aria-selected={tab === 'daily'}
+              data-testid="tab-daily"
+              onClick={() => setTab('daily')}
+            >
+              <IconCalendar />
+              <span className="tab-label-full">Vue globale</span>
+              <span className="tab-label-short">Vue globale</span>
+            </button>
+          </nav>
         </div>
-      )}
-
-      {sources.length > 0 && (
-        <div className="sources-strip" data-testid="sources-strip">
-          {sources.map(s => (
-            <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
-              <span className="dot" />
-              <span title={s.name}>{shortName(s.name)}</span>
-              <span style={{ color: 'var(--fg-dim)' }}>· {s.recordCount}</span>
-              <button
-                aria-label={`Retirer ${s.name}`}
-                data-testid={`btn-remove-${s.name}`}
-                onClick={() => removeSource(s.name)}
-              >×</button>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div style={{ height: 14 }} />
-
-      <div className="tabs-block">
-        <nav className="seg" role="tablist" aria-label="Catégories">
-          <button
-            role="tab"
-            aria-selected={tab === 'recherche'}
-            data-testid="tab-recherche"
-            title="Planning individuel"
-            aria-label="Planning individuel"
-            onClick={() => setTab('recherche')}
-          >
-            <IconSearch />
-            <span className="tab-label-full">Planning individuel</span>
-            <span className="tab-label-short">Planning indiv.</span>
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === 'daily'}
-            data-testid="tab-daily"
-            onClick={() => setTab('daily')}
-          >
-            <IconCalendar />
-            Vue globale
-          </button>
-        </nav>
-
-        {records.length > 0 && tab === 'daily' && (
-          <DailyDateBar
-            records={records}
-            date={dailyDate}
-            onDateChange={setDailyDate}
-          />
-        )}
 
         {records.length > 0 && activeDate && (
           <TechFinder records={records} activeDate={activeDate} />
         )}
-      </div>
+      </aside>
 
-      <div style={{ height: 16 }} />
+      <main className="app-main">
+        {error && (
+          <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginBottom: 16 }}>
+            <div>{error}</div>
+            {errorHint === 'safari' && (
+              <div style={{ marginTop: 8, fontSize: 13 }}>
+                <a
+                  href={typeof window !== 'undefined' ? window.location.href : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'inherit', textDecoration: 'underline' }}
+                  data-testid="link-open-safari"
+                >
+                  Ouvrir dans le navigateur →
+                </a>
+                <div style={{ marginTop: 4, opacity: 0.85 }}>
+                  Astuce : bouton Partager <span aria-hidden>↑</span> puis « Ouvrir dans Safari ».
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-      {records.length === 0 ? (
-        <EmptyAllPanel />
-      ) : tab === 'recherche' ? (
-        <RecherchePanel records={records} />
-      ) : (
-        <DailyPanel records={records} date={dailyDate} onDateChange={setDailyDate} />
-      )}
+        {records.length > 0 && tab === 'daily' && (
+          <div className="main-date-bar" style={{ marginBottom: 16 }}>
+            <DailyDateBar
+              records={records}
+              date={dailyDate}
+              onDateChange={setDailyDate}
+            />
+          </div>
+        )}
 
-      <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
-        Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG
-      </footer>
+        <div className="main-content-panel">
+          {records.length === 0 ? (
+            <EmptyAllPanel />
+          ) : tab === 'recherche' ? (
+            <RecherchePanel records={records} />
+          ) : (
+            <DailyPanel records={records} date={dailyDate} onDateChange={setDailyDate} />
+          )}
+        </div>
+
+        <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
+          Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG
+        </footer>
+      </main>
     </div>
   );
 }
@@ -802,6 +800,14 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
     return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr'));
   }, [present]);
 
+  const uniqueTechs = useMemo(() => {
+    return new Set(present.filter(r => !r.isFOVirtual).map(r => r.employee)).size;
+  }, [present]);
+
+  const activeFOsCount = useMemo(() => {
+    return present.filter(r => isTrainingScene(r.originalScene || r.scene) && !r.isFOVirtual).length;
+  }, [present]);
+
   const sceneTeam = useMemo(() => {
     if (!openScene) return [];
     return present.filter(r => r.scene === openScene);
@@ -830,6 +836,21 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
         />
       ) : (
         <>
+          <div className="stats-grid" data-testid="stats-grid" style={{ marginBottom: 16 }}>
+            <div className="stat-card">
+              <div className="stat-value">{uniqueTechs}</div>
+              <div className="stat-label">Techniciens actifs</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{byScene.length}</div>
+              <div className="stat-label">Scènes & FO</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{activeFOsCount}</div>
+              <div className="stat-label">En formation (FO)</div>
+            </div>
+          </div>
+
           <div className="section-h" style={{ marginTop: 6 }}>
             <div className="section-title">Scènes le {formatDateLong(date)}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
