@@ -318,8 +318,9 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     
     for (const scene of assoc) {
       if (!sceneMap.has(scene)) sceneMap.set(scene, []);
+      const label = r.scene ? ` (${r.scene})` : ' (FO)';
       sceneMap.get(scene)!.push({
-        name: prettyName(r.employee),
+        name: `${prettyName(r.employee)}${label}`,
         time: r.time,
         isFO: true
       });
@@ -360,7 +361,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
       isFO = true;
       const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
       if (assoc.length > 0) {
-        name = `${r.scene} (${assoc.join(', ')})`;
+        name = `${assoc.join(', ')} (${r.scene})`;
       }
     }
     
