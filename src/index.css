@@ -2254,3 +2254,62 @@ body {
 }
 
 
+/* 9. Light Theme Cockpit Overrides for Ultimate Contrast & Readability */
+:root[data-theme="light"] .day-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(40, 28, 16, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(90, 75, 60, 0.04) !important;
+}
+
+:root[data-theme="light"] .day-card[data-interactive="true"]:hover {
+  background: #ffffff !important;
+  border-color: var(--amber) !important;
+  box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(214, 104, 10, 0.08) !important;
+}
+
+:root[data-theme="light"] .day-tag {
+  background: rgba(40, 28, 16, 0.04) !important;
+  border: 1px solid rgba(40, 28, 16, 0.06) !important;
+}
+
+:root[data-theme="light"] .day-card:hover .day-tag {
+  background: rgba(40, 28, 16, 0.06) !important;
+  border-color: rgba(40, 28, 16, 0.12) !important;
+}
+
+:root[data-theme="light"] .day-scene {
+  color: var(--fg) !important;
+}
+
+:root[data-theme="light"] .day-card[data-off="true"] {
+  background: rgba(40, 28, 16, 0.02) !important;
+  border-style: dashed !important;
+}
+
+:root[data-theme="light"] .time-pill.formation {
+  color: #553bb8 !important;
+  background: rgba(108, 77, 224, 0.1) !important;
+  border-color: rgba(108, 77, 224, 0.2) !important;
+}
+
+:root[data-theme="light"] .time-pill {
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .daily-scene-group {
+  border: 1px solid rgba(40, 28, 16, 0.1) !important;
+  box-shadow: 0 6px 20px rgba(90, 75, 60, 0.04) !important;
+}
+
+:root[data-theme="light"] .daily-group-head {
+  background: linear-gradient(135deg, rgba(0, 143, 123, 0.06), rgba(214, 104, 10, 0.04)) !important;
+  border-bottom: 1px solid rgba(40, 28, 16, 0.08) !important;
+}
+
+:root[data-theme="light"] .daily-group-count {
+  box-shadow: 0 2px 8px rgba(0, 143, 123, 0.2) !important;
+}
+
+:root[data-theme="light"] .compact-team-row {
+  border-top-color: rgba(40, 28, 16, 0.05) !important;
+}
