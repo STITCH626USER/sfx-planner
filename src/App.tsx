@@ -151,7 +151,7 @@ export default function App() {
           data-testid="btn-theme-toggle"
           onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
         >
-          <Logo theme={theme} />
+          <Logo />
         </button>
         <div style={{ minWidth: 0 }}>
           <div className="app-title">SFX Planner</div>
@@ -1192,8 +1192,8 @@ function IconEye() {
     </svg>
   );
 }
-function Logo({ theme }: { theme: Theme }) {
-  const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo-${theme === 'dark' ? 'dark' : 'light'}.png`;
+function Logo() {
+  const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
   return (
     <img
       className="logo-img"

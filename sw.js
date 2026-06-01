@@ -4,20 +4,21 @@
 // No planning data, no imported PDFs, no user content is ever stored here —
 // only the static files produced by `vite build`.
 
-const CACHE = "sfx-planner-ca8512590a69";
+const CACHE = "sfx-planner-79aa66dc6bfe";
 const PRECACHE = [
-  "./assets/html2canvas-CpHB7VoU.js",
-  "./assets/index-CE-sLwIb.js",
-  "./assets/index-CGkuGSnz.css",
-  "./assets/index.es-NwP_OSbd.js",
-  "./assets/pdf-DjyCYcl4.js",
+  "./assets/html2canvas-D20bULXO.js",
+  "./assets/index-C5-p5jXo.css",
+  "./assets/index-D3nBrjOV.js",
+  "./assets/index.es-CsSP-VJh.js",
+  "./assets/pdf-SP3DjA_a.js",
   "./assets/pdf.worker.min-SzY6Yteu.js",
   "./assets/purify.es-BX_3MCif.js",
   "./favicon.svg",
   "./icons.svg",
   "./index.html",
   "./sfx-dragon-logo-dark.png",
-  "./sfx-dragon-logo-light.png"
+  "./sfx-dragon-logo-light.png",
+  "./sfx-dragon-logo.jpg"
 ];
 
 self.addEventListener('install', (event) => {

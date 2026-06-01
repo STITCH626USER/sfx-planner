@@ -39,7 +39,7 @@ function getLogoDataUrl(): Promise<string | null> {
     try {
       const base = (typeof window !== 'undefined' && (window as any).__BASE_URL__) ||
         ((import.meta as any).env?.BASE_URL ?? '/');
-      const url = `${base}sfx-dragon-logo-light.png`;
+      const url = `${base}sfx-dragon-logo.jpg`;
       const res = await fetch(url);
       if (!res.ok) return null;
       const blob = await res.blob();
