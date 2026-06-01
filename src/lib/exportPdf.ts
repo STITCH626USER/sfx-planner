@@ -3,7 +3,7 @@
 
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene } from './utils';
+import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene, getSceneColor } from './utils';
 
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
@@ -574,7 +574,7 @@ function drawWeeklyCalendarPage(
   marginX: number,
   logo: string | null
 ) {
-  // 1. Draw consistent premium header
+  // 1. Draw consistent premium dark header
   const layout: LayoutChoice = { orientation: 'landscape', cols: 4, fontTitle: 16, fontSub: 10, fontSection: 11, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false };
   const contentY = drawHeader(doc, pageW, marginX, 9, "Rapport Cockpit SFX — Calendrier Hebdomadaire", weekLabel, layout, logo);
   
@@ -613,33 +613,43 @@ function drawWeeklyCalendarPage(
     const cardX = marginX + col * (colW + 5);
     const cardY = contentY + row * (cardH + 6);
 
-    // Draw rounded card container background
-    doc.setFillColor(252, 252, 254);
+    // Premium card container background
+    doc.setFillColor(254, 254, 255);
     doc.setDrawColor(218, 224, 233);
     doc.setLineWidth(0.15);
-    doc.roundedRect(cardX, cardY, colW, cardH, 1.2, 1.2, 'FD');
+    doc.roundedRect(cardX, cardY, colW, cardH, 1.6, 1.6, 'FD');
 
-    // Draw header bar
-    doc.setFillColor(241, 245, 249);
-    doc.roundedRect(cardX, cardY, colW, 6, 1.2, 1.2, 'F');
-    doc.rect(cardX, cardY + 3, colW, 3, 'F');
+    // Left accent bar (Midnight Slate line)
+    doc.setFillColor(13, 27, 42);
+    doc.rect(cardX, cardY + 1.6, 1.2, cardH - 3.2, 'F');
+
+    // Card header bar
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(cardX, cardY, colW, 6.5, 1.6, 1.6, 'F');
+    doc.rect(cardX, cardY + 3.5, colW, 3.0, 'F'); // flatten bottom
     doc.setDrawColor(218, 224, 233);
-    doc.line(cardX, cardY + 6, cardX + colW, cardY + 6);
+    doc.line(cardX, cardY + 6.5, cardX + colW, cardY + 6.5);
 
-    // Card title: e.g. "Dimanche 14 juin 2026"
+    // Date title text in elegant uppercase format
+    const wd = weekdayFromIso(dateStr);
+    const dayName = wd !== null ? DAY_FR_FULL[wd] : '';
+    const m = dateStr.match(/-(\d{2})-(\d{2})$/);
+    const dateLabel = m ? `${m[2]} ${MONTH_FR[m[1]] ?? m[1]}` : dateStr;
+    const headerText = `${dayName} ${dateLabel}`.toUpperCase();
+
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.setTextColor(40, 40, 44);
-    doc.text(fmtDate(dateStr), cardX + 3, cardY + 4.2);
+    doc.setFontSize(7.5);
+    doc.setTextColor(40, 44, 52);
+    doc.text(headerText, cardX + 3.5, cardY + 4.5);
 
     const dayRecs = weekRecs.filter(r => r.date === dateStr && r.time !== 'OFF');
-    let currentY = cardY + 10.5;
+    let currentY = cardY + 11.0;
 
     if (dayRecs.length === 0) {
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(7.5);
-      doc.setTextColor(110, 110, 116);
-      doc.text('Aucun poste planifié', cardX + 4, currentY);
+      doc.setFontSize(7.0);
+      doc.setTextColor(140, 144, 155);
+      doc.text('Aucun poste planifié', cardX + 4.5, currentY);
     } else {
       const sceneGroups = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
       const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
@@ -679,44 +689,76 @@ function drawWeeklyCalendarPage(
       // Dynamic Font Scaling and Spacing Calculations to prevent card overflow
       let totalHeightNeeded = 0;
       for (const s of sortedScenes) {
-        totalHeightNeeded += 3.4; // scene title height
+        totalHeightNeeded += 3.6; // scene title height
         const techs = sceneGroups.get(s) ?? [];
         totalHeightNeeded += techs.length * 3.1; // tech rows height
-        totalHeightNeeded += 1.2; // group gap
+        totalHeightNeeded += 1.4; // group gap
       }
       if (sortedScenes.length > 0) {
-        totalHeightNeeded -= 1.2; // remove trailing gap
+        totalHeightNeeded -= 1.4; // remove trailing gap
       }
 
-      const maxContentH = cardH - 6.0 - 4.5; // leaving padding at header and bottom
-      const scale = totalHeightNeeded > maxContentH ? Math.max(0.52, maxContentH / totalHeightNeeded) : 1.0;
+      const maxContentH = cardH - 6.5 - 5.5; // leaving padding at header and bottom
+      const scale = totalHeightNeeded > maxContentH ? Math.max(0.50, maxContentH / totalHeightNeeded) : 1.0;
 
       const sceneFontSize = 7.5 * scale;
       const techFontSize = 6.5 * scale;
-      const sceneLineH = 3.4 * scale;
+      const sceneLineH = 3.6 * scale;
       const techLineH = 3.1 * scale;
-      const groupGap = 1.2 * scale;
+      const groupGap = 1.4 * scale;
 
       for (const scene of sortedScenes) {
+        const color = getSceneColor(scene);
+
+        // Draw tiny colored category dot/box
+        doc.setFillColor(color.rgbText[0], color.rgbText[1], color.rgbText[2]);
+        doc.rect(cardX + 3.8, currentY - 1.6 * scale, 1.4 * scale, 1.4 * scale, 'F');
+
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(sceneFontSize);
-        doc.setTextColor(31, 122, 112);
+        doc.setTextColor(color.rgbText[0], color.rgbText[1], color.rgbText[2]);
 
-        const sceneLabel = (doc.splitTextToSize(scene, colW - 6)[0] as string) || scene;
-        doc.text(sceneLabel, cardX + 3, currentY);
+        const sceneLabel = (doc.splitTextToSize(scene, colW - 8)[0] as string) || scene;
+        doc.text(sceneLabel, cardX + 6.0, currentY);
         currentY += sceneLineH;
 
         const techs = (sceneGroups.get(scene) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
         for (const tech of techs) {
+          // Draw micro gold bullet point
+          doc.setFillColor(212, 163, 89);
+          doc.circle(cardX + 4.5, currentY - 0.7 * scale, 0.35 * scale, 'F');
+
+          // Compute capsule pill metrics
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(techFontSize - 0.5);
+          const timeW = doc.getTextWidth(tech.time) + 3.0 * scale;
+          const pillH = techLineH * 0.82;
+          const pillY = currentY - techLineH * 0.70;
+          const pillX = cardX + colW - 3.5 - timeW;
+
+          // Draw micro capsule rounded rectangle
+          const pillBorder = tech.isFO ? [120, 90, 230] : [212, 163, 89];
+          const pillBg = tech.isFO ? [245, 240, 255] : [255, 250, 242];
+          doc.setFillColor(pillBg[0], pillBg[1], pillBg[2]);
+          doc.setDrawColor(pillBorder[0], pillBorder[1], pillBorder[2]);
+          doc.setLineWidth(0.08);
+          doc.roundedRect(pillX, pillY, timeW, pillH, 0.6, 0.6, 'FD');
+
+          // Print hours inside the capsule
+          doc.setTextColor(pillBorder[0], pillBorder[1], pillBorder[2]);
+          doc.text(tech.time, pillX + timeW / 2, pillY + pillH * 0.75, { align: 'center' });
+
+          // Print name on the left, truncated cleanly before the capsule
+          const foPrefix = tech.isFO ? '(FO) ' : '';
+          const nameLabel = `${foPrefix}${tech.name}`;
+          const nameMax = pillX - (cardX + 6.0) - 1.5;
+          const nameText = (doc.splitTextToSize(nameLabel, nameMax)[0] as string) || nameLabel;
+
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(techFontSize);
-          doc.setTextColor(40, 40, 44);
+          doc.setTextColor(48, 48, 52);
+          doc.text(nameText, cardX + 6.0, currentY);
 
-          const foPrefix = tech.isFO ? '(FO) ' : '';
-          const rowText = `  • ${foPrefix}${tech.name} [${tech.time}]`;
-          const maxW = colW - 6;
-          const techLabel = (doc.splitTextToSize(rowText, maxW)[0] as string) || rowText;
-          doc.text(techLabel, cardX + 4, currentY);
           currentY += techLineH;
         }
 
