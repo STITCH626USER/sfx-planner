@@ -687,7 +687,7 @@ function drawWeeklyCalendarPage(
           
           let techText = `${peer.name} [${peer.time}]`;
           if (peer.isFO) {
-            techText = `🎓 ${peer.name} [${peer.time}]`;
+            techText = `(FO) ${peer.name} [${peer.time}]`;
           }
           
           doc.text(`  • ${techText}`, x + 4, ty);
