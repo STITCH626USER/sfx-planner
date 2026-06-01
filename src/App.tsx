@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes } from './lib/exportPdf';
-import { getFOAssociations } from './lib/utils';
+import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
@@ -38,7 +38,7 @@ function dayInitials(name: string): string {
 
 function timePillClass(time: string, scene: string, isFO?: boolean): string {
   if (time === 'OFF') return 'time-pill off';
-  if (isFO || (scene && (scene.toLowerCase() === 'formation' || scene === 'FO'))) {
+  if (isFO || isTrainingScene(scene)) {
     return 'time-pill formation';
   }
   return 'time-pill';
@@ -487,6 +487,11 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   const [openEmployee, setOpenEmployee] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
+  const dayAssocMap = useMemo(() => {
+    if (!allRecords) return new Map<string, string[]>();
+    return computeAllFOAssociations(allRecords);
+  }, [allRecords]);
+
   const handleExportIndiv = async () => {
     if (exporting) return;
     setExporting(true);
@@ -502,8 +507,8 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   const teamForOpen = useMemo(() => {
     if (!openScene || !allRecords) return [];
     const dayRecs = allRecords.filter(r => r.date === openScene.date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => r.scene !== 'FO');
-    const activeFOs = dayRecs.filter(r => r.scene === 'FO');
+    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
+    const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
     const dayAssoc = getFOAssociations(dayRecs);
     
     const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[] }> = [...activeRegs];
@@ -584,20 +589,25 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
               {weekRecs.filter(r => r.time !== 'OFF').length}/7 jours
             </div>
           </div>
-          {weekRecs.map(rec => (
-            <DayCard
-              key={rec.date}
-              rec={rec}
-              onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
-            />
-          ))}
+          {weekRecs.map(rec => {
+            const key = getFOAssociationKey(rec.date, rec.employee);
+            const assoc = dayAssocMap.get(key) ?? [];
+            return (
+              <DayCard
+                key={rec.date}
+                rec={rec}
+                assocScenes={assoc}
+                onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
+              />
+            );
+          })}
         </div>
       ))}
     </div>
   );
 }
 
-function DayCard({ rec, onOpenScene }: { rec: PlanningRecord; onOpenScene?: () => void }) {
+function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assocScenes?: string[]; onOpenScene?: () => void }) {
   const isOff = rec.time === 'OFF';
   const dayPart = rec.date.split('-')[2];
   const interactive = !isOff && !!onOpenScene && !!rec.scene;
@@ -628,14 +638,19 @@ function DayCard({ rec, onOpenScene }: { rec: PlanningRecord; onOpenScene?: () =
       </div>
       <div style={{ minWidth: 0 }}>
         <div className={'day-scene' + (isOff ? ' off' : '')} data-testid={`scene-${rec.date}`}>
-          {isOff ? 'Repos / congé' : rec.scene === 'FO' ? '🎓 FO' : rec.scene}
+          {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
         </div>
+        {assocScenes && assocScenes.length > 0 && (
+          <div style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 500, marginTop: 2 }}>
+            Associé à : {assocScenes.join(', ')}
+          </div>
+        )}
         <div className="row-meta" style={{ marginTop: 2 }}>
           {formatDateLong(rec.date)}
         </div>
       </div>
       <span
-        className={timePillClass(rec.time, rec.scene, rec.scene === 'FO')}
+        className={timePillClass(rec.time, rec.scene, isTrainingScene(rec.scene))}
         data-testid={`time-${rec.date}`}
         aria-hidden={interactive ? 'true' : undefined}
       >
@@ -670,7 +685,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
           {team.map(rec => {
             const isFOVirtual = (rec as any).isFOVirtual;
             const assocScenes = (rec as any).assocScenes;
-            const isFO = rec.scene === 'FO' || isFOVirtual;
+            const isFO = isTrainingScene(rec.scene) || isFOVirtual;
             return (
               <div className="team-row" key={rec.employee} data-testid={`team-${rec.employee}`}>
                 <div className="avatar" aria-hidden>{dayInitials(rec.employee)}</div>
@@ -680,7 +695,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                   </div>
                   <div className="team-meta">
                     {rec.weekLabel}
-                    {rec.scene === 'FO' && assocScenes && assocScenes.length > 0 && ` · Associé à : ${assocScenes.join(', ')}`}
+                    {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · Associé à : ${assocScenes.join(', ')}`}
                   </div>
                 </div>
                 <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
@@ -743,8 +758,8 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
 
   const present = useMemo(() => {
     const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => r.scene !== 'FO');
-    const activeFOs = dayRecs.filter(r => r.scene === 'FO');
+    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
+    const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
 
     const dayAssoc = getFOAssociations(dayRecs);
     
@@ -866,7 +881,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                     {sceneRecords.map(rec => {
                       const isFOVirtual = (rec as any).isFOVirtual;
                       const assocScenes = (rec as any).assocScenes;
-                      const isFO = rec.scene === 'FO' || isFOVirtual;
+                      const isFO = isTrainingScene(rec.scene) || isFOVirtual;
                       return (
                         <div
                           className="compact-team-row"
@@ -880,7 +895,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                             </div>
                             <div className="team-meta compact-meta">
                               {rec.weekLabel}
-                              {rec.scene === 'FO' && assocScenes && assocScenes.length > 0 && ` · ${assocScenes.join(', ')}`}
+                              {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · ${assocScenes.join(', ')}`}
                             </div>
                           </div>
                           <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
@@ -1004,7 +1019,7 @@ function TechFinder({ records, activeDate }: { records: PlanningRecord[]; active
           ) : (
             <div className="tf-found-list">
               {result.recs.map(rec => {
-                const isFO = rec.scene === 'FO';
+                const isFO = isTrainingScene(rec.scene);
                 const assocScenes = (rec as any).assocScenes;
                 return (
                   <div className="tf-found-row" key={`${rec.employee}-${rec.date}`} data-testid={`tf-found-${rec.employee}`}>
@@ -1013,7 +1028,7 @@ function TechFinder({ records, activeDate }: { records: PlanningRecord[]; active
                     </span>
                     <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
                     <span className="tf-scene" title={rec.scene}>
-                      {isFO && assocScenes && assocScenes.length > 0 ? `FO (${assocScenes.join(', ')})` : rec.scene}
+                      {isFO && assocScenes && assocScenes.length > 0 ? `${rec.scene} (${assocScenes.join(', ')})` : rec.scene}
                     </span>
                   </div>
                 );

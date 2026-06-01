@@ -3,7 +3,7 @@
 
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey } from './utils';
+import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene } from './utils';
 
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
@@ -294,8 +294,8 @@ function drawBlocks(
 
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
-  const activeRegs = dayRecs.filter(r => r.scene !== 'FO');
-  const activeFOs = dayRecs.filter(r => r.scene === 'FO');
+  const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
+  const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
   const dayAssoc = getFOAssociations(dayRecs);
   
   const sceneMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
@@ -307,9 +307,10 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 
   for (const r of activeFOs) {
     const assoc = dayAssoc.get(r.employee) ?? [];
-    if (!sceneMap.has('FO')) sceneMap.set('FO', []);
+    const groupKey = isTrainingScene(r.scene) ? r.scene : 'FO';
+    if (!sceneMap.has(groupKey)) sceneMap.set(groupKey, []);
     const assocSuffix = assoc.length > 0 ? ` (${assoc.join(', ')})` : '';
-    sceneMap.get('FO')!.push({
+    sceneMap.get(groupKey)!.push({
       name: `${prettyName(r.employee)}${assocSuffix}`,
       time: r.time,
       isFO: true
@@ -379,7 +380,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 
 export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
   const sceneRecs = records.filter(r => r.scene === scene && r.time !== 'OFF');
-  const foRecs = records.filter(r => r.scene === 'FO' && r.time !== 'OFF');
+  const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF');
   const dayAssoc = computeAllFOAssociations(records);
 
   const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();

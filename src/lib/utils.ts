@@ -22,11 +22,17 @@ export function timesMatch(t1: string, t2: string, tolerance = 3): boolean {
   return Math.abs(r1.start - r2.start) <= tolerance && Math.abs(r1.end - r2.end) <= tolerance;
 }
 
+export function isTrainingScene(scene: string): boolean {
+  if (!scene) return false;
+  const s = scene.toLowerCase().trim();
+  return s === 'fo' || s === 'formation';
+}
+
 export function getFOAssociations(dayRecords: PlanningRecord[]): Map<string, string[]> {
   const associations = new Map<string, string[]>();
   const activeRecs = dayRecords.filter(r => r.time !== 'OFF');
-  const foRecs = activeRecs.filter(r => r.scene === 'FO');
-  const regRecs = activeRecs.filter(r => r.scene !== 'FO');
+  const foRecs = activeRecs.filter(r => isTrainingScene(r.scene));
+  const regRecs = activeRecs.filter(r => !isTrainingScene(r.scene));
 
   for (const fo of foRecs) {
     const matchedScenes = new Set<string>();
