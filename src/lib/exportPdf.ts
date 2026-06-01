@@ -161,14 +161,13 @@ function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _
   // Divider line
   doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]);
   doc.setLineWidth(0.2);
-  doc.line(marginX, pageH - 18, pageW - marginX, pageH - 18);
+  doc.line(marginX, pageH - 14, pageW - marginX, pageH - 14);
   
-  // Permanent warnings in vibrant orange
+  // Condense warning in bold orange
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text("attention l'application ne peut pas gérer le bon placement des formations systématiquement.", pageW / 2, pageH - 13.5, { align: 'center' });
-  doc.text("attention vérifier le planning individuel sur UKG personnel", pageW / 2, pageH - 9.5, { align: 'center' });
+  doc.text("Attention : Contrôle obligatoire sur UKG personnel (le placement des formations peut varier).", pageW / 2, pageH - 10.2, { align: 'center' });
   
   // Standard footer in grey
   doc.setFont('helvetica', 'italic');
@@ -187,8 +186,8 @@ function drawBlocks(
   pageH: number,
   layout: LayoutChoice,
 ): boolean {
-  // Save 22mm of space at the bottom for the warnings and footer
-  const bottom = pageH - 22;
+  // Save 17mm of space at the bottom for the warning and footer
+  const bottom = pageH - 17;
   const availW = pageW - marginX - marginRight;
   const gutter = 4;
   const colW = (availW - gutter * (layout.cols - 1)) / layout.cols;

@@ -1773,3 +1773,76 @@ input:focus, select:focus {
   .export-foot { padding: 12px 16px 14px; }
   .export-opt { padding: 14px; }
 }
+
+/* Polished PWA alert footer styling */
+.app-footer-notice {
+  position: static !important;
+  text-align: center !important;
+  padding: 32px 16px 48px 16px !important;
+  background: transparent !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+}
+
+.footer-warning-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: rgba(255, 176, 58, 0.05);
+  border: 1px solid rgba(255, 176, 58, 0.18);
+  border-radius: var(--r-md);
+  margin-bottom: 10px;
+  max-width: 100%;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: left;
+}
+:root[data-theme="light"] .footer-warning-card {
+  background: rgba(214, 104, 10, 0.04);
+  border-color: rgba(214, 104, 10, 0.15);
+}
+
+.warning-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--amber);
+  background: rgba(255, 176, 58, 0.12);
+  padding: 4px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+:root[data-theme="light"] .warning-badge {
+  background: rgba(214, 104, 10, 0.1);
+}
+
+.warning-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
+
+.footer-subtext {
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-weight: 500;
+  margin-top: 6px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 580px) {
+  .footer-warning-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .warning-text {
+    font-size: 12px;
+  }
+}
+

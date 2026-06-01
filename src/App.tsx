@@ -272,7 +272,11 @@ export default function App() {
         </div>
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
-          Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG
+          <div className="footer-warning-card">
+            <span className="warning-badge">⚠️ ATTENTION</span>
+            <span className="warning-text">Contrôle obligatoire sur UKG personnel. Le placement des formations peut varier.</span>
+          </div>
+          <div className="footer-subtext">Données traitées localement · SFX Planner</div>
         </footer>
       </main>
     </div>
