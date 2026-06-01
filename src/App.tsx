@@ -343,7 +343,14 @@ export default function App() {
 }
 
 function shortName(n: string): string {
-  return n.replace(/\.pdf$/i, '').replace(/PLANNING-/, '').replace(/SEMAINE-/, 'S');
+  let name = n.replace(/\.pdf$/i, '');
+  name = name.replace(/planning/i, '');
+  name = name.replace(/semaine/i, 'S');
+  name = name.replace(/week/i, 'W');
+  name = name.replace(/sem/i, 'S');
+  name = name.replace(/[\s\-_]+/g, ' ').trim();
+  name = name.replace(/s\s*(\d+)/i, 'S$1');
+  return name || n;
 }
 
 /* ---------- Uploader ---------- */

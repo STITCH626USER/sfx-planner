@@ -859,27 +859,37 @@ input:focus, select:focus {
   color: #9a1a25;
 }
 
-/* Source management layout */
+/* Source management layout - horizontal scrolling compact strip */
 .sources-strip {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  gap: 6px;
   margin-top: 12px;
+  padding: 4px 2px;
+  width: 100%;
+}
+.sources-strip::-webkit-scrollbar {
+  display: none;
 }
 .source-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--bg-2);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 6px 12px 6px 8px;
-  font-size: 12px;
+  padding: 4px 10px 4px 6px;
+  font-size: 11px;
   color: var(--fg-muted);
   font-weight: 600;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: var(--spring-transition);
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 .source-pill:hover {
   border-color: var(--line-strong);
