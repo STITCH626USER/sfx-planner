@@ -4,13 +4,13 @@
 // No planning data, no imported PDFs, no user content is ever stored here —
 // only the static files produced by `vite build`.
 
-const CACHE = "sfx-planner-ce686fdb4712";
+const CACHE = "sfx-planner-d1ebf5022b09";
 const PRECACHE = [
-  "./assets/html2canvas-D9w9Synl.js",
-  "./assets/index-D6eihnBF.js",
+  "./assets/html2canvas-CizfBtho.js",
+  "./assets/index-DB6YAQfF.js",
   "./assets/index-DOiKWzEu.css",
-  "./assets/index.es-BYp484eG.js",
-  "./assets/pdf-yjwTCy4J.js",
+  "./assets/index.es-OlX1mtbl.js",
+  "./assets/pdf-DfkhWQaO.js",
   "./assets/pdf.worker.min-SzY6Yteu.js",
   "./assets/purify.es-BX_3MCif.js",
   "./favicon.svg",

@@ -156,7 +156,6 @@ export default function App() {
               <Logo />
             </button>
             <h1 className="landing-title">SFX Planner</h1>
-            <p className="landing-subtitle">Disney Live Ent.</p>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -216,7 +215,6 @@ export default function App() {
           </button>
           <div style={{ minWidth: 0 }}>
             <div className="app-title">SFX Planner</div>
-            <div className="app-sub">Disney Live Ent.</div>
           </div>
         </header>
 
