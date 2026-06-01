@@ -748,11 +748,11 @@ input:focus, select:focus {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 4px 0 10px 0;
+  padding: 12px 6px 20px 6px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
-  margin: 0 -4px;
+  margin: -8px -6px -12px -6px;
 }
 .date-row::-webkit-scrollbar {
   display: none;
@@ -1182,8 +1182,8 @@ input:focus, select:focus {
   -webkit-backdrop-filter: blur(16px);
 }
 .daily-date-bar .date-row {
-  padding: 2px 0;
-  margin: 0;
+  padding: 10px 4px 16px 4px;
+  margin: -8px -4px -10px -4px;
 }
 
 /* Utility classes */
