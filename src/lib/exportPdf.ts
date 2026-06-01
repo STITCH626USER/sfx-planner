@@ -121,61 +121,60 @@ function chooseLayout(itemCount: number, totalRows: number): LayoutChoice {
 }
 
 function drawHeader(doc: jsPDF, pageW: number, marginX: number, marginTop: number, title: string, subtitle: string, layout: LayoutChoice, logo: string | null): number {
-  const logoSize = 10;
-  let textX = marginX + 6;
+  const bannerH = 16;
+  // Draw premium dark midnight header banner
+  doc.setFillColor(13, 20, 35);
+  doc.roundedRect(marginX, marginTop, pageW - marginX * 2, bannerH, 2, 2, 'F');
+
+  let textX = marginX + 4;
   if (logo) {
     try {
-      doc.addImage(logo, 'PNG', marginX, marginTop - 1, logoSize, logoSize);
-      textX = marginX + logoSize + 3;
+      doc.addImage(logo, 'JPEG', marginX + 3, marginTop + 2.2, 11.5, 11.5);
+      textX = marginX + 17;
     } catch {
       // ignore
     }
-  } else {
-    // Orange accent bar fallback
-    doc.setFillColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-    doc.rect(marginX, marginTop, 3, layout.fontTitle * 0.55, 'F');
   }
 
+  // Title in white
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(layout.fontTitle);
-  doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]);
-  doc.text(title, textX, marginTop + layout.fontTitle * 0.42);
+  doc.setFontSize(layout.fontTitle - 2.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text(title, textX, marginTop + 6.2);
 
-  // Small "SFX Planner" wordmark on the right
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(layout.fontSub);
-  doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text('SFX Planner', pageW - marginX, marginTop + layout.fontSub * 0.45 + 0.5, { align: 'right' });
-
+  // Subtitle in light blue/grey
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(layout.fontSub);
-  doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
-  doc.text(subtitle, textX, marginTop + layout.fontTitle * 0.42 + layout.fontSub * 0.45 + 1);
+  doc.setFontSize(layout.fontSub - 1.2);
+  doc.setTextColor(165, 185, 215);
+  doc.text(subtitle, textX, marginTop + 11.8);
 
-  // Divider line
-  const dividerY = Math.max(marginTop + layout.fontTitle * 0.42 + layout.fontSub * 0.45 + 4, marginTop + logoSize + 1);
-  doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]);
-  doc.setLineWidth(0.2);
-  doc.line(marginX, dividerY, pageW - marginX, dividerY);
+  // Right logo/brand wordmark in gold/orange
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(255, 176, 58);
+  doc.text('SFX PLANNER', pageW - marginX - 4, marginTop + 9.5, { align: 'right' });
 
-  return dividerY + 3;
+  return marginTop + bannerH + 4;
 }
 
-function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, dense: boolean, denseNote: boolean) {
+function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _dense: boolean, _denseNote: boolean) {
+  // Divider line
   doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]);
   doc.setLineWidth(0.2);
-  doc.line(marginX, pageH - 8, pageW - marginX, pageH - 8);
+  doc.line(marginX, pageH - 18, pageW - marginX, pageH - 18);
+  
+  // Permanent warnings in vibrant orange
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
+  doc.text("attention l'application ne peut pas gérer le bon placement des formations systématiquement.", pageW / 2, pageH - 13.5, { align: 'center' });
+  doc.text("attention vérifier le planning individuel sur UKG personnel", pageW / 2, pageH - 9.5, { align: 'center' });
+  
+  // Standard footer in grey
   doc.setFont('helvetica', 'italic');
-  doc.setFontSize(dense ? 7.5 : 8);
+  doc.setFontSize(_dense ? 7.5 : 8);
   doc.setTextColor(GREY_MED[0], GREY_MED[1], GREY_MED[2]);
   doc.text(FOOTER, pageW / 2, pageH - 5, { align: 'center' });
-  if (denseNote) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-    doc.text("attention l'application ne peut pas gérer le bon placement des formations systématiquement.", pageW / 2, pageH - 14, { align: 'center' });
-    doc.text("attention vérifier le planning individuel sur UKG personnel", pageW / 2, pageH - 10, { align: 'center' });
-  }
 }
 
 function drawBlocks(
@@ -188,7 +187,8 @@ function drawBlocks(
   pageH: number,
   layout: LayoutChoice,
 ): boolean {
-  const bottom = pageH - 12;
+  // Save 22mm of space at the bottom for the warnings and footer
+  const bottom = pageH - 22;
   const availW = pageW - marginX - marginRight;
   const gutter = 4;
   const colW = (availW - gutter * (layout.cols - 1)) / layout.cols;
@@ -198,14 +198,13 @@ function drawBlocks(
   const colYs: number[] = new Array(layout.cols).fill(startY);
 
   for (const block of blocks) {
-    const cardPaddingTop = 2.0;
+    const cardHeaderHeight = 6.0;
+    const cardPaddingTop = 1.2;
     const cardPaddingBottom = 2.0;
     const cardPaddingLeftRight = 3.0;
-    const cardHeaderHeight = layout.fontSection * 0.45;
-    const cardHeaderSpacing = 2.5;
     
     const rowsLen = Math.max(1, block.rows.length);
-    const cardHeight = cardPaddingTop + cardHeaderHeight + cardHeaderSpacing + rowsLen * (layout.rowHeight + layout.rowGap) + cardPaddingBottom;
+    const cardHeight = cardHeaderHeight + cardPaddingTop + rowsLen * (layout.rowHeight + layout.rowGap) + cardPaddingBottom;
     const blockHeight = cardHeight + layout.sectionGap;
 
     // Try to fit in current column; otherwise move to next column
@@ -226,30 +225,26 @@ function drawBlocks(
 
     const x = marginX + col * (colW + gutter);
 
-    // Draw rounded card container
-    doc.setFillColor(252, 252, 253);
-    doc.setDrawColor(220, 221, 226);
+    // Draw rounded card container background
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.15);
-    doc.roundedRect(x, y, colW, cardHeight, 1.8, 1.8, 'FD');
-    
-    // Draw elegant teal left-accent tag on the top of the card
+    doc.roundedRect(x, y, colW, cardHeight, 1.6, 1.6, 'FD');
+
+    // Draw solid teal card header bar
     doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
-    doc.roundedRect(x, y, 2.5, cardHeaderHeight + cardPaddingTop * 0.7, 0.4, 0.4, 'F');
+    doc.roundedRect(x, y, colW, cardHeaderHeight, 1.6, 1.6, 'F');
+    // Draw flat bottom corners for the header bar so it merges with the card body
+    doc.rect(x, y + 3, colW, cardHeaderHeight - 3, 'F');
 
-    // Section header text
+    // Draw block title inside the header bar in white
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(layout.fontSection);
-    doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]);
-    const headerText = doc.splitTextToSize(block.header, colW - cardPaddingLeftRight * 2 - 4)[0] as string;
-    doc.text(headerText, x + cardPaddingLeftRight + 1, y + cardPaddingTop + cardHeaderHeight * 0.7);
+    doc.setFontSize(layout.fontSection - 0.5);
+    doc.setTextColor(255, 255, 255);
+    const headerText = doc.splitTextToSize(block.header, colW - cardPaddingLeftRight * 2)[0] as string;
+    doc.text(headerText, x + cardPaddingLeftRight, y + cardHeaderHeight * 0.7);
 
-    // Separator line under card header
-    const sepY = y + cardPaddingTop + cardHeaderHeight + 1.0;
-    doc.setDrawColor(235, 236, 240);
-    doc.setLineWidth(0.12);
-    doc.line(x + cardPaddingLeftRight, sepY, x + colW - cardPaddingLeftRight, sepY);
-
-    let ry = sepY + 1.8;
+    let ry = y + cardHeaderHeight + cardPaddingTop + 1.0;
 
     if (block.rows.length === 0) {
       doc.setFont('helvetica', 'italic');
