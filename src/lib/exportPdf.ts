@@ -173,7 +173,7 @@ function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, d
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-    doc.text('Contenu dense, vérifier UKG.', pageW / 2, pageH - 11, { align: 'center' });
+    doc.text('attention vérifier le planning individuel sur UKG personnel', pageW / 2, pageH - 11, { align: 'center' });
   }
 }
 

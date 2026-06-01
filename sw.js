@@ -4,15 +4,15 @@
 // No planning data, no imported PDFs, no user content is ever stored here —
 // only the static files produced by `vite build`.
 
-const CACHE = "sfx-planner-edde7ad62f6c";
+const CACHE = "sfx-planner-9b0417633584";
 const PRECACHE = [
-  "./assets/html2canvas-D20bULXO-KpEnIQN7-Bsl2jt_A-BYHpJtka.js",
+  "./assets/html2canvas-D20bULXO-KpEnIQN7-Bsl2jt_A-BYHpJtka-Ca2Iy5e3.js",
   "./assets/index-Bd7zUkFt.css",
-  "./assets/index-D0F4_EvF.js",
-  "./assets/index.es-CsSP-VJh-pukmmhaL-IsKi_uFY-Bo42Olw0.js",
-  "./assets/pdf-SP3DjA_a-Dk5ESoJK-Oj7yRhq9-BO79vWSY.js",
-  "./assets/pdf.worker.min-SzY6Yteu-SzY6Yteu-SzY6Yteu-SzY6Yteu.js",
-  "./assets/purify.es-BX_3MCif-BiodxAzE-Cy2yYG7j-CRZUrX-u.js",
+  "./assets/index-bQX7yVx9.js",
+  "./assets/index.es-CsSP-VJh-pukmmhaL-IsKi_uFY-Bo42Olw0-qDXkmag8.js",
+  "./assets/pdf-SP3DjA_a-Dk5ESoJK-Oj7yRhq9-BO79vWSY-CIIXNxE6.js",
+  "./assets/pdf.worker.min-SzY6Yteu-SzY6Yteu-SzY6Yteu-SzY6Yteu-SzY6Yteu.js",
+  "./assets/purify.es-BX_3MCif-BiodxAzE-Cy2yYG7j-CRZUrX-u-BwyQan0h.js",
   "./favicon.svg",
   "./icons.svg",
   "./index.html",
