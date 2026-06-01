@@ -374,7 +374,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
     
-    let name = r.scene || '—';
+    let name = r.scene || '-';
     let isFO = false;
     
     if (isTrainingScene(r.scene)) {
@@ -400,12 +400,12 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
   const periodStart = allDates[0] ? fmtDate(allDates[0]) : '';
   const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
   const period = periodStart && periodEnd && periodStart !== periodEnd
-    ? `${periodStart} → ${periodEnd}`
+    ? `${periodStart} au ${periodEnd}`
     : periodStart;
 
   await generateAndSave({
     title: prettyName(employee),
-    subtitle: period ? `Planning individuel · ${period}` : 'Planning individuel',
+    subtitle: period ? `Planning individuel - ${period}` : 'Planning individuel',
     blocks,
     itemCount: blocks.length,
     totalRows,
@@ -457,7 +457,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   const periodStart = allDates[0] ? fmtDate(allDates[0]) : '';
   const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
   const period = periodStart && periodEnd && periodStart !== periodEnd
-    ? `${periodStart} → ${periodEnd}`
+    ? `${periodStart} au ${periodEnd}`
     : periodStart;
 
   await generateAndSave({
