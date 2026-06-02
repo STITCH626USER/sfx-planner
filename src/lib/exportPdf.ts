@@ -470,7 +470,7 @@ async function generateGridGlobalPdf(opts: {
     if (pageCount > 0) doc.addPage();
     pageCount++;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 30, 50);
-    doc.text(`${opts.title} — ${opts.subtitle}`, C_MARGIN, 15);
+    doc.text(`${opts.title} - ${opts.subtitle}`, C_MARGIN, 15);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 110, 130);
     doc.text('SFX Planner', pageW - C_MARGIN, 15, {align: 'right'});
     y = 22;
