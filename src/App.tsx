@@ -55,17 +55,14 @@ export default function App() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // On garde uniquement ces attributs HTML, et on laisse index.css gérer les couleurs
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
     
-    if (theme === 'light') {
-      document.body.style.backgroundColor = '#f1f5f9';
-      document.body.style.color = '#0f172a';
-    } else {
-      document.body.style.backgroundColor = '#0b0f19';
-      document.body.style.color = '#f1f5f9';
-    }
+    // Nettoyage des vieux styles inline persistants lors du changement
+    document.body.style.backgroundColor = '';
+    document.body.style.color = '';
   }, [theme]);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
