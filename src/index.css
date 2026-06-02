@@ -1574,4 +1574,971 @@ input:focus, select:focus {
 }
 
 .export-modal {
-  background: var(--bg-
+  background: var(--bg-1);
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  animation: modalScaleUp 0.35s var(--spring-physics);
+}
+@keyframes modalScaleUp {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.export-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.export-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.export-close {
+  background: transparent;
+  border: 0;
+  color: var(--fg-muted);
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: var(--spring-transition);
+}
+.export-close:hover {
+  background: var(--bg-2);
+  color: var(--rose);
+  transform: scale(1.1) rotate(90deg);
+}
+
+.export-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+
+.export-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  background: var(--bg-soft);
+  color: var(--fg);
+  transition: var(--spring-transition);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: left;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.export-opt:hover {
+  border-color: var(--amber);
+  background: var(--bg-2);
+}
+.export-opt:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.export-opt.on {
+  border-color: var(--amber);
+  background: var(--on-bg);
+  box-shadow: 0 0 12px rgba(255, 176, 58, 0.1);
+}
+.export-opt-title {
+  display: block;
+  width: 100%;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--fg);
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.export-opt-sub {
+  display: block;
+  width: 100%;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-weight: 500;
+}
+.export-scene-select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-3);
+  color: var(--fg);
+  font-size: 14px;
+  font-family: inherit;
+  margin-top: 4px;
+  transition: var(--spring-transition);
+}
+.export-scene-select:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 4px rgba(255, 176, 58, 0.18);
+}
+
+.export-foot {
+  padding: 14px 20px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+}
+.export-foot .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 420px) {
+  .export-overlay { padding: 8px; }
+  .export-modal { max-height: calc(100dvh - 16px); }
+  .export-head { padding: 14px 16px; }
+  .export-body { padding: 12px 16px; }
+  .export-foot { padding: 12px 16px 14px; }
+  .export-opt { padding: 14px; }
+}
+
+/* Polished PWA alert footer styling */
+.app-footer-notice {
+  position: static !important;
+  text-align: center !important;
+  padding: 32px 16px 48px 16px !important;
+  background: transparent !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+}
+
+.footer-warning-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: rgba(255, 176, 58, 0.05);
+  border: 1px solid rgba(255, 176, 58, 0.18);
+  border-radius: var(--r-md);
+  margin-bottom: 10px;
+  max-width: 100%;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: left;
+}
+:root[data-theme="light"] .footer-warning-card {
+  background: rgba(214, 104, 10, 0.04);
+  border-color: rgba(214, 104, 10, 0.15);
+}
+
+.warning-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--amber);
+  background: rgba(255, 176, 58, 0.12);
+  padding: 4px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+:root[data-theme="light"] .warning-badge {
+  background: rgba(214, 104, 10, 0.1);
+}
+
+.warning-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
+
+.footer-subtext {
+  font-size: 11.5px;
+  color: var(--fg-dim);
+  font-weight: 500;
+  margin-top: 6px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 580px) {
+  .footer-warning-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .warning-text {
+    font-size: 12px;
+  }
+}
+
+/* ==========================================================================
+   NEXT-GENERATION HUD OVERRIDE SUITE ("IPHONE 28 COCKPIT" INTERFACE REDESIGN)
+   ========================================================================== */
+
+/* 1. Futuristic Grid Backdrop & Global Glows */
+body {
+  background:
+    radial-gradient(circle 800px at 85% -10%, rgba(255, 168, 52, 0.08), transparent 70%),
+    radial-gradient(circle 800px at 15% 95%, rgba(0, 229, 198, 0.06), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    var(--bg-0) !important;
+  background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px !important;
+}
+
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(circle 800px at 85% -10%, rgba(214, 104, 10, 0.06), transparent 70%),
+    radial-gradient(circle 800px at 15% 95%, rgba(0, 143, 123, 0.04), transparent 70%),
+    linear-gradient(rgba(42, 30, 18, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 30, 18, 0.025) 1px, transparent 1px),
+    var(--bg-0) !important;
+  background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px !important;
+}
+
+/* 2. Cockpit statistics grid (KPI cards) */
+.stats-grid {
+  gap: 16px !important;
+}
+
+.stat-card {
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  overflow: hidden;
+  padding: 18px 12px !important;
+  transition: var(--spring-transition) !important;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--amber), var(--teal));
+  opacity: 0.75;
+  transition: var(--spring-transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  border-color: rgba(0, 229, 198, 0.3) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 229, 198, 0.15) !important;
+}
+
+.stat-card:hover::after {
+  height: 6px;
+  opacity: 1;
+}
+
+.stat-value {
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.04em !important;
+  background: linear-gradient(135deg, var(--amber) 30%, var(--teal)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+:root[data-theme="light"] .stat-value {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: var(--amber) !important;
+}
+
+.stat-label {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--fg-muted) !important;
+  margin-top: 6px !important;
+}
+
+/* 3. Redesigned tridimensional buttons and active navigation states */
+.btn {
+  background: linear-gradient(135deg, var(--amber), var(--amber-2)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(255, 125, 36, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  border-radius: var(--r-md) !important;
+  transition: var(--spring-transition) !important;
+}
+
+.btn:hover {
+  transform: translateY(-3px) scale(1.03) !important;
+  box-shadow: 0 16px 36px rgba(255, 125, 36, 0.4), 0 0 20px rgba(255, 176, 58, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.btn:active {
+  transform: scale(0.96) !important;
+}
+
+.btn-export {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: var(--r-sm) !important;
+  font-weight: 700 !important;
+  transition: var(--spring-transition) !important;
+}
+
+.btn-export:hover {
+  background: rgba(0, 229, 198, 0.08) !important;
+  border-color: var(--teal) !important;
+  color: var(--teal) !important;
+  box-shadow: 0 8px 24px rgba(0, 229, 198, 0.2) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+/* 4. Sliding Segmented Controls (.seg) */
+.seg {
+  background: rgba(4, 6, 10, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+  padding: 6px !important;
+}
+
+.seg button {
+  height: 40px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.seg button[aria-selected="true"] {
+  background: linear-gradient(135deg, var(--teal), var(--teal-2)) !important;
+  color: #04060a !important;
+  box-shadow: 0 6px 20px rgba(0, 229, 198, 0.35) !important;
+  transform: scale(1.015) !important;
+}
+
+:root[data-theme="light"] .seg button[aria-selected="true"] {
+  background: linear-gradient(135deg, var(--teal), var(--teal-2)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(0, 143, 123, 0.3) !important;
+}
+
+/* 5. HUD Frosted Crew Cards (.day-card) */
+.day-card {
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25) !important;
+  background: rgba(13, 20, 35, 0.4) !important;
+  padding: 16px 20px !important;
+  transition: var(--spring-transition) !important;
+}
+
+.day-card[data-interactive="true"]:hover {
+  border-color: rgba(0, 229, 198, 0.4) !important;
+  background: rgba(22, 32, 56, 0.75) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 229, 198, 0.15) !important;
+  transform: translateY(-4px) scale(1.008) !important;
+}
+
+.day-tag {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.day-card:hover .day-tag {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 6. Active Daily Scenes Deck */
+.daily-scene-group {
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25) !important;
+  transition: var(--spring-transition) !important;
+}
+
+.daily-scene-group:hover {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45) !important;
+}
+
+.daily-group-head {
+  background: linear-gradient(135deg, rgba(0, 229, 198, 0.15), rgba(255, 176, 58, 0.08)) !important;
+  padding: 16px 20px !important;
+}
+
+.daily-group-count {
+  background: linear-gradient(135deg, var(--teal), var(--teal-2)) !important;
+  box-shadow: 0 3px 12px rgba(0, 229, 198, 0.35) !important;
+}
+
+/* 7. Premium Embedded Warning HUD widget (PWA Alert footer) */
+.app-footer-notice {
+  position: static !important;
+  padding: 24px 16px 40px 16px !important;
+  background: transparent !important;
+}
+
+.footer-warning-card {
+  background: linear-gradient(135deg, rgba(255, 176, 58, 0.08), rgba(255, 176, 58, 0.02)) !important;
+  border: 1px solid rgba(255, 176, 58, 0.3) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 25px rgba(255, 176, 58, 0.15) !important;
+  border-radius: var(--r-md) !important;
+  padding: 12px 24px !important;
+  transition: var(--spring-transition) !important;
+}
+
+.footer-warning-card:hover {
+  border-color: var(--amber) !important;
+  transform: scale(1.01) !important;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 176, 58, 0.25) !important;
+}
+
+:root[data-theme="light"] .footer-warning-card {
+  background: linear-gradient(135deg, rgba(214, 104, 10, 0.06), rgba(214, 104, 10, 0.02)) !important;
+  border-color: rgba(214, 104, 10, 0.25) !important;
+}
+
+/* 8. Next-Gen Centered Landing UI & Cockpit Experience */
+.app-shell-empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+  box-sizing: border-box;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-landing-card {
+  width: 100%;
+  max-width: 520px;
+  background: linear-gradient(145deg, rgba(13, 20, 35, 0.55), rgba(9, 13, 24, 0.75));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-xl);
+  padding: 40px 32px 32px 32px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  transition: var(--spring-transition);
+  animation: landingCardSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root[data-theme="light"] .empty-landing-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(247, 243, 235, 0.95));
+  border-color: rgba(40, 28, 16, 0.08);
+  box-shadow: 0 24px 64px rgba(90, 75, 60, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+@keyframes landingCardSlideUp {
+  from {
+    transform: translateY(30px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.empty-landing-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 30px;
+  right: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--teal), transparent);
+  opacity: 0.6;
+}
+
+.landing-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  width: 100%;
+}
+
+.landing-logo-wrap {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: var(--spring-transition);
+  position: relative;
+}
+
+.landing-logo-wrap:hover {
+  transform: scale(1.08) rotate(4deg);
+  border-color: rgba(255, 176, 58, 0.3);
+  box-shadow: 0 16px 32px rgba(255, 176, 58, 0.15);
+}
+
+.landing-logo-wrap .logo-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.landing-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--fg) 40%, var(--fg-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme="light"] .landing-title {
+  background: none;
+  -webkit-text-fill-color: initial;
+  color: var(--fg);
+}
+
+.landing-subtitle {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--amber);
+  margin: 6px 0 0 0;
+}
+
+.landing-uploader-wrap {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.landing-uploader-wrap .uploader {
+  padding: 32px 24px !important;
+  border-radius: var(--r-lg) !important;
+  background: rgba(4, 6, 10, 0.45) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  width: 100%;
+}
+
+:root[data-theme="light"] .landing-uploader-wrap .uploader {
+  background: rgba(240, 235, 222, 0.3) !important;
+  border-color: rgba(40, 28, 16, 0.12) !important;
+}
+
+.landing-uploader-wrap .uploader:hover,
+.landing-uploader-wrap .uploader[data-drag="true"] {
+  border-color: var(--amber) !important;
+  background: rgba(255, 176, 58, 0.03) !important;
+  box-shadow: inset 0 2px 8px rgba(255, 176, 58, 0.02) !important;
+}
+
+.landing-warning-notice {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.landing-warning-notice .footer-warning-card {
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 14px 20px !important;
+}
+
+@media (max-width: 480px) {
+  .empty-landing-card {
+    padding: 32px 20px 24px 20px;
+    border-radius: var(--r-lg);
+  }
+  .landing-title {
+    font-size: 26px;
+  }
+  .landing-logo-wrap {
+    width: 76px;
+    height: 76px;
+    margin-bottom: 16px;
+  }
+}
+
+
+/* 9. Light Theme Cockpit Overrides for Ultimate Contrast & Readability */
+:root[data-theme="light"] .day-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(40, 28, 16, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(90, 75, 60, 0.04) !important;
+}
+
+:root[data-theme="light"] .day-card[data-interactive="true"]:hover {
+  background: #ffffff !important;
+  border-color: var(--amber) !important;
+  box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(214, 104, 10, 0.08) !important;
+}
+
+:root[data-theme="light"] .day-tag {
+  background: rgba(40, 28, 16, 0.04) !important;
+  border: 1px solid rgba(40, 28, 16, 0.06) !important;
+}
+
+:root[data-theme="light"] .day-card:hover .day-tag {
+  background: rgba(40, 28, 16, 0.06) !important;
+  border-color: rgba(40, 28, 16, 0.12) !important;
+}
+
+:root[data-theme="light"] .day-scene {
+  color: var(--fg) !important;
+}
+
+:root[data-theme="light"] .day-card[data-off="true"] {
+  background: rgba(40, 28, 16, 0.02) !important;
+  border-style: dashed !important;
+}
+
+:root[data-theme="light"] .time-pill.formation {
+  color: #553bb8 !important;
+  background: rgba(108, 77, 224, 0.1) !important;
+  border-color: rgba(108, 77, 224, 0.2) !important;
+}
+
+:root[data-theme="light"] .time-pill {
+  box-shadow: none !important;
+}
+
+:root[data-theme="light"] .daily-scene-group {
+  border: 1px solid rgba(40, 28, 16, 0.1) !important;
+  box-shadow: 0 6px 20px rgba(90, 75, 60, 0.04) !important;
+}
+
+:root[data-theme="light"] .daily-group-head {
+  background: linear-gradient(135deg, rgba(0, 143, 123, 0.06), rgba(214, 104, 10, 0.04)) !important;
+  border-bottom: 1px solid rgba(40, 28, 16, 0.08) !important;
+}
+
+:root[data-theme="light"] .daily-group-count {
+  box-shadow: 0 2px 8px rgba(0, 143, 123, 0.2) !important;
+}
+
+:root[data-theme="light"] .compact-team-row {
+  border-top-color: rgba(40, 28, 16, 0.05) !important;
+}
+
+/* 10. Cyber-Neon Glow Pulses & Slow-Drifting Background SFX Smoke Cloud Styles */
+
+/* Subtle dynamic drifting smoke background */
+.smoke-bg {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: -100;
+  opacity: 0.038;
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="light"] .smoke-bg {
+  opacity: 0.024;
+  mix-blend-mode: multiply;
+}
+
+.smoke-cloud {
+  position: absolute;
+  width: 90vw;
+  height: 90vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.smoke-cloud-1 {
+  background: radial-gradient(circle, rgba(255, 176, 58, 0.4) 0%, rgba(255, 176, 58, 0) 70%);
+  top: -10%;
+  right: -10%;
+  animation: floatSmoke1 90s infinite linear;
+}
+
+.smoke-cloud-2 {
+  background: radial-gradient(circle, rgba(31, 180, 160, 0.3) 0%, rgba(31, 180, 160, 0) 70%);
+  bottom: -15%;
+  left: -15%;
+  animation: floatSmoke2 120s infinite linear;
+}
+
+.smoke-cloud-3 {
+  background: radial-gradient(circle, rgba(120, 90, 230, 0.25) 0%, rgba(120, 90, 230, 0) 70%);
+  top: 40%;
+  left: 30%;
+  animation: floatSmoke3 100s infinite linear;
+}
+
+@keyframes floatSmoke1 {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  33% { transform: translate(5%, 8%) scale(1.15) rotate(120deg); }
+  66% { transform: translate(-4%, 4%) scale(0.9) rotate(240deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(360deg); }
+}
+
+@keyframes floatSmoke2 {
+  0% { transform: translate(0, 0) scale(1.1) rotate(0deg); }
+  50% { transform: translate(-8%, 5%) scale(0.85) rotate(-180deg); }
+  100% { transform: translate(0, 0) scale(1.1) rotate(-360deg); }
+}
+
+@keyframes floatSmoke3 {
+  0% { transform: translate(0, 0) scale(0.95) rotate(0deg); }
+  50% { transform: translate(6%, -7%) scale(1.2) rotate(180deg); }
+  100% { transform: translate(0, 0) scale(0.95) rotate(360deg); }
+}
+
+/* Cyber-Neon pulsing lueurs on key HUD assets */
+.btn-pick {
+  animation: btnPickPulse 3.5s infinite ease-in-out;
+}
+
+@keyframes btnPickPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 176, 58, 0.15), 0 0 20px rgba(255, 176, 58, 0.05), inset 0 0 8px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 176, 58, 0.35), 0 0 32px rgba(255, 176, 58, 0.15), inset 0 0 12px rgba(255, 255, 255, 0.2);
+  }
+}
+
+nav.seg button[aria-selected="true"] {
+  animation: activeTabGlow 3.5s infinite ease-in-out;
+}
+
+@keyframes activeTabGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(31, 180, 160, 0.2), 0 0 24px rgba(31, 180, 160, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(31, 180, 160, 0.5), 0 0 40px rgba(31, 180, 160, 0.2);
+  }
+}
+
+/* Micro-neon responsive highlights */
+.day-card[data-interactive="true"]:hover {
+  border-color: rgba(31, 180, 160, 0.8) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24), 0 0 16px rgba(31, 180, 160, 0.3) !important;
+}
+
+:root[data-theme="light"] .day-card[data-interactive="true"]:hover {
+  border-color: rgba(31, 180, 160, 0.8) !important;
+  box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(31, 180, 160, 0.2) !important;
+}
+
+.daily-scene-group {
+  transition: border-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.daily-scene-group:hover {
+  border-color: rgba(255, 176, 58, 0.4) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 16px rgba(255, 176, 58, 0.1) !important;
+}
+
+:root[data-theme="light"] .daily-scene-group:hover {
+  border-color: rgba(255, 176, 58, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(255, 176, 58, 0.1) !important;
+}
+
+/* 11. Sticky bottom bar HUD with subtle drifting smoke SFX */
+.app-footer-notice {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: calc(38px + env(safe-area-inset-bottom)) !important;
+  padding: 0 16px calc(env(safe-area-inset-bottom)) 16px !important;
+  background: rgba(13, 20, 35, 0.85) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+}
+
+:root[data-theme="light"] .app-footer-notice {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+
+.app-footer-notice .footer-warning-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  width: 100% !important;
+  text-align: center !important;
+  display: block !important;
+}
+
+.app-footer-notice .warning-text {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+}
+
+:root[data-theme="light"] .app-footer-notice .warning-text {
+  color: rgba(40, 40, 44, 0.85) !important;
+}
+
+/* Extremely light dynamic heavy smoke drifting inside the bottom bar */
+.footer-smoke-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.12;
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="light"] .footer-smoke-bg {
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+}
+
+.footer-smoke-cloud {
+  position: absolute;
+  width: 250px;
+  height: 60px;
+  background: radial-gradient(ellipse at center, rgba(255, 176, 58, 0.25) 0%, rgba(255, 176, 58, 0) 70%);
+  filter: blur(15px);
+  border-radius: 50%;
+}
+
+.footer-smoke-cloud-1 {
+  left: -20px;
+  top: -10px;
+  animation: footerSmokeFloat1 25s infinite ease-in-out;
+}
+
+.footer-smoke-cloud-2 {
+  right: -20px;
+  bottom: -10px;
+  background: radial-gradient(ellipse at center, rgba(31, 180, 160, 0.2) 0%, rgba(31, 180, 160, 0) 70%);
+  animation: footerSmokeFloat2 30s infinite ease-in-out;
+}
+
+@keyframes footerSmokeFloat1 {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(80px) scale(1.15); }
+}
+
+@keyframes footerSmokeFloat2 {
+  0%, 100% { transform: translateX(0) scale(1.1); }
+  50% { transform: translateX(-80px) scale(0.9); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-stagger-1 { animation-delay: 0.05s; }
+.animate-stagger-2 { animation-delay: 0.1s; }
+.animate-stagger-3 { animation-delay: 0.15s; }
+.animate-stagger-4 { animation-delay: 0.2s; }
+.animate-stagger-5 { animation-delay: 0.25s; }
+
+/* CORRECTIF MODE CLAIR : Redéfinition des variables de couleurs */
+:root[data-theme="light"] {
+  --bg-0: #f4f6fa;
+  --bg-1: rgba(255, 255, 255, 0.85);
+  --bg-2: rgba(240, 243, 248, 0.95);
+  --bg-3: #ffffff;
+  --bg-soft: rgba(255, 255, 255, 0.6);
+  --line: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.2);
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --fg-dim: #64748b;
+  --chip-fg: #ffffff;
+  --group-bg: rgba(255, 255, 255, 0.95);
+  --subtle-row-line: rgba(0, 0, 0, 0.06);
+}
