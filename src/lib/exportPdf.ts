@@ -382,7 +382,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
   const blocks   = allDates.map(d => ({header:fmtDateShort(d), rows:dateMap.get(d)??[]}));
   const pStart   = allDates[0] ? fmtDate(allDates[0]) : '';
   const pEnd     = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
-  const period   = pStart&&pEnd&&pStart!==pEnd ? `${pStart} → ${pEnd}` : pStart;
+  const period   = pStart&&pEnd&&pStart!==pEnd ? `${pStart} - ${pEnd}` : pStart;
 
   await generateAndSave({
     title: prettyName(employee),
@@ -424,7 +424,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   const dates     = allDates.map(d => ({date:d, rows:(dateMap.get(d)??[]).sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
   const pStart    = allDates[0] ? fmtDate(allDates[0]) : '';
   const pEnd      = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
-  const period    = pStart&&pEnd&&pStart!==pEnd ? `${pStart} → ${pEnd}` : pStart;
+  const period    = pStart&&pEnd&&pStart!==pEnd ? `${pStart} - ${pEnd}` : pStart;
 
   await generateAndSave({
     title: cleanText(scene),
@@ -602,7 +602,7 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
 
   const pStart = fmtDate(allDates[0]);
   const pEnd = fmtDate(allDates[allDates.length-1]);
-  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
+  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
 
   await generateGridGlobalPdf({
     title: 'Planning Master',
