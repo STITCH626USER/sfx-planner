@@ -97,7 +97,7 @@ function drawHeader(doc: jsPDF, pageW: number, marginX: number, marginTop: numbe
   return marginTop + bannerH + 4;
 }
 
-function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number) {
+function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _dense: boolean, _denseNote: boolean) {
   doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]); doc.setLineWidth(0.2); doc.line(marginX, pageH - 11, pageW - marginX, pageH - 11);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
   doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
@@ -157,17 +157,17 @@ async function generateAndSave(opts: { title: string; subtitle: string; blocks: 
     const doc = new jsPDF({ orientation: layout.orientation, unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
     const contentY = drawHeader(doc, pageW, 10, 9, opts.title, opts.subtitle, layout, logo);
-    if (drawBlocks(doc, opts.blocks, contentY, 10, 10, pageW, pageH, layout)) { drawFooter(doc, pageW, pageH, 10); doc.save(opts.filename); return; }
+    if (drawBlocks(doc, opts.blocks, contentY, 10, 10, pageW, pageH, layout)) { drawFooter(doc, pageW, pageH, 10, layout.dense, layout.dense); doc.save(opts.filename); return; }
   }
   const layout: LayoutChoice = { orientation: 'landscape', cols: 6, fontTitle: 12, fontSub: 8, fontSection: 8.5, fontRow: 7, rowHeight: 2.9, sectionGap: 1.4, rowGap: 0.1, dense: true };
   const doc = new jsPDF({ orientation: layout.orientation, unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
   const contentY = drawHeader(doc, pageW, 8, 8, opts.title, opts.subtitle, layout, logo);
-  drawBlocks(doc, opts.blocks, contentY, 8, 8, pageW, pageH, layout); drawFooter(doc, pageW, pageH, 8); doc.save(opts.filename);
+  drawBlocks(doc, opts.blocks, contentY, 8, 8, pageW, pageH, layout); drawFooter(doc, pageW, pageH, 8, layout.dense, layout.dense); doc.save(opts.filename);
 }
 
 // ----------------------------------------------------
-// NOUVEAU DESIGN : EXPORT QUOTIDIEN SOUS FORME DE CARTES
+// DESIGN D'EXPORT EN MODE CARTES (VUE DU JOUR)
 // ----------------------------------------------------
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const logo = await getLogoDataUrl();
@@ -203,38 +203,47 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 
   const scenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
 
+  const colW = pageW - marginX * 2; const rowHeight = 6.0;
+
   for (const block of scenes) {
-    const cardHeight = 8.0 + 2.0 + block.rows.length * 6.0 + 3.0;
+    const cardHeight = 8.0 + 2.0 + block.rows.length * rowHeight + 3.0;
     if (currentY + cardHeight > bottomMargin) {
       doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12); doc.addPage();
       currentY = drawHeaderLocal(doc, pageW, marginX, 10, 'Vue globale du jour (suite)', fmtDate(date));
     }
 
-    doc.setFillColor(250, 251, 252); doc.setDrawColor(218, 223, 230); doc.setLineWidth(0.2); doc.roundedRect(marginX, currentY, pageW - marginX * 2, cardHeight, 2, 2, 'FD');
-    const dCol = getSceneColor(block.scene).accent;
-    doc.setFillColor(dCol === '#5850ec' ? TEAL[0] : 45, dCol === '#5850ec' ? TEAL[1] : 85, dCol === '#5850ec' ? TEAL[2] : 95);
-    doc.roundedRect(marginX, currentY, pageW - marginX * 2, 8.0, 2, 2, 'F'); doc.rect(marginX, currentY + 4, pageW - marginX * 2, 4, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255); doc.text(block.scene, marginX + 4.0, currentY + 5.2);
+    doc.setFillColor(250, 251, 252); doc.setDrawColor(218, 223, 230); doc.setLineWidth(0.2); doc.roundedRect(marginX, currentY, colW, cardHeight, 2, 2, 'FD');
+    const designColor = getSceneColor(block.scene).accent;
+    doc.setFillColor(designColor === '#5850ec' ? TEAL[0] : 45, designColor === '#5850ec' ? TEAL[1] : 85, designColor === '#5850ec' ? TEAL[2] : 95);
+    doc.roundedRect(marginX, currentY, colW, 8.0, 2, 2, 'F'); doc.rect(marginX, currentY + 4, colW, 4.0, 'F');
 
-    let ry = currentY + 11.0; doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+    doc.text(block.scene, marginX + 4.0, currentY + 5.2);
+
+    let ry = currentY + 11.0;
+    doc.setFontSize(10);
     for (const row of block.rows) {
       let nameX = marginX + 4.0;
       if (row.isFO) {
         doc.setFillColor(108, 92, 231); doc.roundedRect(marginX + 4.0, ry, 7, 4.5, 0.8, 0.8, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.text('FO', marginX + 7.5, ry + 3.2, { align: 'center' });
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+        doc.text('FO', marginX + 7.5, ry + 3.2, { align: 'center' });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(10); nameX = marginX + 13.0;
       }
       doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]); doc.text(row.name, nameX, ry + 3.5);
+
       const timeW = doc.getTextWidth(row.time || '') + 5; const pillX = pageW - marginX - 4.0 - timeW;
       doc.setFillColor(ORANGE[0], ORANGE[1], ORANGE[2]); doc.roundedRect(pillX, ry, timeW, 4.8, 1, 1, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.text(row.time || '', pillX + timeW / 2, ry + 3.4, { align: 'center' });
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); ry += 6.0;
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+      doc.text(row.time || '', pillX + timeW / 2, ry + 3.4, { align: 'center' });
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); ry += rowHeight;
     }
     currentY += cardHeight + 5;
   }
   doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12); doc.save(`sfx-planning-${date}.pdf`);
 }
 
+// Maintien des autres fonctions obligatoires pour la compilation
 export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
   const empRecs = records.filter(r => r.employee === employee); const dayAssoc = computeAllFOAssociations(records);
   const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
@@ -262,4 +271,30 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   }
   for (const r of foRecs) {
     const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
-    if (assoc.includes(scene)) { if (!dateMap.has(r.date)) dateMap.set(r.date, []); const label = r.scene ? ` (${r.scene})` : ''; dateMap.get(r.date)!.push({ name: `${prettyName(r.emp
+    if (assoc.includes(scene)) { if (!dateMap.has(r.date)) dateMap.set(r.date, []); const label = r.scene ? ` (${r.scene})` : ''; dateMap.get(r.date)!.push({ name: `${prettyName(r.employee)}${label}`, time: r.time, isFO: true }); }
+  }
+  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
+  const dates = allDates.map(d => ({ date: d, rows: (dateMap.get(d) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
+  const periodStart = allDates[0] ? fmtDate(allDates[0]) : ''; const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
+  const period = periodStart && periodEnd && periodStart !== periodEnd ? `${periodStart} au ${periodEnd}` : periodStart;
+  
+  // CORRECTION ICI : Fermeture propre de la fonction generateAndSave() et des parenthèses
+  await generateAndSave({ 
+    title: scene, 
+    subtitle: period ? `Période : ${period}` : 'Période', 
+    blocks: dates.map(d => ({ header: fmtDateShort(d.date), rows: d.rows })), 
+    itemCount: dates.length, 
+    totalRows: dates.reduce((acc, d) => acc + Math.max(1, d.rows.length), 0), 
+    filename: `sfx-planning-${slug(scene)}.pdf` 
+  }); 
+}
+
+export function listScenes(records: PlanningRecord[]): string[] {
+  const set = new Set<string>(); for (const r of records) if (r.scene) set.add(r.scene); return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
+  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
+  if (allDates.length === 0) return;
+  await exportDayPdf(allDates[0], records); 
+}
