@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
-import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes } from './lib/exportPdf';
+// Ajout de exportWeeklyPdf ici
+import { exportDayPdf, exportEmployeePdf, exportScenePdf, exportWeeklyPdf, listScenes } from './lib/exportPdf';
 import { getFOAssociations, isTrainingScene, getSceneColor } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
@@ -149,7 +150,6 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   );
 }
 
-// FIX : Ajout complet des variables lues requises pour cet écran
 function EmployeeDetail({ name, records, onBack }: { name: string; records: PlanningRecord[]; onBack: () => void }) {
   const [busy, setBusy] = useState(false);
   return (
@@ -219,10 +219,12 @@ function DailyPanel({ records, date }: { records: PlanningRecord[]; date: string
   );
 }
 
+// Composant ExportDialog modifié avec l'option Semaine
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<'day' | 'scene'>('day');
+  const [mode, setMode] = useState<'day' | 'week' | 'scene'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
+  const dates = useMemo(() => Array.from(new Set(records.map(r => r.date))).sort(), [records]);
   const [selectedScene, setSelectedScene] = useState(scenes[0] ?? '');
 
   return (
@@ -230,7 +232,8 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
       <div className="export-modal" onClick={(e) => e.stopPropagation()}>
         <div className="export-head"><div className="export-title">Exporter en PDF</div><button type="button" onClick={onClose}>×</button></div>
         <div className="export-body" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <button type="button" className={'export-opt' + (mode === 'day' ? ' on' : '')} onClick={() => setMode('day')}>Journée</button>
+          <button type="button" className={'export-opt' + (mode === 'day' ? ' on' : '')} onClick={() => setMode('day')}>Journée actuelle</button>
+          <button type="button" className={'export-opt' + (mode === 'week' ? ' on' : '')} onClick={() => setMode('week')}>Semaine entière ({dates.length} jours)</button>
           <button type="button" className={'export-opt' + (mode === 'scene' ? ' on' : '')} onClick={() => setMode('scene')}>Par Scène</button>
           {mode === 'scene' && (
             <select value={selectedScene} onChange={(e) => setSelectedScene(e.target.value)} style={{ padding: '6px' }}>
@@ -243,6 +246,7 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             setBusy(true);
             try {
               if (mode === 'day') await exportDayPdf(date, records);
+              else if (mode === 'week') await exportWeeklyPdf(dates, records);
               else await exportScenePdf(selectedScene, records);
               onClose();
             } catch {} finally { setBusy(false); }
