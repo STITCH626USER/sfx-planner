@@ -54,26 +54,19 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Apply theme to DOM
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
-    document.body.style.backgroundColor = '';
-    document.body.style.color = '';
-    // Update mobile browser chrome color
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#04060a' : '#f1f5f9');
+    
+    if (theme === 'light') {
+      document.body.style.backgroundColor = '#f1f5f9';
+      document.body.style.color = '#0f172a';
+    } else {
+      document.body.style.backgroundColor = '#0b0f19';
+      document.body.style.color = '#f1f5f9';
+    }
   }, [theme]);
-
-  // Auto-sync with OS dark/light mode preference changes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files).filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');

@@ -5,10 +5,10 @@
 
 :root {
   /* Surface colors (Space-Midnight theme) */
-  --bg-0:        #04060a;                           /* Page background */
-  --bg-1:        rgba(13, 20, 35, 0.45);            /* Card frosted glass base */
-  --bg-2:        rgba(22, 32, 56, 0.65);            /* Elevated menu / dialog */
-  --bg-3:        rgba(35, 50, 85, 0.8);             /* Input / active elements */
+  --bg-0:        #04060a;                            /* Page background */
+  --bg-1:        rgba(13, 20, 35, 0.45);             /* Card frosted glass base */
+  --bg-2:        rgba(22, 32, 56, 0.65);             /* Elevated menu / dialog */
+  --bg-3:        rgba(35, 50, 85, 0.8);              /* Input / active elements */
   --bg-soft:     rgba(9, 13, 24, 0.6);
   --line:        rgba(255, 255, 255, 0.08);          /* Frosted border */
   --line-strong: rgba(255, 255, 255, 0.16);         /* Highlighted border */
@@ -2505,8 +2505,6 @@ nav.seg button[aria-selected="true"] {
   50% { transform: translateX(-80px) scale(0.9); }
 }
 
-
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -2528,25 +2526,19 @@ nav.seg button[aria-selected="true"] {
 .animate-stagger-4 { animation-delay: 0.2s; }
 .animate-stagger-5 { animation-delay: 0.25s; }
 
-/* FORCER LE MODE CLAIR SUR LES COMPOSANTS ENFANTS */
-.light .app-sidebar,
-.light .main-content-panel,
-.light .card,
-.light .export-modal,
-.light .app-shell-empty-container {
-    background-color: #ffffff;
-    color: #0f172a;
-    border-color: #e2e8f0;
-}
-
-.light .daily-scene-group {
-    background-color: #f8fafc;
-    border-color: #cbd5e1;
-    color: #0f172a;
-}
-
-.light .btn, 
-.light .export-opt {
-    background-color: #e2e8f0;
-    color: #0f172a;
+/* CORRECTIF MODE CLAIR : Redéfinition des variables de couleurs */
+:root[data-theme="light"] {
+  --bg-0: #f4f6fa;
+  --bg-1: rgba(255, 255, 255, 0.85);
+  --bg-2: rgba(240, 243, 248, 0.95);
+  --bg-3: #ffffff;
+  --bg-soft: rgba(255, 255, 255, 0.6);
+  --line: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.2);
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --fg-dim: #64748b;
+  --chip-fg: #ffffff;
+  --group-bg: rgba(255, 255, 255, 0.95);
+  --subtle-row-line: rgba(0, 0, 0, 0.06);
 }
