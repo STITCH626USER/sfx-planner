@@ -1,10 +1,11 @@
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene, getSceneColor } from './utils';
+import { getFOAssociations, isTrainingScene, getSceneColor } from './utils';
 
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
 const GREY_DARK: [number, number, number] = [40, 40, 44];
+const GREY_MED: [number, number, number] = [110, 110, 116];
 const GREY_LINE: [number, number, number] = [220, 220, 224];
 
 const MONTH_FR: Record<string, string> = {
@@ -53,14 +54,6 @@ function fmtDate(iso: string): string {
   const wd = weekdayFromIso(iso);
   const prefix = wd !== null ? `${DAY_FR_FULL[wd]} ` : '';
   return `${prefix}${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
-}
-
-function fmtDateShort(iso: string): string {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return iso;
-  const wd = weekdayFromIso(iso);
-  const prefix = wd !== null ? `${DAY_FR_SHORT[wd]} ` : '';
-  return `${prefix}${m[3]}/${m[2]}/${m[1]}`;
 }
 
 function prettyName(s: string): string {
