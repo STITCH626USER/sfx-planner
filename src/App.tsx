@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner</h1>
+            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>1.3</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -251,7 +251,7 @@ export default function App() {
             <Logo />
           </button>
           <div style={{ minWidth: 0 }}>
-            <div className="app-title">SFX Planner</div>
+            <div className="app-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.85em', marginLeft: 4 }}>1.3</span></div>
           </div>
         </header>
 
