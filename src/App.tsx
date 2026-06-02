@@ -63,7 +63,7 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const activeDate = tab === 'daily' ? dailyDate : '';
+
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
