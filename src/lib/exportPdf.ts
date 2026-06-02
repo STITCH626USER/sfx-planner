@@ -446,30 +446,71 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   if (allDates.length===0) return;
 
-  const blocks = allDates.map(date => {
-    const dayRecs = records.filter(r => r.date === date && !/^off$/i.test(r.time));
-    const rows = dayRecs.map(r => ({
-      name: prettyName(r.employee),
-      time: String(r.scene || 'FO'),
-      isFO: isTrainingScene(r.scene)
-    })).sort((a,b) => a.name.localeCompare(b.name, 'fr'));
-    
-    return {
-      header: fmtDateShort(date),
-      rows
-    };
-  });
+  const logo = await getLogoDataUrl();
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const APPROX_HEADER = 37;
+  const rowH = C_ROW_H;
 
   const pStart = fmtDate(allDates[0]);
   const pEnd = fmtDate(allDates[allDates.length-1]);
   const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
 
-  await generateAndSave({
-    title: 'Vue Globale',
-    subtitle: `Toutes scènes confondues - Période : ${period}`,
-    blocks,
-    itemCount: allDates.length,
-    totalRows: blocks.reduce((a,b) => a + Math.max(1, b.rows.length), 0),
-    filename: `sfx-vue-globale.pdf`
-  });
+  let pageCount = 0;
+
+  for (let i = 0; i < allDates.length; i++) {
+    const date = allDates[i];
+    const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
+    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
+    const activeFOs  = dayRecs.filter(r =>  isTrainingScene(r.scene));
+    const dayAssoc   = getFOAssociations(dayRecs);
+    const sceneMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+
+    for (const r of activeRegs) {
+      if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
+      sceneMap.get(r.scene)!.push({name:prettyName(r.employee), time:r.time});
+    }
+    for (const r of activeFOs) {
+      const assoc = dayAssoc.get(r.employee)??[];
+      const gk = r.scene;
+      if (!sceneMap.has(gk)) sceneMap.set(gk,[]);
+      sceneMap.get(gk)!.push({name:`${prettyName(r.employee)}${assoc.length>0?` (${assoc.join(', ')})`:''}`  , time:r.time, isFO:true});
+      for (const sc of assoc) {
+        if (!sceneMap.has(sc)) sceneMap.set(sc,[]);
+        sceneMap.get(sc)!.push({name:`${prettyName(r.employee)} (${r.scene||'FO'})`, time:r.time, isFO:true});
+      }
+    }
+
+    const blocks = Array.from(sceneMap.entries())
+      .sort((a,b) => a[0].localeCompare(b[0],'fr'))
+      .map(([scene,rows]) => {
+        const counts = new Map<string, number>();
+        for (const r of rows) counts.set(r.time, (counts.get(r.time)||0)+1);
+        let bestTime = '', max = 0;
+        for (const [t,c] of counts.entries()) if (c > max) { bestTime = t; max = c; }
+        
+        return {
+          header: `${cleanText(scene)}${bestTime ? ` (${bestTime})` : ''}`,
+          rows: rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))
+        };
+      });
+
+    if (blocks.length === 0) continue;
+
+    if (pageCount > 0) doc.addPage();
+    pageCount++;
+
+    const title = `Vue Globale — ${fmtDate(date)}`;
+    const subtitle = `Période totale : ${period}`;
+
+    const cols = findBestCols(blocks, pageW, pageH, APPROX_HEADER, rowH);
+    const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, title, subtitle, logo);
+    layoutCards(doc, blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, title, subtitle);
+    drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
+  }
+
+  if (pageCount > 0) {
+    doc.save(`sfx-vue-globale.pdf`);
+  }
 }
