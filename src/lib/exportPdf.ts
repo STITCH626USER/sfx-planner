@@ -167,13 +167,19 @@ async function generateAndSave(opts: { title: string; subtitle: string; blocks: 
 }
 
 // ----------------------------------------------------
-// DESIGN D'EXPORT EN MODE CARTES (VUE DU JOUR)
+// EXPORT QUOTIDIEN (NOUVEAU DESIGN PAYSAGE MULTI-COLONNES)
 // ----------------------------------------------------
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const logo = await getLogoDataUrl();
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
-  const marginX = 12; const bottomMargin = pageH - 15;
+  // On repasse en Paysage (Landscape) pour gagner de l'espace en largeur !
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth(); 
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 12; 
+  const bottomMargin = pageH - 15;
+  const cols = 3; // 3 colonnes pour optimiser l'espace
+  const gutter = 6;
+  const colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
   
   const drawHeaderLocal = (d: jsPDF, w: number, mX: number, mT: number, t: string, s: string) => {
     const bannerH = 18; d.setFillColor(13, 20, 35); d.roundedRect(mX, mT, w - mX * 2, bannerH, 2, 2, 'F');
@@ -203,47 +209,74 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 
   const scenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
 
-  const colW = pageW - marginX * 2; const rowHeight = 6.0;
+  const rowHeight = 6.0;
+  let colIndex = 0;
+  const colYs: number[] = new Array(cols).fill(currentY);
 
   for (const block of scenes) {
     const cardHeight = 8.0 + 2.0 + block.rows.length * rowHeight + 3.0;
-    if (currentY + cardHeight > bottomMargin) {
-      doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12); doc.addPage();
-      currentY = drawHeaderLocal(doc, pageW, marginX, 10, 'Vue globale du jour (suite)', fmtDate(date));
+    
+    // Trouver la colonne la plus courte
+    let bestCol = 0;
+    let minY = colYs[0];
+    for(let i=1; i<cols; i++) {
+        if(colYs[i] < minY) {
+            minY = colYs[i];
+            bestCol = i;
+        }
     }
 
-    doc.setFillColor(250, 251, 252); doc.setDrawColor(218, 223, 230); doc.setLineWidth(0.2); doc.roundedRect(marginX, currentY, colW, cardHeight, 2, 2, 'FD');
-    const designColor = getSceneColor(block.scene).accent;
-    doc.setFillColor(designColor === '#5850ec' ? TEAL[0] : 45, designColor === '#5850ec' ? TEAL[1] : 85, designColor === '#5850ec' ? TEAL[2] : 95);
-    doc.roundedRect(marginX, currentY, colW, 8.0, 2, 2, 'F'); doc.rect(marginX, currentY + 4, colW, 4.0, 'F');
+    // Si ça dépasse en bas, on fait un saut de page pour tout le monde
+    if (minY + cardHeight > bottomMargin) {
+      drawFooter(doc, pageW, pageH, marginX, false, false); 
+      doc.addPage();
+      currentY = drawHeaderLocal(doc, pageW, marginX, 10, 'Vue globale du jour (suite)', fmtDate(date));
+      colYs.fill(currentY);
+      minY = currentY;
+      bestCol = 0;
+    }
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
-    doc.text(block.scene, marginX + 4.0, currentY + 5.2);
+    const x = marginX + bestCol * (colW + gutter);
+    const y = minY;
 
-    let ry = currentY + 11.0;
-    doc.setFontSize(10);
+    doc.setFillColor(250, 251, 252); doc.setDrawColor(218, 223, 230); doc.setLineWidth(0.2); 
+    doc.roundedRect(x, y, colW, cardHeight, 2, 2, 'FD');
+    const dCol = getSceneColor(block.scene).accent;
+    doc.setFillColor(dCol === '#5850ec' ? TEAL[0] : 45, dCol === '#5850ec' ? TEAL[1] : 85, dCol === '#5850ec' ? TEAL[2] : 95);
+    doc.roundedRect(x, y, colW, 8.0, 2, 2, 'F'); doc.rect(x, y + 4, colW, 4.0, 'F');
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(255, 255, 255);
+    const sceneText = doc.splitTextToSize(block.scene, colW - 8)[0] as string;
+    doc.text(sceneText, x + 4.0, y + 5.2);
+
+    let ry = y + 11.0; doc.setFontSize(9);
     for (const row of block.rows) {
-      let nameX = marginX + 4.0;
+      let nameX = x + 4.0;
       if (row.isFO) {
-        doc.setFillColor(108, 92, 231); doc.roundedRect(marginX + 4.0, ry, 7, 4.5, 0.8, 0.8, 'F');
+        doc.setFillColor(108, 92, 231); doc.roundedRect(x + 4.0, ry, 7, 4.5, 0.8, 0.8, 'F');
         doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-        doc.text('FO', marginX + 7.5, ry + 3.2, { align: 'center' });
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); nameX = marginX + 13.0;
+        doc.text('FO', x + 7.5, ry + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); nameX = x + 13.0;
       }
-      doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]); doc.text(row.name, nameX, ry + 3.5);
+      
+      const timeW = doc.getTextWidth(row.time || '') + 5; 
+      const pillX = x + colW - 4.0 - timeW;
 
-      const timeW = doc.getTextWidth(row.time || '') + 5; const pillX = pageW - marginX - 4.0 - timeW;
+      const maxNameW = pillX - nameX - 2;
+      const truncName = doc.splitTextToSize(row.name, maxNameW)[0] as string;
+
+      doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]); doc.text(truncName, nameX, ry + 3.5);
+
       doc.setFillColor(ORANGE[0], ORANGE[1], ORANGE[2]); doc.roundedRect(pillX, ry, timeW, 4.8, 1, 1, 'F');
       doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
       doc.text(row.time || '', pillX + timeW / 2, ry + 3.4, { align: 'center' });
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); ry += rowHeight;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); ry += rowHeight;
     }
-    currentY += cardHeight + 5;
+    colYs[bestCol] = y + cardHeight + 4; // Mise à jour de la hauteur de la colonne + marge
   }
-  doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12); doc.save(`sfx-planning-${date}.pdf`);
+  drawFooter(doc, pageW, pageH, marginX, false, false); doc.save(`sfx-planning-${date}.pdf`);
 }
 
-// Maintien des autres fonctions obligatoires pour la compilation
 export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
   const empRecs = records.filter(r => r.employee === employee); const dayAssoc = computeAllFOAssociations(records);
   const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
@@ -278,7 +311,6 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   const periodStart = allDates[0] ? fmtDate(allDates[0]) : ''; const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
   const period = periodStart && periodEnd && periodStart !== periodEnd ? `${periodStart} au ${periodEnd}` : periodStart;
   
-  // CORRECTION ICI : Fermeture propre de la fonction generateAndSave() et des parenthèses
   await generateAndSave({ 
     title: scene, 
     subtitle: period ? `Période : ${period}` : 'Période', 
