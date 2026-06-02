@@ -63,9 +63,8 @@ function prettyName(s: string): string {
   return cleanText(`${first} ${last}`);
 }
 
-export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
-  const logo = await getLogoDataUrl();
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+// Fonction centrale isolée pour permettre le multi-pages proprement
+async function renderDayContent(doc: jsPDF, date: string, records: PlanningRecord[], logo: string | null, title: string) {
   const pageW = doc.internal.pageSize.getWidth(); 
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 12; 
@@ -84,9 +83,11 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     return mT + bannerH + 6;
   };
 
-  let currentY = drawHeaderLocal(doc, pageW, marginX, 10, 'Vue globale du jour', fmtDate(date));
+  let currentY = drawHeaderLocal(doc, pageW, marginX, 10, title, fmtDate(date));
 
   const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
+  if (dayRecs.length === 0) return;
+
   const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
   const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
   const dayAssoc = getFOAssociations(dayRecs);
@@ -100,10 +101,23 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     for (const scene of assoc) { if (!sceneMap.has(scene)) sceneMap.set(scene, []); sceneMap.get(scene)!.push({ name: `${prettyName(r.employee)} (${r.scene ? r.scene : 'FO'})`, time: r.time, isFO: true }); }
   }
 
-  const scenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
+  const rawScenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
+
+  // CORRECTION : Limitation dynamique des lignes pour qu'aucune carte ne puisse dépasser du bas de la page
+  const MAX_ROWS = 22; 
+  const scenes: Array<{ scene: string; rows: any[] }> = [];
+  for (const rs of rawScenes) {
+    if (rs.rows.length > MAX_ROWS) {
+      for (let i = 0; i < rs.rows.length; i += MAX_ROWS) {
+        scenes.push({ scene: rs.scene + (i > 0 ? ' (suite)' : ''), rows: rs.rows.slice(i, i + MAX_ROWS) });
+      }
+    } else {
+      scenes.push(rs);
+    }
+  }
 
   const rowHeight = 6.0;
-  const colYs: number[] = new Array(cols).fill(currentY);
+  let colYs: number[] = new Array(cols).fill(currentY);
 
   for (const block of scenes) {
     const cardHeight = 8.0 + 2.0 + block.rows.length * rowHeight + 3.0;
@@ -120,7 +134,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     if (minY + cardHeight > bottomMargin) {
       doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12);
       doc.addPage();
-      currentY = drawHeaderLocal(doc, pageW, marginX, 10, 'Vue globale du jour (suite)', fmtDate(date));
+      currentY = drawHeaderLocal(doc, pageW, marginX, 10, `${title} (suite)`, fmtDate(date));
       colYs.fill(currentY);
       minY = currentY;
       bestCol = 0;
@@ -164,8 +178,32 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   }
   doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
+  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif.", pageW / 2, pageH - 7, { align: 'center' });
+}
+
+export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
+  const logo = await getLogoDataUrl();
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  await renderDayContent(doc, date, records, logo, 'Vue globale du jour');
   doc.save(`sfx-planning-${date}.pdf`);
+}
+
+// NOUVEAUTÉ : Export Hebdomadaire
+export async function exportWeeklyPdf(dates: string[], records: PlanningRecord[]): Promise<void> {
+  const logo = await getLogoDataUrl();
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  let pageAdded = false;
+  
+  for (const date of dates) {
+    const hasRecords = records.some(r => r.date === date && r.time !== 'OFF');
+    if (!hasRecords) continue;
+
+    if (pageAdded) doc.addPage();
+    await renderDayContent(doc, date, records, logo, 'Rapport Hebdomadaire');
+    pageAdded = true;
+  }
+  
+  doc.save(`sfx-planning-semaine.pdf`);
 }
 
 export async function exportScenePdf(scene: string, _records: PlanningRecord[]): Promise<void> {
