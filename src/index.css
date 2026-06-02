@@ -123,7 +123,7 @@ body {
     var(--bg-0);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Beautiful dynamic neon pulse in headers */
@@ -170,7 +170,7 @@ input:focus, select:focus {
   max-width: 480px;
   margin-inline: auto;
   margin-block: 0;
-  padding: 4px 16px calc(100px + env(safe-area-inset-bottom)) 16px;
+  padding: 0px 14px calc(100px + env(safe-area-inset-bottom)) 14px;
   min-height: 100%;
 }
 
@@ -271,8 +271,8 @@ input:focus, select:focus {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 18px;
+  gap: 12px;
+  padding: 12px 14px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--r-lg);
   background: linear-gradient(135deg, rgba(255, 176, 58, 0.05), rgba(0, 229, 198, 0.03)), var(--bg-1);
@@ -740,11 +740,16 @@ input:focus, select:focus {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 12px 6px 20px 6px;
+  padding: 12px 6px 12px 6px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
-  margin: -8px -6px -12px -6px;
+  margin: -8px -6px 0 -6px;
+  position: sticky;
+  top: 60px; /* Under the header */
+  z-index: 20;
+  /* Soft background gradient to hide content scrolling behind */
+  background: linear-gradient(to bottom, var(--bg-0) 80%, transparent);
 }
 .date-row::-webkit-scrollbar {
   display: none;
