@@ -163,8 +163,18 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   doc.rect(x, y+1.5, w, headerH-1.5, 'F');
 
   // Scene name (compact font)
-  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...WHITE);
-  const sn = doc.splitTextToSize(cleanText(sceneName), w-padX*2-10)[0] as string;
+  doc.setFont('helvetica','bold'); doc.setTextColor(...WHITE);
+  let snSize = 7.5;
+  doc.setFontSize(snSize);
+  const maxWText = w - padX*2 - 10;
+  let sn = cleanText(sceneName);
+  while(doc.getTextWidth(sn) > maxWText && snSize > 5.0) {
+    snSize -= 0.5;
+    doc.setFontSize(snSize);
+  }
+  if (doc.getTextWidth(sn) > maxWText) {
+    sn = doc.splitTextToSize(sn, maxWText)[0] as string;
+  }
   doc.text(sn, x+padX+1.5, y+headerH*0.66);
 
   // Count badge
@@ -303,15 +313,6 @@ async function generateAndSave(opts:{
    EXPORT QUOTIDIEN — Vue globale du jour
 ═══════════════════════════════════════════════ */
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
-  const logo = await getLogoDataUrl();
-  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const marginX = 12;
-  const ROW_H = 6.0; const COLS = 3;
-
-  let currentY = drawPremiumHeader(doc, pageW, marginX, 10, 'Vue globale du jour', fmtDate(date), logo, 'DÉPARTEMENT SFX');
-
   const dayRecs = records.filter(r => r.date===date && r.time!=='OFF');
   const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
   const activeFOs  = dayRecs.filter(r =>  isTrainingScene(r.scene));
@@ -333,13 +334,18 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     }
   }
 
-  const scenes = Array.from(sceneMap.entries())
+  const blocks = Array.from(sceneMap.entries())
     .sort((a,b) => a[0].localeCompare(b[0],'fr'))
     .map(([scene,rows]) => ({header:cleanText(scene), rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
 
-  layoutCards(doc, scenes, currentY, marginX, pageW, pageH, COLS, ROW_H, 5, logo, 'Vue globale du jour', fmtDate(date));
-  drawPremiumFooter(doc, pageW, pageH, marginX);
-  doc.save(`sfx-planning-${date}.pdf`);
+  await generateAndSave({
+    title: 'Vue globale du jour',
+    subtitle: fmtDate(date),
+    blocks,
+    itemCount: blocks.length,
+    totalRows: blocks.reduce((a,b)=>a+Math.max(1,b.rows.length),0),
+    filename: `sfx-planning-${date}.pdf`,
+  });
 }
 
 /* ═══════════════════════════════════════════════

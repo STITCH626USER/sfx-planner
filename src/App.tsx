@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.10</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.11</span>
               </span>
             </div>
           </div>
@@ -318,7 +318,7 @@ export default function App() {
           </nav>
         </div>
 
-        {records.length > 0 && activeDate && (
+        {records.length > 0 && activeDate && tab === 'recherche' && (
           <TechFinder records={records} activeDate={activeDate} />
         )}
       </aside>
@@ -948,7 +948,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           </div>
 
           <div className="section-h" style={{ marginTop: 6 }}>
-            <div className="section-title">Département SFX — {formatDateLong(date)}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="section-title" style={{ textTransform: 'capitalize' }}>{formatDateLong(date)}</div>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
                 type="button"
@@ -958,7 +960,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 onClick={() => setShowExport(true)}
               >
                 <IconDownload />
-                <span>Export PDF Cartes</span>
+                <span>Export PDF</span>
               </button>
               <div className="section-count" data-testid="text-count-daily">{present.length}</div>
             </div>
