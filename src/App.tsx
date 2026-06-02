@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
-import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes } from './lib/exportPdf';
-import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey } from './lib/utils';
+import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
+import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey, getSceneColor } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
@@ -29,7 +29,6 @@ function formatDateLong(iso: string): string {
   return `${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
 }
 function dayInitials(name: string): string {
-  // Take first letters of two name parts (e.g. "AIRIAU, CEDRICK" → "AC")
   const parts = name.replace(/[(*)]/g, '').split(/[, ]+/).filter(Boolean);
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -45,14 +44,19 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('recherche');
+  const [tab, setTab] = useState<Tab>('daily');
+  
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'dark';
   });
+
   const [records, setRecords] = useState<PlanningRecord[]>([]);
   const [sources, setSources] = useState<SourceFile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fireworkTrigger, setFireworkTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [errorHint, setErrorHint] = useState<'safari' | null>(null);
   const [drag, setDrag] = useState(false);
@@ -63,7 +67,29 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.className = theme;
+    document.body.className = theme;
+    
+    // CORRECTION MAJEURE : On force la couleur de fond du site
+    // car votre fichier index.css bloque probablement le fond global.
+    if (theme === 'light') {
+      document.body.style.backgroundColor = '#f1f5f9';
+      document.body.style.color = '#0f172a';
+    } else {
+      document.body.style.backgroundColor = '#0b0f19';
+      document.body.style.color = '#f1f5f9';
+    }
   }, [theme]);
+
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
     setError(null);
@@ -94,6 +120,9 @@ export default function App() {
       }
       setRecords(prev => [...prev, ...newRecs]);
       setSources(prev => [...prev, ...newSrcs]);
+      if (newRecs.length > 0) {
+        setFireworkTrigger(prev => prev + 1);
+      }
       if (ignored > 0) {
         setError(`${ignored} fichier(s) non-PDF ignoré(s).`);
       }
@@ -106,16 +135,12 @@ export default function App() {
         || (isIOS && !/Safari\//.test(ua));
       if (inApp) {
         setError(
-          'Cette page est ouverte dans une app (WhatsApp, Instagram, etc.) qui ' +
-          'limite la lecture des PDF. Ouvre le lien dans Safari pour importer ton ' +
-          'planning. Détail : ' + raw,
+          'Cette page est ouverte dans une app qui limite la lecture des PDF. Ouvre le lien dans Safari pour importer ton planning. Détail : ' + raw,
         );
         setErrorHint('safari');
       } else if (isIOS) {
         setError(
-          'Impossible de lire ce PDF sur cet iPhone. Essaie de l’ouvrir d’abord ' +
-          'dans l’app Fichiers puis « Partager → SFX Planner », ou ouvre la page ' +
-          'depuis Safari. Détail : ' + raw,
+          'Impossible de lire ce PDF sur cet iPhone. Essaie de l’ouvrir d’abord dans l’app Fichiers puis « Partager → SFX Planner », ou ouvre la page depuis Safari. Détail : ' + raw,
         );
         setErrorHint('safari');
       } else {
@@ -140,15 +165,86 @@ export default function App() {
     setSources(prev => prev.filter(s => s.name !== name));
   }, []);
 
+  if (records.length === 0) {
+    return (
+      <div className="app-shell-empty-container" data-testid="app-root">
+        <div className="smoke-bg" aria-hidden="true">
+          <div className="smoke-cloud smoke-cloud-1" />
+          <div className="smoke-cloud smoke-cloud-2" />
+          <div className="smoke-cloud smoke-cloud-3" />
+        </div>
+        <FireworksCanvas triggerCount={fireworkTrigger} />
+        <div className="empty-landing-card">
+          <header className="landing-header">
+            <button
+              type="button"
+              className="landing-logo-wrap"
+              aria-label="Changer le mode d'affichage"
+              title="Changer le mode d'affichage"
+              data-testid="btn-theme-toggle"
+              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+            >
+              <Logo />
+            </button>
+            <h1 className="landing-title">SFX Planner</h1>
+          </header>
+          
+          <div className="landing-uploader-wrap">
+            <Uploader
+              loading={loading}
+              drag={drag}
+              compact={false}
+              onPick={() => fileRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={onDrop}
+            />
+          </div>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            multiple
+            style={{ display: 'none' }}
+            data-testid="input-file"
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          />
+
+          {error && (
+            <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginTop: 16, marginBottom: 16 }}>
+              <div>{error}</div>
+            </div>
+          )}
+
+          <div className="landing-warning-notice">
+            <div className="footer-warning-card">
+              <span className="warning-text">
+                <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.3</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell" data-testid="app-root">
+      <div className="smoke-bg" aria-hidden="true">
+        <div className="smoke-cloud smoke-cloud-1" />
+        <div className="smoke-cloud smoke-cloud-2" />
+        <div className="smoke-cloud smoke-cloud-3" />
+      </div>
+      <FireworksCanvas triggerCount={fireworkTrigger} />
       <aside className="app-sidebar">
         <header className="app-header">
           <button
             type="button"
             className="app-logo"
-            aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-            title="Changer le mode d’affichage"
+            aria-label="Changer le mode d'affichage"
+            title="Changer le mode d'affichage"
             data-testid="btn-theme-toggle"
             onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
           >
@@ -156,7 +252,6 @@ export default function App() {
           </button>
           <div style={{ minWidth: 0 }}>
             <div className="app-title">SFX Planner</div>
-            <div className="app-sub">Disney Live Ent.</div>
           </div>
         </header>
 
@@ -243,9 +338,6 @@ export default function App() {
                 >
                   Ouvrir dans le navigateur →
                 </a>
-                <div style={{ marginTop: 4, opacity: 0.85 }}>
-                  Astuce : bouton Partager <span aria-hidden>↑</span> puis « Ouvrir dans Safari ».
-                </div>
               </div>
             )}
           </div>
@@ -272,7 +364,16 @@ export default function App() {
         </div>
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
-          Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG &nbsp;·&nbsp; <span style={{opacity: 0.45, fontSize: '10px'}}>v3.2</span>
+          <div className="footer-smoke-bg" aria-hidden="true">
+            <div className="footer-smoke-cloud footer-smoke-cloud-1" />
+            <div className="footer-smoke-cloud footer-smoke-cloud-2" />
+          </div>
+          <div className="footer-warning-card">
+            <span className="warning-text">
+              <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
+              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
+            </span>
+          </div>
         </footer>
       </main>
     </div>
@@ -280,10 +381,16 @@ export default function App() {
 }
 
 function shortName(n: string): string {
-  return n.replace(/\.pdf$/i, '').replace(/PLANNING-/, '').replace(/SEMAINE-/, 'S');
+  let name = n.replace(/\.pdf$/i, '');
+  name = name.replace(/planning/i, '');
+  name = name.replace(/semaine/i, 'S');
+  name = name.replace(/week/i, 'W');
+  name = name.replace(/sem/i, 'S');
+  name = name.replace(/[\s\-_]+/g, ' ').trim();
+  name = name.replace(/s\s*(\d+)/i, 'S$1');
+  return name || n;
 }
 
-/* ---------- Uploader ---------- */
 function Uploader({
   loading, drag, compact, onPick, onDragOver, onDragLeave, onDrop,
 }: {
@@ -293,12 +400,12 @@ function Uploader({
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
 }) {
-  const title = loading
-    ? <><span className="spinner" /> Lecture du planning…</>
+  const cta = loading
+    ? 'Lecture...'
     : compact
-      ? 'Ajouter d’autres PDF'
-      : 'Importer vos PDF de planning';
-  const cta = compact ? 'Ajouter' : 'Choisir des PDF';
+      ? 'Ajouter PDF Chronos'
+      : 'Importer PDF Chronos';
+
   return (
     <div
       className="uploader"
@@ -307,23 +414,21 @@ function Uploader({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: compact ? '12px' : '24px 16px' }}
     >
-      <div className="uploader-icon" aria-hidden>
-        <IconUpload />
-      </div>
-      <div className="uploader-body">
-        <div className="uploader-title">{title}</div>
-      </div>
-      <div className="uploader-cta">
-        <button className={'btn' + (compact ? ' btn-sm' : '')} onClick={onPick} disabled={loading} data-testid="btn-pick">
-          {cta}
-        </button>
-      </div>
+      <button
+        className={'btn' + (compact ? ' btn-sm' : '')}
+        onClick={onPick}
+        disabled={loading}
+        data-testid="btn-pick"
+        style={{ width: '100%', maxWidth: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+      >
+        {loading && <span className="spinner" style={{ borderColor: 'rgba(0,0,0,0.1)', borderTopColor: 'currentColor' }} />}
+        {cta}
+      </button>
     </div>
   );
 }
-
-/* ---------- Recherche (employee search) ---------- */
 
 function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   const [query, setQuery] = useState('');
@@ -411,7 +516,6 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
 
 function titleCaseWord(w: string): string {
   if (!w) return w;
-  // Preserve hyphens and apostrophes as separators within a word.
   return w
     .split(/([-'])/)
     .map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
@@ -423,10 +527,6 @@ function titleCasePart(s: string): string {
 }
 
 function prettyName(s: string): string {
-  // "SERRANO, FLORIAN" → "Florian Serrano"
-  // "AIRIAU, CEDRICK" → "Cedrick Airiau"
-  // "JEAN-MARIE, ANNE" → "Anne Jean-Marie"
-  // Falls back gracefully if no comma is present.
   const idx = s.indexOf(',');
   if (idx === -1) {
     return titleCasePart(s);
@@ -439,7 +539,6 @@ function prettyName(s: string): string {
 }
 
 function searchHaystack(s: string): string {
-  // Build a haystack that lets users match "Prénom", "Nom", "Prénom Nom" or "Nom Prénom".
   const pretty = prettyName(s);
   const idx = s.indexOf(',');
   let reversed = '';
@@ -465,16 +564,19 @@ function countActiveDays(records: PlanningRecord[], name: string): number {
 function EmployeeDetail({ name, records, allRecords, onBack }: {
   name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; onBack: () => void;
 }) {
-  // Group by weekLabel
+  useEffect(() => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+  }, [name]);
+  
   const byWeek = useMemo(() => {
     const m = new Map<string, PlanningRecord[]>();
     for (const r of records) {
       if (!m.has(r.weekLabel)) m.set(r.weekLabel, []);
       m.get(r.weekLabel)!.push(r);
     }
-    // sort within each week by date
     for (const [, arr] of m) arr.sort((a, b) => a.date.localeCompare(b.date));
-    // sort weeks by first date
     return Array.from(m.entries()).sort((a, b) => a[1][0].date.localeCompare(b[1][0].date));
   }, [records]);
 
@@ -635,7 +737,11 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
         <span className="n">{dayPart}</span>
       </div>
       <div style={{ minWidth: 0 }}>
-        <div className={'day-scene' + (isOff ? ' off' : '')} data-testid={`scene-${rec.date}`}>
+        <div
+          className={'day-scene' + (isOff ? ' off' : '')}
+          data-testid={`scene-${rec.date}`}
+          style={!isOff ? { borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' } : undefined}
+        >
           {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
         </div>
         {assocScenes && assocScenes.length > 0 && (
@@ -657,8 +763,6 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
     </div>
   );
 }
-
-/* ---------- Scene detail (used from EmployeeDetail when tapping a day card) ---------- */
 
 function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
   scene: string; date: string; team: PlanningRecord[]; onBack: () => void; onViewEmployee: (employee: string) => void;
@@ -717,7 +821,6 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
   );
 }
 
-/* ---------- Sticky daily date bar (rendered inside tabs-block) ---------- */
 function DailyDateBar({ records, date, onDateChange }: {
   records: PlanningRecord[]; date: string; onDateChange: (d: string) => void;
 }) {
@@ -741,20 +844,14 @@ function DailyDateBar({ records, date, onDateChange }: {
   );
 }
 
-/* ---------- Vue globale journalière ---------- */
-
-function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
+function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [openScene, setOpenScene] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
 
-  // Reset opened scene when date changes
   useEffect(() => {
     setOpenScene(null);
   }, [date]);
-
-  // Keep parent in charge of date normalization
-  void onDateChange;
 
   const present = useMemo(() => {
     const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
@@ -762,7 +859,6 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
     const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
 
     const dayAssoc = getFOAssociations(dayRecs);
-    
     const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
     
     for (const fo of activeFOs) {
@@ -852,7 +948,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
           </div>
 
           <div className="section-h" style={{ marginTop: 6 }}>
-            <div className="section-title">Scènes le {formatDateLong(date)}</div>
+            <div className="section-title">Département SFX — {formatDateLong(date)}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
                 type="button"
@@ -862,7 +958,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                 onClick={() => setShowExport(true)}
               >
                 <IconDownload />
-                <span>Export PDF</span>
+                <span>Export PDF Cartes</span>
               </button>
               <div className="section-count" data-testid="text-count-daily">{present.length}</div>
             </div>
@@ -884,20 +980,24 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
             </div>
           ) : (
             <div className="daily-groups" data-testid="list-daily-scenes">
-              {byScene.map(([scene, sceneRecords]) => (
+              {byScene.map(([scene, sceneRecords], sIndex) => (
                 <section
-                  className="daily-scene-group"
+                  className="daily-scene-group animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
-                  aria-label={`Équipe de ${scene} (${sceneRecords.length} personnes)`}
+                  style={{ animationDelay: `${sIndex * 0.05}s` }}
                 >
                   <button
                     type="button"
                     className="daily-group-head"
                     data-testid={`scene-card-${scene}`}
-                    aria-label={`Ouvrir le détail de ${scene}`}
                     onClick={() => setOpenScene(scene)}
-                    style={{ width: '100%', cursor: 'pointer' }}
+                    style={{ 
+                      width: '100%', 
+                      cursor: 'pointer', 
+                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}30, transparent)`,
+                      borderLeft: `4.5px solid ${getSceneColor(scene).accent}` 
+                    }}
                   >
                     <div className="daily-group-scene">{scene}</div>
                     <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
@@ -929,7 +1029,6 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                           <button
                             type="button"
                             className="btn-eye compact-eye"
-                            aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
                             data-testid={`btn-view-tech-${rec.employee}`}
                             onClick={() => setSelectedEmployee(rec.employee)}
                           >
@@ -979,7 +1078,6 @@ function DatePicker({ dates, date, records, onChange }: {
   );
 }
 
-/* ---------- Tech Finder (compact, in tabs block) ---------- */
 function TechFinder({ records, activeDate }: { records: PlanningRecord[]; activeDate: string }) {
   const [query, setQuery] = useState('');
 
@@ -1017,13 +1115,11 @@ function TechFinder({ records, activeDate }: { records: PlanningRecord[]; active
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           data-testid="input-tech-finder"
-          aria-label="Vérifier la présence d'un technicien"
         />
         {query && (
           <button
             type="button"
             className="tech-finder-clear"
-            aria-label="Effacer"
             data-testid="btn-tech-finder-clear"
             onClick={() => setQuery('')}
           >×</button>
@@ -1068,12 +1164,91 @@ function TechFinder({ records, activeDate }: { records: PlanningRecord[]; active
   );
 }
 
-/* ---------- Empty all ---------- */
 function EmptyAllPanel() {
   return <div className="empty" data-testid="empty-root" />;
 }
 
-/* ---------- Icons ---------- */
+function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
+  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
+  const scenes = useMemo(() => listScenes(records), [records]);
+  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const handleExport = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (mode === 'day') {
+        await exportDayPdf(date, records);
+      } else if (mode === 'scene' && selectedScene) {
+        await exportScenePdf(selectedScene, records);
+      } else if (mode === 'global') {
+        await exportGlobalRecapPdf(records);
+      }
+      onClose();
+    } catch (e) {
+      console.error('PDF export failed', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
+      <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <div className="export-head">
+          <div className="export-title">Exporter en PDF</div>
+          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
+        </div>
+        <div className="export-body">
+          <button
+            type="button"
+            className={'export-opt' + (mode === 'day' ? ' on' : '')}
+            onClick={() => setMode('day')}
+          >
+            <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
+            <span className="export-opt-sub">Format cartes par scènes / équipes (très lisible)</span>
+          </button>
+          <button
+            type="button"
+            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
+            onClick={() => setMode('scene')}
+          >
+            <span className="export-opt-title">Scène sur période</span>
+            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
+          </button>
+          {mode === 'scene' && (
+            <select
+              className="export-scene-select"
+              value={selectedScene}
+              onChange={(e) => setSelectedScene(e.target.value)}
+            >
+              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="export-foot">
+          <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
+          <button
+            type="button"
+            className="btn"
+            disabled={busy || (mode === 'scene' && !selectedScene)}
+            onClick={handleExport}
+          >
+            {busy ? 'Génération…' : 'Exporter'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function IconSearch() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1088,13 +1263,6 @@ function IconCalendar() {
       <path d="M8 2v4M16 2v4M3 10h18" />
       <rect x="3" y="4" width="18" height="18" rx="3" />
       <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
-    </svg>
-  );
-}
-function IconUpload({ size = 22 }: { size?: number } = {}) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3v12" /><path d="m7 8 5-5 5 5" /><path d="M5 21h14" />
     </svg>
   );
 }
@@ -1119,92 +1287,6 @@ function IconDownload() {
     </svg>
   );
 }
-
-function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [mode, setMode] = useState<'day' | 'scene'>('day');
-  const scenes = useMemo(() => listScenes(records), [records]);
-  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const [busy, setBusy] = useState(false);
-  const handleExport = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      if (mode === 'day') {
-        await exportDayPdf(date, records);
-      } else if (selectedScene) {
-        await exportScenePdf(selectedScene, records);
-      }
-      onClose();
-    } catch (e) {
-      console.error('PDF export failed', e);
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
-      <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="export-head">
-          <div className="export-title">Exporter en PDF</div>
-          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
-        </div>
-        <div className="export-body">
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'day' ? ' on' : '')}
-            aria-pressed={mode === 'day'}
-            onClick={() => setMode('day')}
-            data-testid="export-mode-day"
-          >
-            <span className="export-opt-title">Journée sélectionnée</span>
-            <span className="export-opt-sub">{formatDateLong(date)} · toutes les scènes</span>
-          </button>
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
-            aria-pressed={mode === 'scene'}
-            onClick={() => setMode('scene')}
-            data-testid="export-mode-scene"
-          >
-            <span className="export-opt-title">Scène sur période</span>
-            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
-          </button>
-          {mode === 'scene' && (
-            <select
-              className="export-scene-select"
-              value={selectedScene}
-              onChange={(e) => setSelectedScene(e.target.value)}
-              data-testid="export-scene-select"
-              aria-label="Sélectionner la scène"
-            >
-              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-        </div>
-        <div className="export-foot">
-          <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
-          <button
-            type="button"
-            className="btn"
-            data-testid="btn-export-confirm"
-            disabled={busy || (mode === 'scene' && !selectedScene)}
-            onClick={handleExport}
-          >
-            {busy ? 'Génération…' : 'Exporter'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function IconEye() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1216,14 +1298,103 @@ function IconEye() {
 function Logo() {
   const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
   return (
-    <img
-      className="logo-img"
-      src={logoSrc}
-      alt=""
-      width="56"
-      height="56"
-      decoding="async"
-      aria-hidden="true"
-    />
+    <img className="logo-img" src={logoSrc} alt="" width="56" height="56" decoding="async" aria-hidden="true" />
+  );
+}
+
+interface FireworkParticle {
+  x: number; y: number; vx: number; vy: number; color: string; alpha: number; decay: number; size: number;
+}
+interface FireworkRocket {
+  x: number; y: number; tx: number; ty: number; vx: number; vy: number; color: string; size: number;
+}
+
+function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const particlesRef = useRef<FireworkParticle[]>([]);
+  const rocketsRef = useRef<FireworkRocket[]>([]);
+  const animationFrameId = useRef<number | null>(null);
+
+  const colors = ['#ff3366', '#ff9933', '#ffff33', '#33ff66', '#33ccff', '#cc33ff', '#ff00aa', '#00ffcc'];
+
+  const spawnExplosion = useCallback((x: number, y: number, color?: string) => {
+    const count = 40 + Math.floor(Math.random() * 30);
+    const baseColor = color || colors[Math.floor(Math.random() * colors.length)];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 4.5;
+      particlesRef.current.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.5, color: baseColor, alpha: 1, decay: 0.012 + Math.random() * 0.015, size: 1 + Math.random() * 2 });
+    }
+  }, [colors]);
+
+  const spawnRocket = useCallback(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const tx = 100 + Math.random() * (canvas.width - 200); const ty = 80 + Math.random() * (canvas.height * 0.4);
+    const x = tx + (Math.random() - 0.5) * 50; const y = canvas.height;
+    const dy = ty - y; const dx = tx - x; const duration = 40 + Math.random() * 20;
+    rocketsRef.current.push({ x, y, tx, ty, vx: dx / duration, vy: dy / duration, color: colors[Math.floor(Math.random() * colors.length)], size: 2.2 });
+  }, [colors]);
+
+  useEffect(() => {
+    if (triggerCount > 0) {
+      let count = 4 + Math.floor(Math.random() * 3);
+      const interval = setInterval(() => { spawnRocket(); count--; if (count <= 0) clearInterval(interval); }, 150);
+    }
+  }, [triggerCount, spawnRocket]);
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const path = e.composedPath() as HTMLElement[];
+      const isInteractive = path.some(el =>
+        el.tagName === 'BUTTON' ||
+        el.tagName === 'INPUT' ||
+        el.tagName === 'SELECT' ||
+        el.tagName === 'A' ||
+        (el.classList && (
+          el.classList.contains('day-card') ||
+          el.classList.contains('seg') ||
+          el.classList.contains('source-pill') ||
+          el.classList.contains('daily-group-head')
+        ))
+      );
+      if (isInteractive) return;
+
+      spawnExplosion(e.clientX, e.clientY);
+    };
+
+    window.addEventListener('mousedown', handleGlobalClick);
+    return () => window.removeEventListener('mousedown', handleGlobalClick);
+  }, [spawnExplosion]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize(); window.addEventListener('resize', resize);
+
+    const update = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rockets = rocketsRef.current;
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i]; r.x += r.vx; r.y += r.vy;
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.size, 0, Math.PI * 2); ctx.fillStyle = r.color; ctx.shadowColor = r.color; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+        if (r.vy >= 0 || r.y <= r.ty) { spawnExplosion(r.x, r.y, r.color); rockets.splice(i, 1); }
+      }
+      const particles = particlesRef.current;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.045; p.vx *= 0.985; p.vy *= 0.985; p.alpha -= p.decay;
+        if (p.alpha <= 0) { particles.splice(i, 1); continue; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.shadowColor = p.color; ctx.shadowBlur = 4; ctx.fill(); ctx.shadowBlur = 0; ctx.globalAlpha = 1.0;
+      }
+      animationFrameId.current = requestAnimationFrame(update);
+    };
+    animationFrameId.current = requestAnimationFrame(update);
+    return () => { window.removeEventListener('resize', resize); if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current); };
+  }, [spawnExplosion]);
+
+  return (
+    <canvas ref={canvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 9999 }} />
   );
 }

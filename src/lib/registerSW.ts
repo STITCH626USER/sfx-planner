@@ -9,55 +9,25 @@
 // visit.
 
 export function registerOfflineSW(): void {
-  if (typeof document === 'undefined' || typeof navigator === 'undefined') return;
-  if (!('serviceWorker' in navigator)) return;
-  // Service workers require a secure context. localhost is treated as secure.
-  if (!window.isSecureContext) return;
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
 
-  // The HTML <base> resolves to the directory the app was served from
-  // (`/sfx-planner/` on GitHub Pages, `/` in local preview). Pointing the
-  // SW URL at that base keeps the scope correct without hardcoding.
-  const swUrl = new URL('sw.js', document.baseURI).toString();
-  const scope = new URL('./', document.baseURI).toString();
-
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register(swUrl, { scope })
-      .then((reg) => {
-        // Surface readiness in the console only — no UI noise.
-        // eslint-disable-next-line no-console
-        console.info('[sfx-planner] offline cache ready (scope:', reg.scope, ')');
-
-        // Check for updates
-        reg.addEventListener('updatefound', () => {
-          const installingWorker = reg.installing;
-          if (installingWorker) {
-            installingWorker.addEventListener('statechange', () => {
-              if (installingWorker.state === 'installed') {
-                if (navigator.serviceWorker.controller) {
-                  // New update is ready (skipWaiting in sw.js will activate it immediately,
-                  // triggering controllerchange below).
-                  // eslint-disable-next-line no-console
-                  console.info('[sfx-planner] New update found and installing...');
-                }
-              }
-            });
-          }
-        });
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.warn('[sfx-planner] SW registration failed:', err);
+  // Unregister all active service workers to prevent cache locking and ensure the latest dashboard redesign is visible instantly
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister().then((success) => {
+        if (success) {
+          // eslint-disable-next-line no-console
+          console.info('[sfx-planner] successfully unregistered service worker to bypass cache');
+        }
       });
-  });
-
-  // Reload the page when the controlling service worker changes
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
     }
   });
+
+  // Clear all PWA caches
+  if (typeof caches !== 'undefined') {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key));
+    });
+  }
 }
 
