@@ -67,6 +67,18 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.className = theme;
+    document.body.className = theme;
+    
+    // CORRECTION MAJEURE : On force la couleur de fond du site
+    // car votre fichier index.css bloque probablement le fond global.
+    if (theme === 'light') {
+      document.body.style.backgroundColor = '#f1f5f9';
+      document.body.style.color = '#0f172a';
+    } else {
+      document.body.style.backgroundColor = '#0b0f19';
+      document.body.style.color = '#f1f5f9';
+    }
   }, [theme]);
 
   useEffect(() => {
@@ -658,6 +670,8 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
             type="button"
             className="btn-export"
             data-testid="btn-export-indiv"
+            aria-label={`Exporter le planning de ${prettyName(name)} en PDF`}
+            title="Exporter en PDF"
             disabled={exporting || records.length === 0}
             onClick={handleExportIndiv}
           >
@@ -713,6 +727,7 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
       data-testid={`day-${rec.date}`}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `Voir l'équipe de ${rec.scene} le ${formatDateLong(rec.date)}` : undefined}
       onClick={interactive ? handleClick : undefined}
       onKeyDown={interactive ? handleKey : undefined}
       style={interactive ? { cursor: 'pointer' } : undefined}
@@ -791,6 +806,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                 <button
                   type="button"
                   className="btn-eye"
+                  aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
                   data-testid={`btn-view-employee-${rec.employee}`}
                   onClick={() => onViewEmployee(rec.employee)}
                 >
@@ -938,6 +954,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                 type="button"
                 className="btn-export"
                 data-testid="btn-export-pdf"
+                aria-label="Exporter en PDF"
                 onClick={() => setShowExport(true)}
               >
                 <IconDownload />
@@ -1152,6 +1169,9 @@ function EmptyAllPanel() {
 }
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
+  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
+  const scenes = useMemo(() => listScenes(records), [records]);
+  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -1160,14 +1180,21 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const handleExportSingleDay = async () => {
+  const handleExport = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      await exportDayPdf(date, records);
+      if (mode === 'day') {
+        await exportDayPdf(date, records);
+      } else if (mode === 'scene' && selectedScene) {
+        await exportScenePdf(selectedScene, records);
+      } else if (mode === 'global') {
+        await exportGlobalRecapPdf(records);
+      }
       onClose();
     } catch (e) {
       console.error('PDF export failed', e);
+    } finally {
       setBusy(false);
     }
   };
@@ -1176,31 +1203,45 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
       <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="export-head">
-          <div className="export-title">Exporter le planning quotidien</div>
-          <button type="button" className="export-close" onClick={onClose}>×</button>
+          <div className="export-title">Exporter en PDF</div>
+          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
         </div>
-        <div className="export-body" style={{ padding: '16px 0' }}>
-          <p style={{ margin: '0 0 16px 0', fontSize: '14px', opacity: 0.85 }}>
-            Vous allez générer un document PDF contenant uniquement les cartes des équipes prévues pour cette date.
-          </p>
+        <div className="export-body">
           <button
             type="button"
-            className="export-opt on"
-            onClick={handleExportSingleDay}
+            className={'export-opt' + (mode === 'day' ? ' on' : '')}
+            onClick={() => setMode('day')}
           >
             <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
             <span className="export-opt-sub">Format cartes par scènes / équipes (très lisible)</span>
           </button>
+          <button
+            type="button"
+            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
+            onClick={() => setMode('scene')}
+          >
+            <span className="export-opt-title">Scène sur période</span>
+            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
+          </button>
+          {mode === 'scene' && (
+            <select
+              className="export-scene-select"
+              value={selectedScene}
+              onChange={(e) => setSelectedScene(e.target.value)}
+            >
+              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
         </div>
         <div className="export-foot">
           <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
           <button
             type="button"
             className="btn"
-            disabled={busy}
-            onClick={handleExportSingleDay}
+            disabled={busy || (mode === 'scene' && !selectedScene)}
+            onClick={handleExport}
           >
-            {busy ? 'Génération…' : 'Générer le PDF'}
+            {busy ? 'Génération…' : 'Exporter'}
           </button>
         </div>
       </div>
@@ -1327,7 +1368,10 @@ function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext('2d'); if (!ctx) return;
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
     resize(); window.addEventListener('resize', resize);
 
     const update = () => {
