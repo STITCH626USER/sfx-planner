@@ -29,7 +29,6 @@ function formatDateLong(iso: string): string {
   return `${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
 }
 function dayInitials(name: string): string {
-  // Take first letters of two name parts (e.g. "AIRIAU, CEDRICK" → "AC")
   const parts = name.replace(/[(*)]/g, '').split(/[, ]+/).filter(Boolean);
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -350,7 +349,7 @@ export default function App() {
           <div className="footer-warning-card">
             <span className="warning-text">
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
+              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) is donnée à titre indicatif et peut varier. Données traitées localement.
             </span>
           </div>
         </footer>
@@ -498,7 +497,6 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
 
 function titleCaseWord(w: string): string {
   if (!w) return w;
-  // Preserve hyphens and apostrophes as separators within a word.
   return w
     .split(/([-'])/)
     .map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
@@ -510,10 +508,6 @@ function titleCasePart(s: string): string {
 }
 
 function prettyName(s: string): string {
-  // "SERRANO, FLORIAN" → "Florian Serrano"
-  // "AIRIAU, CEDRICK" → "Cedrick Airiau"
-  // "JEAN-MARIE, ANNE" → "Anne Jean-Marie"
-  // Falls back gracefully if no comma is present.
   const idx = s.indexOf(',');
   if (idx === -1) {
     return titleCasePart(s);
@@ -526,7 +520,6 @@ function prettyName(s: string): string {
 }
 
 function searchHaystack(s: string): string {
-  // Build a haystack that lets users match "Prénom", "Nom", "Prénom Nom" or "Nom Prénom".
   const pretty = prettyName(s);
   const idx = s.indexOf(',');
   let reversed = '';
@@ -557,16 +550,14 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 50);
   }, [name]);
-  // Group by weekLabel
+  
   const byWeek = useMemo(() => {
     const m = new Map<string, PlanningRecord[]>();
     for (const r of records) {
       if (!m.has(r.weekLabel)) m.set(r.weekLabel, []);
       m.get(r.weekLabel)!.push(r);
     }
-    // sort within each week by date
     for (const [, arr] of m) arr.sort((a, b) => a.date.localeCompare(b.date));
-    // sort weeks by first date
     return Array.from(m.entries()).sort((a, b) => a[1][0].date.localeCompare(b[1][0].date));
   }, [records]);
 
@@ -754,7 +745,7 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
   );
 }
 
-/* ---------- Scene detail (used from EmployeeDetail when tapping a day card) ---------- */
+/* ---------- Scene detail ---------- */
 
 function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
   scene: string; date: string; team: PlanningRecord[]; onBack: () => void; onViewEmployee: (employee: string) => void;
@@ -813,7 +804,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
   );
 }
 
-/* ---------- Sticky daily date bar (rendered inside tabs-block) ---------- */
+/* ---------- Sticky daily date bar ---------- */
 function DailyDateBar({ records, date, onDateChange }: {
   records: PlanningRecord[]; date: string; onDateChange: (d: string) => void;
 }) {
@@ -844,13 +835,9 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
   const [openScene, setOpenScene] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
 
-  // Reset opened scene when date changes
   useEffect(() => {
     setOpenScene(null);
   }, [date]);
-
-  // Keep parent in charge of date normalization
-  void onDateChange;
 
   const present = useMemo(() => {
     const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
@@ -858,7 +845,6 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
     const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
 
     const dayAssoc = getFOAssociations(dayRecs);
-    
     const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
     
     for (const fo of activeFOs) {
@@ -948,7 +934,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
           </div>
 
           <div className="section-h" style={{ marginTop: 6 }}>
-            <div className="section-title">Scènes le {formatDateLong(date)}</div>
+            <div className="section-title">Département SFX — {formatDateLong(date)}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
                 type="button"
@@ -958,7 +944,7 @@ function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]
                 onClick={() => setShowExport(true)}
               >
                 <IconDownload />
-                <span>Export PDF</span>
+                <span>Export PDF Cartes</span>
               </button>
               <div className="section-count" data-testid="text-count-daily">{present.length}</div>
             </div>
@@ -1081,7 +1067,7 @@ function DatePicker({ dates, date, records, onChange }: {
   );
 }
 
-/* ---------- Tech Finder (compact, in tabs block) ---------- */
+/* ---------- Tech Finder ---------- */
 function TechFinder({ records, activeDate }: { records: PlanningRecord[]; activeDate: string }) {
   const [query, setQuery] = useState('');
 
@@ -1215,29 +1201,16 @@ function IconDownload() {
   );
 }
 
+/* MODIFIÉ : Simplifié pour forcer l'export au format journée aérée */
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
-  const scenes = useMemo(() => listScenes(records), [records]);
-  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const [busy, setBusy] = useState(false);
-  const handleExport = async () => {
+
+  const handleExportSingleDay = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      if (mode === 'day') {
-        await exportDayPdf(date, records);
-      } else if (mode === 'scene' && selectedScene) {
-        await exportScenePdf(selectedScene, records);
-      } else if (mode === 'global') {
-        await exportGlobalRecapPdf(records);
-      }
+      // Déclenche l'export propre de la journée sélectionnée (génère des cartes claires)
+      await exportDayPdf(date, records);
       onClose();
     } catch (e) {
       console.error('PDF export failed', e);
@@ -1249,62 +1222,31 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
       <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="export-head">
-          <div className="export-title">Exporter en PDF</div>
+          <div className="export-title">Exporter le planning quotidien</div>
           <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
         </div>
-        <div className="export-body">
+        <div className="export-body" style={{ padding: '16px 0' }}>
+          <p style={{ margin: '0 0 16px 0', fontSize: '14px', opacity: 0.85 }}>
+            Vous allez générer un document PDF contenant uniquement les cartes des équipes prévues pour cette date.
+          </p>
           <button
             type="button"
-            className={'export-opt' + (mode === 'day' ? ' on' : '')}
-            aria-pressed={mode === 'day'}
-            onClick={() => setMode('day')}
-            data-testid="export-mode-day"
+            className="export-opt on"
+            onClick={handleExportSingleDay}
           >
-            <span className="export-opt-title">Journée sélectionnée</span>
-            <span className="export-opt-sub">{formatDateLong(date)} · toutes les scènes</span>
+            <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
+            <span className="export-opt-sub">Format cartes par scènes / équipes (très lisible)</span>
           </button>
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
-            aria-pressed={mode === 'scene'}
-            onClick={() => setMode('scene')}
-            data-testid="export-mode-scene"
-          >
-            <span className="export-opt-title">Scène sur période</span>
-            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
-          </button>
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'global' ? ' on' : '')}
-            aria-pressed={mode === 'global'}
-            onClick={() => setMode('global')}
-            data-testid="export-mode-global"
-          >
-            <span className="export-opt-title">Rapport Roster Hebdomadaire (Tableau)</span>
-            <span className="export-opt-sub">Grille tabulaire couleur ultra-lisible (1 page par semaine), aucun technicien masqué</span>
-          </button>
-          {mode === 'scene' && (
-            <select
-              className="export-scene-select"
-              value={selectedScene}
-              onChange={(e) => setSelectedScene(e.target.value)}
-              data-testid="export-scene-select"
-              aria-label="Sélectionner la scène"
-            >
-              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
         </div>
         <div className="export-foot">
           <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
           <button
             type="button"
             className="btn"
-            data-testid="btn-export-confirm"
-            disabled={busy || (mode === 'scene' && !selectedScene)}
-            onClick={handleExport}
+            disabled={busy}
+            onClick={handleExportSingleDay}
           >
-            {busy ? 'Génération…' : 'Exporter'}
+            {busy ? 'Génération…' : 'Générer le PDF'}
           </button>
         </div>
       </div>
