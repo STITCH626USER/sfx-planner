@@ -272,7 +272,7 @@ export default function App() {
         </div>
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
-          Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG
+          Données traitées localement. Pas à l'abri d'erreurs, se reporter au planning UKG &nbsp;·&nbsp; <span style={{opacity: 0.45, fontSize: '10px'}}>v3.0</span>
         </footer>
       </main>
     </div>
