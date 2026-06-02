@@ -62,6 +62,42 @@
 
   color-scheme: dark;
 }
+/* ── Light mode CSS variable overrides ─────────────────────────── */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg-0:        #f5f2ed;
+  --bg-1:        rgba(255, 255, 255, 0.88);
+  --bg-2:        rgba(244, 240, 232, 0.92);
+  --bg-3:        rgba(232, 226, 214, 0.96);
+  --bg-soft:     rgba(250, 247, 240, 0.8);
+  --line:        rgba(40, 28, 16, 0.09);
+  --line-strong: rgba(40, 28, 16, 0.18);
+  --shadow-card: 0 4px 20px rgba(90,75,60,0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+  --shadow-soft: 0 2px 10px rgba(90,75,60,0.05);
+  --fg:          #1e1408;
+  --fg-muted:    #6b5a48;
+  --fg-dim:      #9e8e7e;
+  --group-bg:    rgba(255,255,255,0.9);
+  --subtle-row-line: rgba(40,28,16,0.05);
+  --page-glow-amber: rgba(214,104,10,0.07);
+  --page-glow-teal:  rgba(0,143,123,0.05);
+  --logo-bg:     linear-gradient(135deg,#fff4e0,#f5e4c8);
+  --logo-inset:  rgba(214,104,10,0.12);
+  --logo-shadow: rgba(90,75,60,0.25);
+  --amber:       #c85c00;
+  --amber-2:     #a34800;
+  --teal:        #00897a;
+  --teal-2:      #006d62;
+  --rose:        #d94050;
+  --violet:      #7c5bd4;
+  --blue:        #2a7abf;
+  --off-bg:      rgba(40,28,16,0.07);
+  --off-fg:      #6b5a48;
+  --on-bg:       #c85c00;
+  --on-fg:       #ffffff;
+  --on-line:     rgba(200,92,0,0.35);
+}
+
 
 * {
   box-sizing: border-box;

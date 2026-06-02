@@ -11,7 +11,7 @@ const VIOLET:  [number,number,number] = [108, 92,  231];
 const WHITE:   [number,number,number] = [255, 255, 255];
 const INK:     [number,number,number] = [22,  28,  46];
 const MUTED:   [number,number,number] = [100, 110, 130];
-const DIVIDER: [number,number,number] = [220, 225, 235];
+// const DIVIDER: [number,number,number] = [220, 225, 235];
 
 const MONTH_FR: Record<string,string> = {
   '01':'janv.','02':'févr.','03':'mars','04':'avril','05':'mai',
@@ -87,7 +87,7 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   doc.setFillColor(...TEAL); doc.rect(pageW-marginX-3, y+2, 0.5, h-4, 'F');
   // Logo
   let tx = marginX + 5;
-  if (logo) { try { const r=2; const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'JPEG',lx,ly,ls,ls); tx=lx+ls+4; } catch {} }
+  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'JPEG',lx,ly,ls,ls); tx=lx+ls+4; } catch {} }
   // Title
   doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...WHITE);
   doc.text(cleanText(title), tx, y+8.5);
@@ -219,7 +219,7 @@ function chooseLayout(items:number, rows:number): Layout {
 
 /* ─── Multi-column card layout engine ─── */
 function layoutCards(doc: jsPDF, blocks: Array<{header:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>,
-  startY: number, marginX: number, pageW: number, pageH: number, cols: number, rowH: number, gap: number, logo: string|null,
+  startY: number, marginX: number, pageW: number, pageH: number, cols: number, rowH: number, _gap: number, logo: string|null,
   headerTitle: string, headerSub: string): void {
   const bottom = pageH - 14;
   const gutter = 5;
@@ -278,7 +278,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 12;
-  const ROW_H = 6.0; const COLS = 3; const GUTTER = 5;
+  const ROW_H = 6.0; const COLS = 3;
 
   let currentY = drawPremiumHeader(doc, pageW, marginX, 10, 'Vue globale du jour', fmtDate(date), logo, 'DÉPARTEMENT SFX');
 
