@@ -46,7 +46,6 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 export default function App() {
   const [tab, setTab] = useState<Tab>('daily');
   
-  // FIX: Détection automatique du mode clair/sombre
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -66,14 +65,12 @@ export default function App() {
 
   const activeDate = tab === 'daily' ? dailyDate : '';
 
-  // FIX: Application du thème
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
   }, [theme]);
 
-  // FIX: Écoute des changements de thème du téléphone
   useEffect(() => {
     if (!window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -166,7 +163,7 @@ export default function App() {
           <div className="smoke-cloud smoke-cloud-2" />
           <div className="smoke-cloud smoke-cloud-3" />
         </div>
-        <FireworksCanvas triggerCount={fireworkTrigger} />
+        <FireworksCanvas triggerCount="{fireworkTrigger}"/>
         <div className="empty-landing-card">
           <header className="landing-header">
             <button
@@ -177,17 +174,13 @@ export default function App() {
               data-testid="btn-theme-toggle"
               onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
             >
-              <Logo />
+              <Logo/>
             </button>
             <h1 className="landing-title">SFX Planner</h1>
           </header>
           
           <div className="landing-uploader-wrap">
-            <Uploader
-              loading={loading}
-              drag={drag}
-              compact={false}
-              onPick={() => fileRef.current?.click()}
+            <Uploader compact="{false}" drag="{drag}" loading="{loading}" onPick="{()"> fileRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
               onDragLeave={() => setDrag(false)}
               onDrop={onDrop}
@@ -214,7 +207,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
+                Contrôle obligatoire sur UKG personnel. Données traitées localement.
               </span>
             </div>
           </div>
@@ -230,7 +223,7 @@ export default function App() {
         <div className="smoke-cloud smoke-cloud-2" />
         <div className="smoke-cloud smoke-cloud-3" />
       </div>
-      <FireworksCanvas triggerCount={fireworkTrigger} />
+      <FireworksCanvas triggerCount="{fireworkTrigger}"/>
       <aside className="app-sidebar">
         <header className="app-header">
           <button
@@ -241,17 +234,14 @@ export default function App() {
             data-testid="btn-theme-toggle"
             onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
           >
-            <Logo />
+            <Logo/>
           </button>
           <div style={{ minWidth: 0 }}>
             <div className="app-title">SFX Planner</div>
           </div>
         </header>
 
-        <Uploader
-          loading={loading}
-          drag={drag}
-          compact={records.length > 0}
+        <Uploader compact="{records.length" drag="{drag}" loading="{loading}"> 0}
           onPick={() => fileRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
           onDragLeave={() => setDrag(false)}
@@ -294,7 +284,7 @@ export default function App() {
               aria-label="Planning individuel"
               onClick={() => setTab('recherche')}
             >
-              <IconSearch />
+              <IconSearch/>
               <span className="tab-label-full">Planning individuel</span>
               <span className="tab-label-short">Planning indiv.</span>
             </button>
@@ -304,7 +294,7 @@ export default function App() {
               data-testid="tab-daily"
               onClick={() => setTab('daily')}
             >
-              <IconCalendar />
+              <IconCalendar/>
               <span className="tab-label-full">Vue globale</span>
               <span className="tab-label-short">Vue globale</span>
             </button>
@@ -312,7 +302,7 @@ export default function App() {
         </div>
 
         {records.length > 0 && activeDate && (
-          <TechFinder records={records} activeDate={activeDate} />
+          <TechFinder activeDate="{activeDate}" records="{records}"/>
         )}
       </aside>
 
@@ -338,21 +328,17 @@ export default function App() {
 
         {records.length > 0 && tab === 'daily' && (
           <div className="main-date-bar" style={{ marginBottom: 16 }}>
-            <DailyDateBar
-              records={records}
-              date={dailyDate}
-              onDateChange={setDailyDate}
-            />
+            <DailyDateBar date="{dailyDate}" onDateChange="{setDailyDate}" records="{records}"/>
           </div>
         )}
 
         <div className="main-content-panel">
           {records.length === 0 ? (
-            <EmptyAllPanel />
+            <EmptyAllPanel/>
           ) : tab === 'recherche' ? (
-            <RecherchePanel records={records} />
+            <RecherchePanel records="{records}"/>
           ) : (
-            <DailyPanel records={records} date={dailyDate} onDateChange={setDailyDate} />
+            <DailyPanel date="{dailyDate}" onDateChange="{setDailyDate}" records="{records}"/>
           )}
         </div>
 
@@ -364,7 +350,7 @@ export default function App() {
           <div className="footer-warning-card">
             <span className="warning-text">
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
+              Contrôle obligatoire sur UKG personnel. Données traitées localement.
             </span>
           </div>
         </footer>
@@ -445,9 +431,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
 
   if (selected) {
     return (
-      <EmployeeDetail
-        name={selected}
-        records={records.filter(r => r.employee === selected)}
+      <EmployeeDetail name="{selected}" records="{records.filter(r"> r.employee === selected)}
         allRecords={records}
         onBack={() => setSelected(null)}
       />
@@ -457,7 +441,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   return (
     <div data-testid="panel-recherche">
       <div className="search-wrap" style={{ marginBottom: 12 }}>
-        <span className="search-icon"><IconSearch /></span>
+        <span className="search-icon"><IconSearch/></span>
         <input
           type="search"
           inputMode="search"
@@ -478,7 +462,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
 
       {filtered.length === 0 ? (
         <div className="empty" data-testid="empty-search">
-          <div className="empty-icon"><IconSearch /></div>
+          <div className="empty-icon"><IconSearch/></div>
           <div className="empty-title">Aucun résultat</div>
           <div className="empty-sub">Vérifiez l'orthographe ou essayez une partie du nom.</div>
         </div>
@@ -498,7 +482,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
                   {countWeeks(records, name)} semaine(s) · {countActiveDays(records, name)} jour(s) actif(s)
                 </div>
               </div>
-              <span className="row-arrow"><IconChevron /></span>
+              <span className="row-arrow"><IconChevron/></span>
             </button>
           ))}
         </div>
@@ -573,794 +557,4 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
     return Array.from(m.entries()).sort((a, b) => a[1][0].date.localeCompare(b[1][0].date));
   }, [records]);
 
-  const active = records.filter(r => r.time !== 'OFF').length;
-  const total = records.length;
-
-  const [openScene, setOpenScene] = useState<{ date: string; scene: string } | null>(null);
-  const [openEmployee, setOpenEmployee] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
-
-  const dayAssocMap = useMemo(() => {
-    if (!allRecords) return new Map<string, string[]>();
-    return computeAllFOAssociations(allRecords);
-  }, [allRecords]);
-
-  const handleExportIndiv = async () => {
-    if (exporting) return;
-    setExporting(true);
-    try {
-      await exportEmployeePdf(name, allRecords ?? records);
-    } catch (e) {
-      console.error('PDF export failed', e);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const teamForOpen = useMemo(() => {
-    if (!openScene || !allRecords) return [];
-    const dayRecs = allRecords.filter(r => r.date === openScene.date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-    const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
-    const dayAssoc = getFOAssociations(dayRecs);
-    
-    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
-    for (const fo of activeFOs) {
-      const assoc = dayAssoc.get(fo.employee) ?? [];
-      result.push({ ...fo, assocScenes: assoc, originalScene: fo.scene });
-      for (const scene of assoc) {
-        result.push({ ...fo, scene, isFOVirtual: true, assocScenes: assoc, originalScene: fo.scene });
-      }
-    }
-    
-    return result
-      .filter(r => r.scene === openScene.scene)
-      .sort((a, b) => prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr'));
-  }, [openScene, allRecords]);
-
-  if (openEmployee && allRecords) {
-    return (
-      <EmployeeDetail
-        name={openEmployee}
-        records={allRecords.filter(r => r.employee === openEmployee)}
-        allRecords={allRecords}
-        onBack={() => setOpenEmployee(null)}
-      />
-    );
-  }
-
-  if (openScene) {
-    return (
-      <SceneDetail
-        scene={openScene.scene}
-        date={openScene.date}
-        team={teamForOpen}
-        onBack={() => setOpenScene(null)}
-        onViewEmployee={(emp) => setOpenEmployee(emp)}
-      />
-    );
-  }
-
-  const canOpenScene = !!allRecords;
-
-  return (
-    <div data-testid="panel-employee">
-      <button className="btn-link" onClick={onBack} data-testid="btn-back-employees">
-        ← Retour
-      </button>
-      <div className="card" style={{ marginTop: 8, marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div className="avatar" style={{ width: 44, height: 44, fontSize: 14 }}>{dayInitials(name)}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 17 }} data-testid="text-employee-name">
-              {prettyName(name)}
-            </div>
-            <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', marginTop: 2 }}>
-              {active}/{total} jours travaillés sur {byWeek.length} semaine(s)
-            </div>
-          </div>
-          <button
-            type="button"
-            className="btn-export"
-            data-testid="btn-export-indiv"
-            aria-label={`Exporter le planning de ${prettyName(name)} en PDF`}
-            title="Exporter en PDF"
-            disabled={exporting || records.length === 0}
-            onClick={handleExportIndiv}
-          >
-            <IconDownload />
-            <span>{exporting ? 'Génération…' : 'Export PDF'}</span>
-          </button>
-        </div>
-      </div>
-
-      {byWeek.map(([weekLabel, weekRecs]) => (
-        <div className="week-block" key={weekLabel} data-testid={`week-${weekLabel}`}>
-          <div className="week-head">
-            <div className="week-name">{weekLabel}</div>
-            <div className="week-range">
-              {weekRecs.filter(r => r.time !== 'OFF').length}/7 jours
-            </div>
-          </div>
-          {weekRecs.map(rec => {
-            const key = getFOAssociationKey(rec.date, rec.employee);
-            const assoc = dayAssocMap.get(key) ?? [];
-            return (
-              <DayCard
-                key={rec.date}
-                rec={rec}
-                assocScenes={assoc}
-                onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
-              />
-            );
-          })}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assocScenes?: string[]; onOpenScene?: () => void }) {
-  const isOff = rec.time === 'OFF';
-  const dayPart = rec.date.split('-')[2];
-  const interactive = !isOff && !!onOpenScene && !!rec.scene;
-  const handleClick = () => { if (interactive) onOpenScene!(); };
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (!interactive) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onOpenScene!();
-    }
-  };
-  return (
-    <div
-      className="day-card"
-      data-off={isOff ? 'true' : 'false'}
-      data-interactive={interactive ? 'true' : 'false'}
-      data-testid={`day-${rec.date}`}
-      role={interactive ? 'button' : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      aria-label={interactive ? `Voir l'équipe de ${rec.scene} le ${formatDateLong(rec.date)}` : undefined}
-      onClick={interactive ? handleClick : undefined}
-      onKeyDown={interactive ? handleKey : undefined}
-      style={interactive ? { cursor: 'pointer' } : undefined}
-    >
-      <div className="day-tag">
-        <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
-        <span className="n">{dayPart}</span>
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div
-          className={'day-scene' + (isOff ? ' off' : '')}
-          data-testid={`scene-${rec.date}`}
-          style={!isOff ? { borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' } : undefined}
-        >
-          {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
-        </div>
-        {assocScenes && assocScenes.length > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 500, marginTop: 2 }}>
-            Associé à : {assocScenes.join(', ')}
-          </div>
-        )}
-        <div className="row-meta" style={{ marginTop: 2 }}>
-          {formatDateLong(rec.date)}
-        </div>
-      </div>
-      <span
-        className={timePillClass(rec.time, rec.scene, isTrainingScene(rec.scene))}
-        data-testid={`time-${rec.date}`}
-        aria-hidden={interactive ? 'true' : undefined}
-      >
-        {isOff ? 'OFF' : rec.time}
-      </span>
-    </div>
-  );
-}
-
-function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
-  scene: string; date: string; team: PlanningRecord[]; onBack: () => void; onViewEmployee: (employee: string) => void;
-}) {
-  return (
-    <div data-testid="panel-scene-detail">
-      <button className="btn-link" onClick={onBack} data-testid="btn-back-scenes">← Retour</button>
-      <div className="card" style={{ marginTop: 8, marginBottom: 16 }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 17, overflowWrap: 'anywhere' }}
-             data-testid="text-scene-name">
-          {scene}
-        </div>
-        <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', marginTop: 2 }}>
-          {formatDateLong(date)} · {team.length} technicien(s)
-        </div>
-      </div>
-
-      {team.length === 0 ? (
-        <div className="empty"><div className="empty-title">Personne sur cette scène ce jour.</div></div>
-      ) : (
-        <div className="list" data-testid="list-team">
-          {team.map(rec => {
-            const isFOVirtual = (rec as any).isFOVirtual;
-            const assocScenes = (rec as any).assocScenes;
-            const originalScene = (rec as any).originalScene;
-            const isFO = isTrainingScene(rec.scene) || isFOVirtual;
-            return (
-              <div className="team-row" key={rec.employee} data-testid={`team-${rec.employee}`}>
-                <div className="avatar" aria-hidden>{dayInitials(rec.employee)}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div className="team-name">
-                    {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
-                  </div>
-                  <div className="team-meta">
-                    {rec.weekLabel}
-                    {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · Associé à : ${assocScenes.join(', ')}`}
-                    {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
-                  </div>
-                </div>
-                <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
-                <button
-                  type="button"
-                  className="btn-eye"
-                  aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
-                  data-testid={`btn-view-employee-${rec.employee}`}
-                  onClick={() => onViewEmployee(rec.employee)}
-                >
-                  <IconEye />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DailyDateBar({ records, date, onDateChange }: {
-  records: PlanningRecord[]; date: string; onDateChange: (d: string) => void;
-}) {
-  const dates = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of records) if (r.date) set.add(r.date);
-    return Array.from(set).sort();
-  }, [records]);
-
-  useEffect(() => {
-    if (dates.length === 0) return;
-    if (!date || !dates.includes(date)) onDateChange(dates[0]);
-  }, [dates, date, onDateChange]);
-
-  if (dates.length === 0) return null;
-
-  return (
-    <div className="daily-date-bar" data-testid="daily-date-bar">
-      <DatePicker dates={dates} date={date} records={records} onChange={onDateChange} />
-    </div>
-  );
-}
-
-function DailyPanel({ records, date, onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
-  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
-  const [openScene, setOpenScene] = useState<string | null>(null);
-  const [showExport, setShowExport] = useState(false);
-
-  useEffect(() => {
-    setOpenScene(null);
-  }, [date]);
-
-  const present = useMemo(() => {
-    const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-    const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
-
-    const dayAssoc = getFOAssociations(dayRecs);
-    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
-    
-    for (const fo of activeFOs) {
-      const assoc = dayAssoc.get(fo.employee) ?? [];
-      result.push({
-        ...fo,
-        assocScenes: assoc,
-        originalScene: fo.scene
-      });
-      
-      for (const scene of assoc) {
-        result.push({
-          ...fo,
-          scene,
-          isFOVirtual: true,
-          assocScenes: assoc,
-          originalScene: fo.scene
-        });
-      }
-    }
-
-    return result.sort((a, b) => {
-      const byScene = a.scene.localeCompare(b.scene, 'fr');
-      if (byScene !== 0) return byScene;
-      return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
-    });
-  }, [records, date]);
-
-  const byScene = useMemo(() => {
-    const groups = new Map<string, Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }>>();
-    for (const rec of present) {
-      if (!groups.has(rec.scene)) groups.set(rec.scene, []);
-      groups.get(rec.scene)!.push(rec);
-    }
-    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr'));
-  }, [present]);
-
-  const uniqueTechs = useMemo(() => {
-    return new Set(present.filter(r => !r.isFOVirtual).map(r => r.employee)).size;
-  }, [present]);
-
-  const activeFOsCount = useMemo(() => {
-    return present.filter(r => isTrainingScene(r.originalScene || r.scene) && !r.isFOVirtual).length;
-  }, [present]);
-
-  const sceneTeam = useMemo(() => {
-    if (!openScene) return [];
-    return present.filter(r => r.scene === openScene);
-  }, [openScene, present]);
-
-  if (selectedEmployee) {
-    return (
-      <EmployeeDetail
-        name={selectedEmployee}
-        records={records.filter(r => r.employee === selectedEmployee)}
-        allRecords={records}
-        onBack={() => setSelectedEmployee(null)}
-      />
-    );
-  }
-
-  return (
-    <div data-testid="panel-daily">
-      {openScene ? (
-        <SceneDetail
-          scene={openScene}
-          date={date}
-          team={sceneTeam}
-          onBack={() => setOpenScene(null)}
-          onViewEmployee={(emp) => setSelectedEmployee(emp)}
-        />
-      ) : (
-        <>
-          <div className="stats-grid" data-testid="stats-grid" style={{ marginBottom: 16 }}>
-            <div className="stat-card">
-              <div className="stat-value">{uniqueTechs}</div>
-              <div className="stat-label">Techniciens actifs</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{byScene.length}</div>
-              <div className="stat-label">Scènes & FO</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{activeFOsCount}</div>
-              <div className="stat-label">En formation (FO)</div>
-            </div>
-          </div>
-
-          <div className="section-h" style={{ marginTop: 6 }}>
-            <div className="section-title">Département SFX — {formatDateLong(date)}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                type="button"
-                className="btn-export"
-                data-testid="btn-export-pdf"
-                aria-label="Exporter en PDF"
-                onClick={() => setShowExport(true)}
-              >
-                <IconDownload />
-                <span>Export PDF Cartes</span>
-              </button>
-              <div className="section-count" data-testid="text-count-daily">{present.length}</div>
-            </div>
-          </div>
-
-          {showExport && (
-            <ExportDialog
-              records={records}
-              date={date}
-              onClose={() => setShowExport(false)}
-            />
-          )}
-
-          {byScene.length === 0 ? (
-            <div className="empty" data-testid="empty-daily">
-              <div className="empty-icon"><IconCalendar /></div>
-              <div className="empty-title">Personne présent ce jour</div>
-              <div className="empty-sub">Aucun technicien avec une scène planifiée sur cette date.</div>
-            </div>
-          ) : (
-            <div className="daily-groups" data-testid="list-daily-scenes">
-              {byScene.map(([scene, sceneRecords], sIndex) => (
-                <section
-                  className="daily-scene-group animate-fade-in"
-                  key={scene}
-                  data-testid={`scene-group-${scene}`}
-                  style={{ animationDelay: `${sIndex * 0.05}s` }}
-                >
-                  <button
-                    type="button"
-                    className="daily-group-head"
-                    data-testid={`scene-card-${scene}`}
-                    onClick={() => setOpenScene(scene)}
-                    style={{ 
-                      width: '100%', 
-                      cursor: 'pointer', 
-                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}30, transparent)`,
-                      borderLeft: `4.5px solid ${getSceneColor(scene).accent}` 
-                    }}
-                  >
-                    <div className="daily-group-scene">{scene}</div>
-                    <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
-                  </button>
-                  <div className="compact-list" data-testid={`scene-team-${scene}`}>
-                    {sceneRecords.map(rec => {
-                      const isFOVirtual = (rec as any).isFOVirtual;
-                      const assocScenes = (rec as any).assocScenes;
-                      const originalScene = (rec as any).originalScene;
-                      const isFO = isTrainingScene(rec.scene) || isFOVirtual;
-                      return (
-                        <div
-                          className="compact-team-row"
-                          key={`${rec.employee}-${rec.date}`}
-                          data-testid={`scene-tech-${scene}-${rec.employee}`}
-                        >
-                          <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
-                          <div style={{ minWidth: 0 }}>
-                            <div className="team-name compact-name">
-                              {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
-                            </div>
-                            <div className="team-meta compact-meta">
-                              {rec.weekLabel}
-                              {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · ${assocScenes.join(', ')}`}
-                              {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
-                            </div>
-                          </div>
-                          <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
-                          <button
-                            type="button"
-                            className="btn-eye compact-eye"
-                            data-testid={`btn-view-tech-${rec.employee}`}
-                            onClick={() => setSelectedEmployee(rec.employee)}
-                          >
-                            <IconEye />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-function DatePicker({ dates, date, records, onChange }: {
-  dates: string[]; date: string; records: PlanningRecord[]; onChange: (date: string) => void;
-}) {
-  return (
-    <div className="date-row" role="tablist" data-testid="date-row">
-      {dates.map(d => {
-        const sel = d === date;
-        const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-        const dn = m ? m[3] : d;
-        const mo = m ? (MONTH_FR[m[2]] ?? m[2]) : '';
-        const day = records.find(r => r.date === d)?.day ?? '';
-        return (
-          <button
-            key={d}
-            role="tab"
-            aria-selected={sel}
-            className="date-pill"
-            data-testid={`date-pill-${d}`}
-            onClick={() => onChange(d)}
-          >
-            <span className="dpd">{DAY_FR_SHORT[day] ?? ''}</span>
-            <span className="dpn">{dn}</span>
-            <span className="dpm">{mo}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function TechFinder({ records, activeDate }: { records: PlanningRecord[]; activeDate: string }) {
-  const [query, setQuery] = useState('');
-
-  const result = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return null;
-    if (!activeDate) {
-      return { kind: 'no-date' as const };
-    }
-    const tokens = q.split(/\s+/).filter(Boolean);
-    const dayAllRecs = records.filter(r => r.date === activeDate && r.time !== 'OFF');
-    const dayAssoc = getFOAssociations(dayAllRecs);
-    const dayRecs = dayAllRecs
-      .filter(r => tokens.every(t => searchHaystack(r.employee).includes(t)))
-      .map(r => ({
-        ...r,
-        assocScenes: dayAssoc.get(r.employee)
-      }));
-    if (dayRecs.length === 0) {
-      return { kind: 'off' as const };
-    }
-    return { kind: 'found' as const, recs: dayRecs };
-  }, [query, activeDate, records]);
-
-  return (
-    <div className="tech-finder" data-testid="tech-finder">
-      <div className="tech-finder-input-wrap">
-        <span className="tech-finder-icon" aria-hidden><IconSearch /></span>
-        <input
-          type="search"
-          inputMode="search"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Vérifier un technicien…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          data-testid="input-tech-finder"
-        />
-        {query && (
-          <button
-            type="button"
-            className="tech-finder-clear"
-            data-testid="btn-tech-finder-clear"
-            onClick={() => setQuery('')}
-          >×</button>
-        )}
-      </div>
-      {result && (
-        <div className="tech-finder-result" data-testid="tech-finder-result">
-          {result.kind === 'no-date' ? (
-            <div className="tf-status-card tf-card-info">
-              <span className="tf-status-icon"><IconCalendar /></span>
-              <span className="tf-status-text">
-                Choisissez une date dans Vue globale.
-              </span>
-            </div>
-          ) : result.kind === 'off' ? (
-            <div className="tf-status-card tf-card-off" data-testid="tf-off">
-              <span className="tf-status-icon"><IconMoon /></span>
-              <span className="tf-status-text">la personne est OFF</span>
-            </div>
-          ) : (
-            <div className="tf-found-list">
-              {result.recs.map(rec => {
-                const isFO = isTrainingScene(rec.scene);
-                const assocScenes = (rec as any).assocScenes;
-                return (
-                  <div className="tf-found-row" key={`${rec.employee}-${rec.date}`} data-testid={`tf-found-${rec.employee}`}>
-                    <span className="tf-name">
-                      {isFO ? `🎓 ` : ''}{prettyName(rec.employee)}
-                    </span>
-                    <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
-                    <span className="tf-scene" title={rec.scene}>
-                      {isFO && assocScenes && assocScenes.length > 0 ? `${rec.scene} (${assocScenes.join(', ')})` : rec.scene}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function EmptyAllPanel() {
-  return <div className="empty" data-testid="empty-root" />;
-}
-
-function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
-  const scenes = useMemo(() => listScenes(records), [records]);
-  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const handleExport = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      if (mode === 'day') {
-        await exportDayPdf(date, records);
-      } else if (mode === 'scene' && selectedScene) {
-        await exportScenePdf(selectedScene, records);
-      } else if (mode === 'global') {
-        await exportGlobalRecapPdf(records);
-      }
-      onClose();
-    } catch (e) {
-      console.error('PDF export failed', e);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
-      <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="export-head">
-          <div className="export-title">Exporter en PDF</div>
-          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
-        </div>
-        <div className="export-body">
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'day' ? ' on' : '')}
-            onClick={() => setMode('day')}
-          >
-            <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
-            <span className="export-opt-sub">Format cartes par scènes / équipes (très lisible)</span>
-          </button>
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
-            onClick={() => setMode('scene')}
-          >
-            <span className="export-opt-title">Scène sur période</span>
-            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
-          </button>
-          {mode === 'scene' && (
-            <select
-              className="export-scene-select"
-              value={selectedScene}
-              onChange={(e) => setSelectedScene(e.target.value)}
-            >
-              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-        </div>
-        <div className="export-foot">
-          <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={busy || (mode === 'scene' && !selectedScene)}
-            onClick={handleExport}
-          >
-            {busy ? 'Génération…' : 'Exporter'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function IconSearch() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m21 21-4.3-4.3" />
-    </svg>
-  );
-}
-function IconCalendar() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M8 2v4M16 2v4M3 10h18" />
-      <rect x="3" y="4" width="18" height="18" rx="3" />
-      <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
-    </svg>
-  );
-}
-function IconChevron() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m9 6 6 6-6 6" />
-    </svg>
-  );
-}
-function IconMoon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-    </svg>
-  );
-}
-function IconDownload() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" />
-    </svg>
-  );
-}
-function IconEye() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-function Logo() {
-  const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
-  return (
-    <img className="logo-img" src={logoSrc} alt="" width="56" height="56" decoding="async" aria-hidden="true" />
-  );
-}
-
-interface FireworkParticle {
-  x: number; y: number; vx: number; vy: number; color: string; alpha: number; decay: number; size: number;
-}
-interface FireworkRocket {
-  x: number; y: number; tx: number; ty: number; vx: number; vy: number; color: string; size: number;
-}
-
-function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const particlesRef = useRef<FireworkParticle[]>([]);
-  const rocketsRef = useRef<FireworkRocket[]>([]);
-  const animationFrameId = useRef<number | null>(null);
-
-  const colors = ['#ff3366', '#ff9933', '#ffff33', '#33ff66', '#33ccff', '#cc33ff', '#ff00aa', '#00ffcc'];
-
-  const spawnExplosion = (x: number, y: number, color?: string) => {
-    const count = 40 + Math.floor(Math.random() * 30);
-    const baseColor = color || colors[Math.floor(Math.random() * colors.length)];
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 1 + Math.random() * 4.5;
-      particlesRef.current.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.5, color: baseColor, alpha: 1, decay: 0.012 + Math.random() * 0.015, size: 1 + Math.random() * 2 });
-    }
-  };
-
-  const spawnRocket = () => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const tx = 100 + Math.random() * (canvas.width - 200); const ty = 80 + Math.random() * (canvas.height * 0.4);
-    const x = tx + (Math.random() - 0.5) * 50; const y = canvas.height;
-    const dy = ty - y; const dx = tx - x; const duration = 40 + Math.random() * 20;
-    rocketsRef.current.push({ x, y, tx, ty, vx: dx / duration, vy: dy / duration, color: colors[Math.floor(Math.random() * colors.length)], size: 2.2 });
-  };
-
-  useEffect(() => {
-    if (triggerCount > 0) {
-      let count = 4 + Math.floor(Math.random() * 3);
-      const interval = setInterval(() => { spawnRocket(); count--; if (count <= 0) clearInterval(interval); }, 150);
-    }
-  }, [triggerCount]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext('2d'); if (!ctx) return;
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    resize(); window.addEventListener('resize', resize);
-
-    const update = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const rockets = rocketsRef.current;
-      for (let i = rockets.length - 1; i >= 0; i--) {
-        const r = rockets[i]; r.x += r.vx; r.y += r.vy;
-        ctx.beginPath(); ctx.arc(r.x, r.y, r.size, 0, Math.PI * 2); ctx.fillStyle = r.color; ctx.shadowColor = r.color; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
-        if (r.vy >= 0 || r.y <= r.ty) { spawnExplosion(r.x, r.y, r.color); rockets.splice(i, 1); }
-      }
-      const particles = particlesRef.current;
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.045; p.vx *= 0.985; p.vy *= 0.985; p.alpha -= p.decay;
-        if (p.alpha <= 0) { particles.splice(i, 1); continue; }
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.shadowColor = p.color; ctx.shadowBlur = 4; ctx.fill(); ctx.shadowBlur = 0; ctx.globalAlpha = 1.0;
-      }
-      animationFrameId.current = requestAnimationFrame(update);
-    };
-    animationFrameId.current = requestAnimationFrame(update);
-    return () => { window.removeEventListener('resize', resize); if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current); };
-  }, []);
-
-  return (
-    <canvas ref={canvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 9999 }} />
-  );
-}
+  const active = records.filter(r => r.tim
