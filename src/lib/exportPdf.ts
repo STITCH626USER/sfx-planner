@@ -442,6 +442,85 @@ export function listScenes(records: PlanningRecord[]): string[] {
   return Array.from(set).sort((a,b)=>a.localeCompare(b,'fr'));
 }
 
+async function generateCompactGlobalPdf(opts: {
+  title: string; subtitle: string; filename: string;
+  days: Array<{
+    date: string;
+    scenes: Array<{
+      name: string;
+      time: string;
+      technicians: string[];
+    }>
+  }>
+}) {
+  const logo = await getLogoDataUrl();
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const C_MARGIN = 15;
+  const bottom = pageH - 15;
+  const cols = 3;
+  const gutter = 10;
+  const colW = (pageW - C_MARGIN*2 - gutter*(cols-1)) / cols;
+
+  let currentY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo) + 5;
+  const startY = currentY;
+  const colYs = new Array(cols).fill(startY);
+  let bestCol = 0;
+
+  for (const day of opts.days) {
+    let dayH = 8.5; // header
+    for (const sc of day.scenes) {
+      dayH += 5.5; // title
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+      const lines = doc.splitTextToSize(sc.technicians.join('  •  '), colW - 6);
+      dayH += lines.length * 3.8 + 2;
+    }
+    dayH += 6; // padding bottom
+
+    bestCol = 0;
+    for (let i=1; i<cols; i++) if (colYs[i] < colYs[bestCol]) bestCol = i;
+
+    if (colYs[bestCol] + dayH > bottom) {
+      drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
+      doc.addPage();
+      const ny = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle + ' (suite)', logo) + 5;
+      colYs.fill(ny);
+      bestCol = 0;
+    }
+
+    const x = C_MARGIN + bestCol*(colW+gutter);
+    let y = colYs[bestCol];
+
+    // Day Header
+    doc.setFillColor(240, 242, 248);
+    doc.roundedRect(x, y, colW, 7, 1, 1, 'F');
+    doc.setFillColor(255, 176, 58); // AMBER
+    doc.roundedRect(x, y, 2, 7, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(20, 30, 50);
+    doc.text(fmtDate(day.date).toUpperCase(), x+4, y+5);
+    y += 8.5;
+
+    // Scenes
+    for (const sc of day.scenes) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(232, 130, 30);
+      doc.text(`■ ${cleanText(sc.name)} ${sc.time ? `(${sc.time})` : ''}`, x+2, y+4);
+      y += 5.5;
+
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(40, 50, 70);
+      const lines = doc.splitTextToSize(sc.technicians.join('  •  '), colW - 6);
+      doc.text(lines, x+4, y+3);
+      y += lines.length * 3.8 + 2;
+    }
+
+    y += 4;
+    colYs[bestCol] = y;
+  }
+
+  drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
+  doc.save(opts.filename);
+}
+
 export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   if (allDates.length===0) return;
@@ -450,7 +529,10 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
   const pEnd = fmtDate(allDates[allDates.length-1]);
   const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
 
-  const blocks: Array<{header: string, rows: Array<{name: string, time: string, isFO?: boolean}>}> = [];
+  const days: Array<{
+    date: string;
+    scenes: Array<{name: string, time: string, technicians: string[]}>
+  }> = [];
 
   for (let i = 0; i < allDates.length; i++) {
     const date = allDates[i];
@@ -458,7 +540,7 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
     const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
     const activeFOs  = dayRecs.filter(r =>  isTrainingScene(r.scene));
     const dayAssoc   = getFOAssociations(dayRecs);
-    const sceneMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+    const sceneMap   = new Map<string, Array<{name:string;time:string}>>();
 
     for (const r of activeRegs) {
       if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
@@ -468,14 +550,14 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
       const assoc = dayAssoc.get(r.employee)??[];
       const gk = r.scene;
       if (!sceneMap.has(gk)) sceneMap.set(gk,[]);
-      sceneMap.get(gk)!.push({name:`${prettyName(r.employee)}${assoc.length>0?` (${assoc.join(', ')})`:''}`  , time:r.time, isFO:true});
+      sceneMap.get(gk)!.push({name:`${prettyName(r.employee)}${assoc.length>0?` (FO)`:''}`, time:r.time});
       for (const sc of assoc) {
         if (!sceneMap.has(sc)) sceneMap.set(sc,[]);
-        sceneMap.get(sc)!.push({name:`${prettyName(r.employee)} (${r.scene||'FO'})`, time:r.time, isFO:true});
+        sceneMap.get(sc)!.push({name:`${prettyName(r.employee)} (FO)`, time:r.time});
       }
     }
 
-    const dayBlocks = Array.from(sceneMap.entries())
+    const scenes = Array.from(sceneMap.entries())
       .sort((a,b) => a[0].localeCompare(b[0],'fr'))
       .map(([scene,rows]) => {
         const counts = new Map<string, number>();
@@ -483,21 +565,25 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
         let bestTime = '', max = 0;
         for (const [t,c] of counts.entries()) if (c > max) { bestTime = t; max = c; }
         
+        const sortedRows = rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+        const technicians = sortedRows.map(r => r.name + (r.time !== bestTime && r.time ? ` [${r.time}]` : ''));
+        
         return {
-          header: `${fmtDateShort(date)} : ${cleanText(scene)}${bestTime ? ` (${bestTime})` : ''}`,
-          rows: rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))
+          name: scene,
+          time: bestTime,
+          technicians
         };
       });
 
-    blocks.push(...dayBlocks);
+    if (scenes.length > 0) {
+      days.push({ date, scenes });
+    }
   }
 
-  await generateAndSave({
+  await generateCompactGlobalPdf({
     title: 'Vue Globale',
-    subtitle: `Toutes scènes confondues - Période : ${period}`,
-    blocks,
-    itemCount: blocks.length,
-    totalRows: blocks.reduce((a,b) => a + Math.max(1, b.rows.length), 0),
-    filename: `sfx-vue-globale.pdf`
+    subtitle: `Période totale : ${period}`,
+    filename: `sfx-vue-globale.pdf`,
+    days
   });
 }
