@@ -5,10 +5,10 @@
 
 :root {
   /* Surface colors (Space-Midnight theme) */
-  --bg-0:        #04060a;                           /* Page background */
-  --bg-1:        rgba(13, 20, 35, 0.45);            /* Card frosted glass base */
-  --bg-2:        rgba(22, 32, 56, 0.65);            /* Elevated menu / dialog */
-  --bg-3:        rgba(35, 50, 85, 0.8);             /* Input / active elements */
+  --bg-0:        #04060a;                            /* Page background */
+  --bg-1:        rgba(13, 20, 35, 0.45);             /* Card frosted glass base */
+  --bg-2:        rgba(22, 32, 56, 0.65);             /* Elevated menu / dialog */
+  --bg-3:        rgba(35, 50, 85, 0.8);              /* Input / active elements */
   --bg-soft:     rgba(9, 13, 24, 0.6);
   --line:        rgba(255, 255, 255, 0.08);          /* Frosted border */
   --line-strong: rgba(255, 255, 255, 0.16);         /* Highlighted border */
@@ -2505,8 +2505,6 @@ nav.seg button[aria-selected="true"] {
   50% { transform: translateX(-80px) scale(0.9); }
 }
 
-
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -2528,28 +2526,53 @@ nav.seg button[aria-selected="true"] {
 .animate-stagger-4 { animation-delay: 0.2s; }
 .animate-stagger-5 { animation-delay: 0.25s; }
 
-/* ============================================================
-   COMPREHENSIVE LIGHT MODE OVERRIDES
-   ============================================================ */
-
-/* Page background */
-:root[data-theme="light"] body {
-  background: #f1f5f9;
+/* CORRECTIF MODE CLAIR : Redéfinition des variables de couleurs */
+:root[data-theme="light"] {
+  --bg-0: #f4f6fa;
+  --bg-1: rgba(255, 255, 255, 0.85);
+  --bg-2: rgba(240, 243, 248, 0.95);
+  --bg-3: #ffffff;
+  --bg-soft: rgba(255, 255, 255, 0.6);
+  --line: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.2);
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --fg-dim: #64748b;
+  --chip-fg: #ffffff;
+  --group-bg: rgba(255, 255, 255, 0.95);
+  --subtle-row-line: rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-soft: 0 2px 8px rgba(0,0,0,0.04);
+  --page-glow-amber: rgba(214, 104, 10, 0.04);
+  --page-glow-teal: rgba(0, 143, 123, 0.03);
+  --on-bg: rgba(214, 104, 10, 0.08);
+  --on-fg: #c2410c;
+  --on-line: rgba(214, 104, 10, 0.2);
+  --form-bg: rgba(108, 77, 224, 0.08);
+  --form-fg: #553bb8;
+  --form-line: rgba(108, 77, 224, 0.18);
+  --off-bg: rgba(0,0,0,0.03);
+  --off-fg: #64748b;
+  --smoke-opacity: 0.015;
+  --smoke-blend: multiply;
+  color-scheme: light;
 }
 
-/* Landing page */
-:root[data-theme="light"] .app-shell-empty-container {
-  background: #f1f5f9;
+/* ---- Light mode component overrides (missing from base) ---- */
+
+:root[data-theme="light"] .app-sidebar {
+  background: rgba(255,255,255,0.92);
+  border-right-color: rgba(0,0,0,0.08);
+  backdrop-filter: blur(20px);
 }
 
-:root[data-theme="light"] .empty-landing-card {
+:root[data-theme="light"] .app-main {
+  background: var(--bg-0);
+}
+
+:root[data-theme="light"] .app-logo {
   background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
-}
-
-:root[data-theme="light"] .empty-landing-card::before {
-  opacity: 0.4;
+  border-color: rgba(0,0,0,0.08);
 }
 
 :root[data-theme="light"] .landing-title {
@@ -2559,101 +2582,26 @@ nav.seg button[aria-selected="true"] {
   color: #0f172a !important;
 }
 
-:root[data-theme="light"] .landing-logo-wrap {
-  background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-:root[data-theme="light"] .landing-logo-wrap:hover {
-  border-color: #f59e0b;
-  box-shadow: 0 8px 24px rgba(245,158,11,0.15);
-}
-
-:root[data-theme="light"] .landing-uploader-wrap .btn {
-  background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 16px rgba(245,158,11,0.3);
-}
-
-/* Sidebar */
-:root[data-theme="light"] .app-sidebar {
-  background: #ffffff;
-  border-right-color: #e2e8f0;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
-}
-
-:root[data-theme="light"] .app-header {
-  border-bottom-color: #e2e8f0;
-}
-
-:root[data-theme="light"] .app-title {
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .app-logo {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-}
-
-/* Segmented control (tabs) */
-:root[data-theme="light"] .seg {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-}
-
-:root[data-theme="light"] .seg button {
-  color: #475569;
-}
-
-:root[data-theme="light"] .seg button[aria-selected="true"] {
-  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(13,148,136,0.3);
-}
-
-/* Main content area */
-:root[data-theme="light"] .app-main {
-  background: #f1f5f9;
-}
-
-:root[data-theme="light"] .main-content-panel {
-  color: #0f172a;
-}
-
-/* Search */
 :root[data-theme="light"] .search-wrap input {
   background: #ffffff;
-  border-color: #e2e8f0;
+  border-color: rgba(0,0,0,0.1);
   color: #0f172a;
-}
-
-:root[data-theme="light"] .search-wrap input::placeholder {
-  color: #94a3b8;
 }
 
 :root[data-theme="light"] .search-wrap input:focus {
-  border-color: #0d9488;
-  box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0, 229, 198, 0.1);
 }
 
-/* Employee list rows */
 :root[data-theme="light"] .row {
   color: #0f172a;
-  border-bottom-color: #f1f5f9;
 }
 
 :root[data-theme="light"] .row:hover {
-  background: #f8fafc;
+  background: rgba(0,0,0,0.03);
 }
 
-:root[data-theme="light"] .avatar {
-  background: linear-gradient(135deg, #f59e0b, #ea580c);
-  color: #ffffff;
-}
-
-/* Section headers */
-:root[data-theme="light"] .section-h {
+:root[data-theme="light"] .list {
   color: #0f172a;
 }
 
@@ -2661,129 +2609,61 @@ nav.seg button[aria-selected="true"] {
   color: #0f172a;
 }
 
-/* Date pills */
-:root[data-theme="light"] .date-pill {
+:root[data-theme="light"] .card {
   background: #ffffff;
-  border-color: #e2e8f0;
-  color: #475569;
-}
-
-:root[data-theme="light"] .date-pill[aria-selected="true"] {
-  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-  box-shadow: 0 2px 8px rgba(13,148,136,0.3);
-}
-
-:root[data-theme="light"] .date-pill:hover:not([aria-selected="true"]) {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-/* Daily scene groups */
-:root[data-theme="light"] .daily-scene-group {
-  background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-:root[data-theme="light"] .daily-scene-group:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-}
-
-:root[data-theme="light"] .daily-group-head {
-  background: #f8fafc;
-  border-bottom-color: #e2e8f0;
-}
-
-:root[data-theme="light"] .daily-group-scene {
+  border-color: rgba(0,0,0,0.08);
   color: #0f172a;
 }
 
-/* Compact team rows */
-:root[data-theme="light"] .compact-team-row {
-  color: #0f172a;
-  border-top-color: #f1f5f9;
-}
-
-:root[data-theme="light"] .compact-team-row:hover {
-  background: #f8fafc;
-}
-
-/* Time pills */
-:root[data-theme="light"] .time-pill {
-  background: rgba(13,148,136,0.08);
-  color: #0d9488;
-  border-color: rgba(13,148,136,0.2);
-  box-shadow: none;
-}
-
-:root[data-theme="light"] .time-pill.off {
-  background: #f1f5f9;
-  color: #94a3b8;
-  border-color: #e2e8f0;
-}
-
-:root[data-theme="light"] .time-pill.formation {
-  background: rgba(139,92,246,0.08);
-  color: #7c3aed;
-  border-color: rgba(139,92,246,0.2);
-}
-
-/* Buttons */
 :root[data-theme="light"] .btn {
-  background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
+  background: linear-gradient(135deg, var(--amber), var(--amber-2)) !important;
   color: #ffffff !important;
   border-color: transparent !important;
-  box-shadow: 0 4px 12px rgba(245,158,11,0.25);
-}
-
-:root[data-theme="light"] .btn:hover {
-  box-shadow: 0 6px 20px rgba(245,158,11,0.35);
-}
-
-:root[data-theme="light"] .btn-sm {
-  box-shadow: 0 2px 8px rgba(245,158,11,0.2);
 }
 
 :root[data-theme="light"] .btn-export {
-  background: #ffffff !important;
-  color: #0d9488 !important;
-  border-color: #e2e8f0 !important;
+  background: rgba(255,255,255,0.8) !important;
+  color: var(--teal) !important;
+  border-color: rgba(0,0,0,0.1) !important;
 }
 
 :root[data-theme="light"] .btn-export:hover {
-  background: rgba(13,148,136,0.06) !important;
-  border-color: #0d9488 !important;
-  box-shadow: 0 4px 12px rgba(13,148,136,0.12);
+  border-color: var(--teal) !important;
+  background: rgba(0, 229, 198, 0.06) !important;
 }
 
 :root[data-theme="light"] .btn-link {
-  color: #0d9488;
+  color: var(--teal);
 }
 
-/* Card */
-:root[data-theme="light"] .card {
+:root[data-theme="light"] .date-pill {
   background: #ffffff;
-  border-color: #e2e8f0;
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.1);
+  color: #475569;
 }
 
-/* Export modal */
+:root[data-theme="light"] .compact-team-row {
+  color: #0f172a;
+  border-top-color: rgba(0,0,0,0.05);
+}
+
+:root[data-theme="light"] .time-pill {
+  box-shadow: none;
+}
+
 :root[data-theme="light"] .export-overlay {
-  background: rgba(15,23,42,0.3);
+  background: rgba(15,23,42,0.25);
 }
 
 :root[data-theme="light"] .export-modal {
   background: #ffffff;
-  border-color: #e2e8f0;
+  border-color: rgba(0,0,0,0.1);
   color: #0f172a;
   box-shadow: 0 16px 48px rgba(0,0,0,0.12);
 }
 
 :root[data-theme="light"] .export-head {
-  border-bottom-color: #e2e8f0;
+  border-bottom-color: rgba(0,0,0,0.08);
 }
 
 :root[data-theme="light"] .export-title {
@@ -2791,27 +2671,27 @@ nav.seg button[aria-selected="true"] {
 }
 
 :root[data-theme="light"] .export-opt {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.1);
   color: #0f172a;
 }
 
 :root[data-theme="light"] .export-opt:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.15);
 }
 
 :root[data-theme="light"] .export-opt.on {
-  background: rgba(245,158,11,0.06);
-  border-color: #f59e0b;
+  background: var(--on-bg);
+  border-color: var(--amber);
 }
 
 :root[data-theme="light"] .export-foot {
-  border-top-color: #e2e8f0;
+  border-top-color: rgba(0,0,0,0.08);
 }
 
-/* Smoke effects — softer in light mode */
 :root[data-theme="light"] .smoke-bg {
   opacity: 0.015;
   mix-blend-mode: multiply;
 }
+
