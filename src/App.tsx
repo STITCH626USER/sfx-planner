@@ -7,6 +7,30 @@ import { getFOAssociations, isTrainingScene, getSceneColor } from './lib/utils';
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
 
+const MONTH_FR: Record<string, string> = {
+  '01': 'janv.', '02': 'févr.', '03': 'mars', '04': 'avril', '05': 'mai',
+  '06': 'juin', '07': 'juil.', '08': 'août', '09': 'sept.', '10': 'oct.', '11': 'nov.', '12': 'déc.',
+};
+
+function formatDateLong(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
+}
+
+function dayInitials(name: string): string {
+  const parts = name.replace(/[(*)]/g, '').split(/[, ]+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function timePillClass(time: string, scene: string, isFO?: boolean): string {
+  if (time === 'OFF') return 'time-pill off';
+  if (isFO || isTrainingScene(scene)) return 'time-pill formation';
+  return 'time-pill';
+}
+
 export default function App() {
   const [tab, setTab] = useState<Tab>('daily');
   const [theme, setTheme] = useState<Theme>(() => {
@@ -26,6 +50,7 @@ export default function App() {
     document.documentElement.className = theme;
     document.body.className = theme;
     
+    // Forçage de la couleur de fond globale pour contourner l'index.css fixe
     if (theme === 'light') {
       document.body.style.backgroundColor = '#f1f5f9';
       document.body.style.color = '#0f172a';
@@ -48,9 +73,7 @@ export default function App() {
       setRecords(prev => [...prev, ...newRecs]);
     } catch {
       console.error('Erreur');
-    } finally {
-      setLoading(false);
-    }
+    } resolve: { setLoading(false); }
   }, []);
 
   if (records.length === 0) {
@@ -62,7 +85,7 @@ export default function App() {
             <h1 className="landing-title">SFX Planner</h1>
           </header>
           <div className="landing-uploader-wrap">
-            <button className="btn" onClick={() => fileRef.current?.click()} disabled={loading}>
+            <button type="button" className="btn" onClick={() => fileRef.current?.click()} disabled={loading}>
               {loading ? 'Lecture...' : 'Importer PDF Chronos'}
             </button>
           </div>
@@ -79,10 +102,14 @@ export default function App() {
           <button type="button" className="app-logo" onClick={() => setTheme(c => c === 'dark' ? 'light' : 'dark')}><Logo /></button>
           <div style={{ minWidth: 0 }}><div className="app-title">SFX Planner</div></div>
         </header>
+        <div style={{ padding: '12px', width: '100%' }}>
+          <button type="button" className="btn btn-sm" onClick={() => fileRef.current?.click()} style={{ width: '100%' }}>Ajouter PDF</button>
+        </div>
+        <input ref={fileRef} type="file" accept=".pdf,application/pdf" multiple style={{ display: 'none' }} onChange={(e) => e.target.files && handleFiles(e.target.files)} />
         <div className="sidebar-nav-block">
-          <nav className="seg">
-            <button aria-selected={tab === 'recherche'} onClick={() => setTab('recherche')}><span className="tab-label-full">Planning individuel</span></button>
-            <button aria-selected={tab === 'daily'} onClick={() => setTab('daily')}><span className="tab-label-full">Vue globale</span></button>
+          <nav className="seg" role="tablist">
+            <button type="button" role="tab" aria-selected={tab === 'recherche'} onClick={() => setTab('recherche')}><span className="tab-label-full">Planning individuel</span></button>
+            <button type="button" role="tab" aria-selected={tab === 'daily'} onClick={() => setTab('daily')}><span className="tab-label-full">Vue globale</span></button>
           </nav>
         </div>
       </aside>
@@ -100,27 +127,27 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const employees = useMemo(() => Array.from(new Set(records.map(r => r.employee))).sort(), [records]);
-  const filtered = useMemo(() => employees.filter(n => n.toLowerCase().includes(query.toLowerCase())), [employees, query]);
+  const filtered = useMemo(() => employees.filter(n => n.toLowerCase().includes(query.trim().toLowerCase())), [employees, query]);
 
   if (selected) return <EmployeeDetail name={selected} onBack={() => setSelected(null)} />;
   return (
     <div>
       <div className="search-wrap" style={{ marginBottom: 12 }}><input type="search" placeholder="Rechercher un technicien…" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
       <div className="list">
-        {filtered.map(name => <button key={name} className="row" onClick={() => setSelected(name)}><div className="avatar">{dayInitials(name)}</div><div>{name}</div></button>)}
+        {filtered.map(name => <button key={name} className="row" onClick={() => setSelected(name)}><div className="avatar">{dayInitials(name)}</div><div>{prettyName(name)}</div></button>)}
       </div>
     </div>
   );
 }
 
 function EmployeeDetail({ name, onBack }: { name: string; onBack: () => void }) {
-  return <div><button className="btn-link" onClick={onBack}>← Retour</button><div className="card" style={{ marginTop: 8 }}>{name}</div></div>;
+  return <div><button type="button" className="btn-link" onClick={onBack}>← Retour</button><div className="card" style={{ marginTop: 8 }}>{prettyName(name)}</div></div>;
 }
 
 function DailyDateBar({ records, date, onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const dates = useMemo(() => Array.from(new Set(records.map(r => r.date))).sort(), [records]);
   useEffect(() => { if (dates.length > 0 && !dates.includes(date)) onDateChange(dates[0]); }, [dates, date, onDateChange]);
-  return <div className="date-row">{dates.map(d => <button key={d} aria-selected={d === date} className="date-pill" onClick={() => onDateChange(d)}><span className="dpn">{d.split('-')[2]}</span></button>)}</div>;
+  return <div className="date-row">{dates.map(d => <button key={d} type="button" className="date-pill" aria-selected={d === date} onClick={() => onDateChange(d)}><span className="dpn">{d.split('-')[2]}</span></button>)}</div>;
 }
 
 function DailyPanel({ records, date }: { records: PlanningRecord[]; date: string }) {
@@ -159,7 +186,7 @@ function DailyPanel({ records, date }: { records: PlanningRecord[]; date: string
             <div className="compact-list">
               {sceneRecords.map((rec: any, idx: number) => (
                 <div className="compact-team-row" key={`${rec.employee}-${idx}`}>
-                  <div>{rec.isFOVirtual ? `🎓 ` : ''}{rec.employee}</div>
+                  <div>{rec.isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}</div>
                   <span className={timePillClass(rec.time, rec.scene)}>{rec.time}</span>
                 </div>
               ))}
@@ -206,3 +233,11 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
 }
 
 function Logo() { return <img className="logo-img" src={`${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`} alt="" width="56" height="56" />; }
+function titleCaseWord(w: string): string { if (!w) return w; return w.split(/([-'])/).map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(''); }
+function titleCasePart(s: string): string { return s.trim().split(/\s+/).map(titleCaseWord).join(' '); }
+function prettyName(s: string): string {
+  const idx = s.indexOf(','); if (idx === -1) return titleCasePart(s);
+  const last = titleCasePart(s.slice(0, idx)); const first = titleCasePart(s.slice(idx + 1));
+  return first ? `${first} ${last}` : last;
+}
+function searchHaystack(s: string): string { const pretty = prettyName(s); const idx = s.indexOf(','); const reversed = idx !== -1 ? `${s.slice(idx + 1).trim()} ${s.slice(0, idx).trim()}` : ''; return `${s} ${pretty} ${reversed}`.toLowerCase(); }
