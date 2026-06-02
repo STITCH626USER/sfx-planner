@@ -446,18 +446,11 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   if (allDates.length===0) return;
 
-  const logo = await getLogoDataUrl();
-  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const APPROX_HEADER = 37;
-  const rowH = C_ROW_H;
-
   const pStart = fmtDate(allDates[0]);
   const pEnd = fmtDate(allDates[allDates.length-1]);
   const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
 
-  let pageCount = 0;
+  const blocks: Array<{header: string, rows: Array<{name: string, time: string, isFO?: boolean}>}> = [];
 
   for (let i = 0; i < allDates.length; i++) {
     const date = allDates[i];
@@ -482,7 +475,7 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
       }
     }
 
-    const blocks = Array.from(sceneMap.entries())
+    const dayBlocks = Array.from(sceneMap.entries())
       .sort((a,b) => a[0].localeCompare(b[0],'fr'))
       .map(([scene,rows]) => {
         const counts = new Map<string, number>();
@@ -491,26 +484,20 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
         for (const [t,c] of counts.entries()) if (c > max) { bestTime = t; max = c; }
         
         return {
-          header: `${cleanText(scene)}${bestTime ? ` (${bestTime})` : ''}`,
+          header: `${fmtDateShort(date)} : ${cleanText(scene)}${bestTime ? ` (${bestTime})` : ''}`,
           rows: rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))
         };
       });
 
-    if (blocks.length === 0) continue;
-
-    if (pageCount > 0) doc.addPage();
-    pageCount++;
-
-    const title = `Vue Globale — ${fmtDate(date)}`;
-    const subtitle = `Période totale : ${period}`;
-
-    const cols = findBestCols(blocks, pageW, pageH, APPROX_HEADER, rowH);
-    const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, title, subtitle, logo);
-    layoutCards(doc, blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, title, subtitle);
-    drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
+    blocks.push(...dayBlocks);
   }
 
-  if (pageCount > 0) {
-    doc.save(`sfx-vue-globale.pdf`);
-  }
+  await generateAndSave({
+    title: 'Vue Globale',
+    subtitle: `Toutes scènes confondues - Période : ${period}`,
+    blocks,
+    itemCount: blocks.length,
+    totalRows: blocks.reduce((a,b) => a + Math.max(1, b.rows.length), 0),
+    filename: `sfx-vue-globale.pdf`
+  });
 }
