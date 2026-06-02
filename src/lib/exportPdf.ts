@@ -167,17 +167,16 @@ async function generateAndSave(opts: { title: string; subtitle: string; blocks: 
 }
 
 // ----------------------------------------------------
-// EXPORT QUOTIDIEN (NOUVEAU DESIGN PAYSAGE MULTI-COLONNES)
+// MULTI-COLUMNS LANDSCAPE FOR DAILY CARDS EXPORT
 // ----------------------------------------------------
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const logo = await getLogoDataUrl();
-  // On repasse en Paysage (Landscape) pour gagner de l'espace en largeur !
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth(); 
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 12; 
   const bottomMargin = pageH - 15;
-  const cols = 3; // 3 colonnes pour optimiser l'espace
+  const cols = 3; 
   const gutter = 6;
   const colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
   
@@ -210,13 +209,11 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   const scenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
 
   const rowHeight = 6.0;
-  let colIndex = 0;
   const colYs: number[] = new Array(cols).fill(currentY);
 
   for (const block of scenes) {
     const cardHeight = 8.0 + 2.0 + block.rows.length * rowHeight + 3.0;
     
-    // Trouver la colonne la plus courte
     let bestCol = 0;
     let minY = colYs[0];
     for(let i=1; i<cols; i++) {
@@ -226,7 +223,6 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
         }
     }
 
-    // Si ça dépasse en bas, on fait un saut de page pour tout le monde
     if (minY + cardHeight > bottomMargin) {
       drawFooter(doc, pageW, pageH, marginX, false, false); 
       doc.addPage();
@@ -261,18 +257,16 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
       
       const timeW = doc.getTextWidth(row.time || '') + 5; 
       const pillX = x + colW - 4.0 - timeW;
-
       const maxNameW = pillX - nameX - 2;
       const truncName = doc.splitTextToSize(row.name, maxNameW)[0] as string;
 
       doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]); doc.text(truncName, nameX, ry + 3.5);
-
       doc.setFillColor(ORANGE[0], ORANGE[1], ORANGE[2]); doc.roundedRect(pillX, ry, timeW, 4.8, 1, 1, 'F');
       doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
       doc.text(row.time || '', pillX + timeW / 2, ry + 3.4, { align: 'center' });
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9); ry += rowHeight;
     }
-    colYs[bestCol] = y + cardHeight + 4; // Mise à jour de la hauteur de la colonne + marge
+    colYs[bestCol] = y + cardHeight + 4; 
   }
   drawFooter(doc, pageW, pageH, marginX, false, false); doc.save(`sfx-planning-${date}.pdf`);
 }
@@ -297,7 +291,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   const sceneRecs = records.filter(r => r.scene === scene && r.time !== 'OFF'); const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF'); const dayAssoc = computeAllFOAssociations(records);
   const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
   for (const r of sceneRecs) {
-    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
+    if (!dateMap.has(r.date)) data-theme; dateMap.set(r.date, []);
     let isFO = false; let name = prettyName(r.employee);
     if (isTrainingScene(r.scene)) { isFO = true; const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? []; if (assoc.length > 0) name = `${prettyName(r.employee)} (${assoc.join(', ')})`; }
     dateMap.get(r.date)!.push({ name, time: r.time, isFO });
