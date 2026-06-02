@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
-import { exportDayPdf, exportScenePdf, listScenes } from './lib/exportPdf';
+import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes } from './lib/exportPdf';
 import { getFOAssociations, isTrainingScene, getSceneColor } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
@@ -31,6 +31,14 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
   return 'time-pill';
 }
 
+function titleCaseWord(w: string): string { if (!w) return w; return w.split(/([-'])/).map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(''); }
+function titleCasePart(s: string): string { return s.trim().split(/\s+/).map(titleCaseWord).join(' '); }
+function prettyName(s: string): string {
+  const idx = s.indexOf(','); if (idx === -1) return titleCasePart(s);
+  const last = titleCasePart(s.slice(0, idx)); const first = titleCasePart(s.slice(idx + 1));
+  return first ? `${first} ${last}` : last;
+}
+
 export default function App() {
   const [tab, setTab] = useState<Tab>('daily');
   const [theme, setTheme] = useState<Theme>(() => {
@@ -50,7 +58,6 @@ export default function App() {
     document.documentElement.className = theme;
     document.body.className = theme;
     
-    // Forçage de la couleur de fond globale pour contourner l'index.css fixe
     if (theme === 'light') {
       document.body.style.backgroundColor = '#f1f5f9';
       document.body.style.color = '#0f172a';
@@ -73,7 +80,9 @@ export default function App() {
       setRecords(prev => [...prev, ...newRecs]);
     } catch {
       console.error('Erreur');
-    } resolve: { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   if (records.length === 0) {
@@ -129,7 +138,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   const employees = useMemo(() => Array.from(new Set(records.map(r => r.employee))).sort(), [records]);
   const filtered = useMemo(() => employees.filter(n => n.toLowerCase().includes(query.trim().toLowerCase())), [employees, query]);
 
-  if (selected) return <EmployeeDetail name={selected} onBack={() => setSelected(null)} />;
+  if (selected) return <EmployeeDetail name={selected} records={records} onBack={() => setSelected(null)} />;
   return (
     <div>
       <div className="search-wrap" style={{ marginBottom: 12 }}><input type="search" placeholder="Rechercher un technicien…" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
@@ -140,8 +149,20 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   );
 }
 
-function EmployeeDetail({ name, onBack }: { name: string; onBack: () => void }) {
-  return <div><button type="button" className="btn-link" onClick={onBack}>← Retour</button><div className="card" style={{ marginTop: 8 }}>{prettyName(name)}</div></div>;
+// FIX : Ajout complet des variables lues requises pour cet écran
+function EmployeeDetail({ name, records, onBack }: { name: string; records: PlanningRecord[]; onBack: () => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div>
+      <button type="button" className="btn-link" onClick={onBack}>← Retour</button>
+      <div className="card" style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>{prettyName(name)}</div>
+        <button type="button" className="btn btn-sm" disabled={busy} onClick={async () => {
+          setBusy(true); try { await exportEmployeePdf(name, records); } catch {} finally { setBusy(false); }
+        }}>Export PDF</button>
+      </div>
+    </div>
+  );
 }
 
 function DailyDateBar({ records, date, onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
@@ -233,11 +254,3 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
 }
 
 function Logo() { return <img className="logo-img" src={`${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`} alt="" width="56" height="56" />; }
-function titleCaseWord(w: string): string { if (!w) return w; return w.split(/([-'])/).map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(''); }
-function titleCasePart(s: string): string { return s.trim().split(/\s+/).map(titleCaseWord).join(' '); }
-function prettyName(s: string): string {
-  const idx = s.indexOf(','); if (idx === -1) return titleCasePart(s);
-  const last = titleCasePart(s.slice(0, idx)); const first = titleCasePart(s.slice(idx + 1));
-  return first ? `${first} ${last}` : last;
-}
-function searchHaystack(s: string): string { const pretty = prettyName(s); const idx = s.indexOf(','); const reversed = idx !== -1 ? `${s.slice(idx + 1).trim()} ${s.slice(0, idx).trim()}` : ''; return `${s} ${pretty} ${reversed}`.toLowerCase(); }
