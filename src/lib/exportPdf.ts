@@ -17,6 +17,7 @@ const MONTH_FR: Record<string, string> = {
 const DAY_FR_FULL = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const DAY_FR_SHORT = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
 
+// Nettoyage radical des caractères bizarres du PDF
 function cleanText(text: string): string {
   if (!text) return '';
   return text.replace(/[Ø<ß"«»®©]/g, '').replace(/\s+/g, ' ').trim();
@@ -69,10 +70,8 @@ function prettyName(s: string): string {
   const tc = (w: string) => w.split(/([-'])/).map(p => /^[-']$/.test(p) ? p : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join('');
   const tcp = (str: string) => str.trim().split(/\s+/).map(tc).join(' ');
   if (idx === -1) return cleanText(tcp(s));
-  const last = tcp(s.slice(0, idx));
-  const first = tcp(s.slice(idx + 1));
-  if (!first) return cleanText(last);
-  if (!last) return cleanText(first);
+  const last = tcp(s.slice(0, idx)); const first = tcp(s.slice(idx + 1));
+  if (!first) return cleanText(last); if (!last) return cleanText(first);
   return cleanText(`${first} ${last}`);
 }
 
@@ -89,22 +88,20 @@ function chooseLayout(itemCount: number, totalRows: number): LayoutChoice {
 
 function drawHeader(doc: jsPDF, pageW: number, marginX: number, marginTop: number, title: string, subtitle: string, layout: LayoutChoice, logo: string | null): number {
   const bannerH = 16;
-  doc.setFillColor(13, 20, 35);
-  doc.roundedRect(marginX, marginTop, pageW - marginX * 2, bannerH, 2, 2, 'F');
-  doc.setFillColor(255, 176, 58);
-  doc.rect(marginX + 2, marginTop + bannerH - 0.8, pageW - marginX * 2 - 4, 0.4, 'F');
+  doc.setFillColor(13, 20, 35); doc.roundedRect(marginX, marginTop, pageW - marginX * 2, bannerH, 2, 2, 'F');
+  doc.setFillColor(255, 176, 58); doc.rect(marginX + 2, marginTop + bannerH - 0.8, pageW - marginX * 2 - 4, 0.4, 'F');
   let textX = marginX + 4;
   if (logo) { try { doc.addImage(logo, 'JPEG', marginX + 3, marginTop + 2.2, 11.5, 11.5); textX = marginX + 17; } catch { } }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(layout.fontTitle - 2.5); doc.setTextColor(255, 255, 255); doc.text(title, textX, marginTop + 6.2);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(layout.fontSub - 1.2); doc.setTextColor(165, 185, 215); doc.text(subtitle, textX, marginTop + 11.8);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(255, 176, 58); doc.text('DÉPARTEMENT SFX', pageW - marginX - 4, marginTop + 9.5, { align: 'right' });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(255, 176, 58); doc.text('SFX PLANNER', pageW - marginX - 4, marginTop + 9.5, { align: 'right' });
   return marginTop + bannerH + 4;
 }
 
-function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number) {
+function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _dense: boolean, _denseNote: boolean) {
   doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]); doc.setLineWidth(0.2); doc.line(marginX, pageH - 11, pageW - marginX, pageH - 11);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
+  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
 }
 
 function drawBlocks(doc: jsPDF, blocks: Array<{ header: string; rows: Array<{ name: string; time: string; isFO?: boolean }> }>, startY: number, marginX: number, marginRight: number, pageW: number, pageH: number, layout: LayoutChoice): boolean {
@@ -112,8 +109,7 @@ function drawBlocks(doc: jsPDF, blocks: Array<{ header: string; rows: Array<{ na
   let col = 0; let y = startY; const colYs: number[] = new Array(layout.cols).fill(startY);
   for (const block of blocks) {
     const cardHeaderHeight = 6.0; const cardPaddingTop = 1.2; const cardPaddingBottom = 2.0; const cardPaddingLeftRight = 3.0;
-    const rowsLen = Math.max(1, block.rows.length); const cardHeight = cardHeaderHeight + cardPaddingTop + rowsLen * (layout.rowHeight + layout.rowGap) + cardPaddingBottom;
-    const blockHeight = cardHeight + layout.sectionGap;
+    const rowsLen = Math.max(1, block.rows.length); const cardHeight = cardHeaderHeight + cardPaddingTop + rowsLen * (layout.rowHeight + layout.rowGap) + cardPaddingBottom; const blockHeight = cardHeight + layout.sectionGap;
     let placed = false;
     for (let tries = 0; tries < layout.cols; tries++) { const idx = (col + tries) % layout.cols; if (colYs[idx] + blockHeight <= bottom) { col = idx; y = colYs[idx]; placed = true; break; } }
     if (!placed) return false;
@@ -129,8 +125,7 @@ function drawBlocks(doc: jsPDF, blocks: Array<{ header: string; rows: Array<{ na
       doc.setFont('helvetica', 'normal'); doc.setFontSize(layout.fontRow);
       for (const row of block.rows) {
         const isFO = (row as any).isFO; const timeStr = row.time || ''; const timeW = doc.getTextWidth(timeStr) + 4;
-        const pillW = isFO ? 7.5 : 0; const nameMax = colW - cardPaddingLeftRight * 2 - timeW - pillW - 2.5;
-        const nameTxt = (doc.splitTextToSize(row.name, nameMax)[0] as string) || row.name;
+        const pillW = isFO ? 7.5 : 0; const nameMax = colW - cardPaddingLeftRight * 2 - timeW - pillW - 2.5; const nameTxt = (doc.splitTextToSize(row.name, nameMax)[0] as string) || row.name;
         let nameX = x + cardPaddingLeftRight;
         if (isFO) {
           const foPillW = 6; const foPillH = layout.rowHeight * 0.85; const foPillY = ry + (layout.rowHeight - foPillH) / 2;
@@ -150,68 +145,31 @@ function drawBlocks(doc: jsPDF, blocks: Array<{ header: string; rows: Array<{ na
   return true;
 }
 
-function slug(s: string): string { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'scene'; }
+function slug(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'scene';
+}
 
 async function generateAndSave(opts: { title: string; subtitle: string; blocks: Array<{ header: string; rows: Array<{ name: string; time: string; isFO?: boolean }> }>; itemCount: number; totalRows: number; filename: string; }): Promise<void> {
-  const logo = await getLogoDataUrl();
-  const tiers = [ chooseLayout(opts.itemCount, opts.totalRows), { orientation: 'landscape', cols: 2, fontTitle: 16, fontSub: 10, fontSection: 10.5, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false }, { orientation: 'landscape', cols: 3, fontTitle: 15, fontSub: 9.5, fontSection: 10, fontRow: 8.5, rowHeight: 3.8, sectionGap: 2.4, rowGap: 0.2, dense: true }, { orientation: 'landscape', cols: 4, fontTitle: 14, fontSub: 9, fontSection: 9.5, fontRow: 8, rowHeight: 3.4, sectionGap: 2, rowGap: 0.2, dense: true }, { orientation: 'landscape', cols: 5, fontTitle: 13, fontSub: 8.5, fontSection: 9, fontRow: 7.5, rowHeight: 3.1, sectionGap: 1.6, rowGap: 0.15, dense: true } ];
+  const logo = await getLogoDataUrl(); const tiers = [chooseLayout(opts.itemCount, opts.totalRows)];
+  tiers.push({ orientation: 'landscape', cols: 2, fontTitle: 16, fontSub: 10, fontSection: 10.5, fontRow: 9, rowHeight: 4.2, sectionGap: 2.8, rowGap: 0.3, dense: false });
+  tiers.push({ orientation: 'landscape', cols: 3, fontTitle: 15, fontSub: 9.5, fontSection: 10, fontRow: 8.5, rowHeight: 3.8, sectionGap: 2.4, rowGap: 0.2, dense: true });
+  tiers.push({ orientation: 'landscape', cols: 4, fontTitle: 14, fontSub: 9, fontSection: 9.5, fontRow: 8, rowHeight: 3.4, sectionGap: 2, rowGap: 0.2, dense: true });
   for (const layout of tiers) {
-    const doc = new jsPDF({ orientation: layout.orientation as any, unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({ orientation: layout.orientation, unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
-    const contentY = drawHeader(doc, pageW, 10, 9, opts.title, opts.subtitle, layout as any, logo);
-    if (drawBlocks(doc, opts.blocks, contentY, 10, 10, pageW, pageH, layout as any)) { drawFooter(doc, pageW, pageH, 10); doc.save(opts.filename); return; }
+    const contentY = drawHeader(doc, pageW, 10, 9, opts.title, opts.subtitle, layout, logo);
+    if (drawBlocks(doc, opts.blocks, contentY, 10, 10, pageW, pageH, layout)) { drawFooter(doc, pageW, pageH, 10, layout.dense, layout.dense); doc.save(opts.filename); return; }
   }
   const layout: LayoutChoice = { orientation: 'landscape', cols: 6, fontTitle: 12, fontSub: 8, fontSection: 8.5, fontRow: 7, rowHeight: 2.9, sectionGap: 1.4, rowGap: 0.1, dense: true };
-  const doc = new jsPDF({ orientation: layout.orientation as any, unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: layout.orientation, unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
-  const contentY = drawHeader(doc, pageW, 8, 8, opts.title, opts.subtitle, layout as any, logo);
-  drawBlocks(doc, opts.blocks, contentY, 8, 8, pageW, pageH, layout as any); drawFooter(doc, pageW, pageH, 8); doc.save(opts.filename);
+  const contentY = drawHeader(doc, pageW, 8, 8, opts.title, opts.subtitle, layout, logo);
+  drawBlocks(doc, opts.blocks, contentY, 8, 8, pageW, pageH, layout); drawFooter(doc, pageW, pageH, 8, layout.dense, layout.dense); doc.save(opts.filename);
 }
 
-// === EXPORTS OFFICIELS DE L'APPLICATION ===
-
-export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
-  const empRecs = records.filter(r => r.employee === employee); const dayAssoc = computeAllFOAssociations(records);
-  const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
-  for (const r of empRecs) {
-    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-    let name = r.scene || '-'; let isFO = false;
-    if (isTrainingScene(r.scene)) { isFO = true; const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? []; if (assoc.length > 0) name = `${assoc.join(', ')} (${r.scene})`; }
-    dateMap.get(r.date)!.push(r.time === 'OFF' ? { name: 'Repos / congé', time: 'OFF' } : { name, time: r.time, isFO });
-  }
-  const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
-  const blocks = allDates.map(d => ({ header: fmtDateShort(d), rows: (dateMap.get(d) ?? []) }));
-  const period = allDates[0] && allDates[allDates.length - 1] && allDates[0] !== allDates[allDates.length - 1] ? `${fmtDate(allDates[0])} au ${fmtDate(allDates[allDates.length - 1])}` : (allDates[0] ? fmtDate(allDates[0]) : '');
-  await generateAndSave({ title: prettyName(employee), subtitle: period ? `Planning individuel - ${period}` : 'Planning individuel', blocks, itemCount: blocks.length, totalRows: blocks.reduce((acc, b) => acc + Math.max(1, b.rows.length), 0), filename: `sfx-planning-indiv-${slug(prettyName(employee))}.pdf` });
-}
-
-export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
-  const sceneRecs = records.filter(r => r.scene === scene && r.time !== 'OFF'); const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF'); const dayAssoc = computeAllFOAssociations(records);
-  const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
-  for (const r of sceneRecs) {
-    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-    let isFO = false; let name = prettyName(r.employee);
-    if (isTrainingScene(r.scene)) { isFO = true; const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? []; if (assoc.length > 0) name = `${prettyName(r.employee)} (${assoc.join(', ')})`; }
-    dateMap.get(r.date)!.push({ name, time: r.time, isFO });
-  }
-  for (const r of foRecs) {
-    const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
-    if (assoc.includes(scene)) { if (!dateMap.has(r.date)) dateMap.set(r.date, []); dateMap.get(r.date)!.push({ name: `${prettyName(r.employee)}${r.scene ? ` (${r.scene})` : ''}`, time: r.time, isFO: true }); }
-  }
-  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
-  const dates = allDates.map(d => ({ date: d, rows: (dateMap.get(d) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
-  const period = allDates[0] && allDates[allDates.length - 1] && allDates[0] !== allDates[allDates.length - 1] ? `${fmtDate(allDates[0])} au ${fmtDate(allDates[allDates.length - 1])}` : (allDates[0] ? fmtDate(allDates[0]) : '');
-  await generateAndSave({ title: scene, subtitle: period ? `Période : ${period}` : 'Période', blocks: dates.map(d => ({ header: fmtDateShort(d.date), rows: d.rows })), itemCount: dates.length, totalRows: dates.reduce((acc, d) => acc + Math.max(1, d.rows.length), 0), filename: `sfx-planning-${slug(scene)}.pdf` });
-}
-
-export function listScenes(records: PlanningRecord[]): string[] {
-  return Array.from(new Set(records.map(r => r.scene).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'fr'));
-}
-
-export async function exportGlobalRecapPdf(_records: PlanningRecord[]): Promise<void> {
-  // L'ancienne grille globale n'est plus utilisée, mais doit exister pour TypeScript
-}
-
+// ----------------------------------------------------
+// NOUVEAU DESIGN : EXPORT QUOTIDIEN SOUS FORME DE CARTES
+// ----------------------------------------------------
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const logo = await getLogoDataUrl();
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -276,4 +234,50 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     currentY += cardHeight + 5;
   }
   doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12); doc.save(`sfx-planning-${date}.pdf`);
+}
+
+export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
+  const empRecs = records.filter(r => r.employee === employee); const dayAssoc = computeAllFOAssociations(records);
+  const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
+  for (const r of empRecs) {
+    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
+    let name = r.scene || '-'; let isFO = false;
+    if (isTrainingScene(r.scene)) { isFO = true; const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? []; if (assoc.length > 0) name = `${assoc.join(', ')} (${r.scene})`; }
+    dateMap.get(r.date)!.push(r.time === 'OFF' ? { name: 'Repos / congé', time: 'OFF' } : { name, time: r.time, isFO });
+  }
+  const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
+  const blocks = allDates.map(d => ({ header: fmtDateShort(d), rows: (dateMap.get(d) ?? []) }));
+  const periodStart = allDates[0] ? fmtDate(allDates[0]) : ''; const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
+  const period = periodStart && periodEnd && periodStart !== periodEnd ? `${periodStart} au ${periodEnd}` : periodStart;
+  await generateAndSave({ title: prettyName(employee), subtitle: period ? `Planning individuel - ${period}` : 'Planning individuel', blocks, itemCount: blocks.length, totalRows: blocks.reduce((acc, b) => acc + Math.max(1, b.rows.length), 0), filename: `sfx-planning-indiv-${slug(prettyName(employee))}.pdf` });
+}
+
+export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
+  const sceneRecs = records.filter(r => r.scene === scene && r.time !== 'OFF'); const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF'); const dayAssoc = computeAllFOAssociations(records);
+  const dateMap = new Map<string, Array<{ name: string; time: string; isFO?: boolean }>>();
+  for (const r of sceneRecs) {
+    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
+    let isFO = false; let name = prettyName(r.employee);
+    if (isTrainingScene(r.scene)) { isFO = true; const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? []; if (assoc.length > 0) name = `${prettyName(r.employee)} (${assoc.join(', ')})`; }
+    dateMap.get(r.date)!.push({ name, time: r.time, isFO });
+  }
+  for (const r of foRecs) {
+    const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
+    if (assoc.includes(scene)) { if (!dateMap.has(r.date)) dateMap.set(r.date, []); const label = r.scene ? ` (${r.scene})` : ''; dateMap.get(r.date)!.push({ name: `${prettyName(r.employee)}${label}`, time: r.time, isFO: true }); }
+  }
+  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
+  const dates = allDates.map(d => ({ date: d, rows: (dateMap.get(d) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
+  const periodStart = allDates[0] ? fmtDate(allDates[0]) : ''; const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
+  const period = periodStart && periodEnd && periodStart !== periodEnd ? `${periodStart} au ${periodEnd}` : periodStart;
+  await generateAndSave({ title: scene, subtitle: period ? `Période : ${period}` : 'Période', blocks: dates.map(d => ({ header: fmtDateShort(d.date), rows: d.rows })), itemCount: dates.length, totalRows: dates.reduce((acc, d) => acc + Math.max(1, d.rows.length), 0), filename: `sfx-planning-${slug(scene)}.pdf` });
+}
+
+export function listScenes(records: PlanningRecord[]): string[] {
+  const set = new Set<string>(); for (const r of records) if (r.scene) set.add(r.scene); return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
+  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
+  if (allDates.length === 0) return;
+  await exportDayPdf(allDates[0], records); // Redirige proprement vers la vue quotidienne
 }
