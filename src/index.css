@@ -2151,9 +2151,10 @@ body {
 }
 
 :root[data-theme="light"] .landing-title {
-  background: none;
-  -webkit-text-fill-color: initial;
-  color: var(--fg);
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: #1e293b !important;
+  color: #1e293b !important;
 }
 
 .landing-subtitle {
@@ -2575,12 +2576,7 @@ nav.seg button[aria-selected="true"] {
   border-color: rgba(0,0,0,0.08);
 }
 
-:root[data-theme="light"] .landing-title {
-  background: none !important;
-  -webkit-background-clip: initial !important;
-  -webkit-text-fill-color: #0f172a !important;
-  color: #0f172a !important;
-}
+
 
 :root[data-theme="light"] .search-wrap input {
   background: #ffffff;
