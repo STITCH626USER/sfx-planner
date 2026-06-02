@@ -107,6 +107,7 @@ export default function App() {
             </button>
           </div>
           <input ref={fileRef} type="file" accept=".pdf,application/pdf" multiple style={{ display: 'none' }} onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+          <div style={{ marginTop: 24, fontSize: 11, color: 'var(--fg-dim)', opacity: 0.5 }}>v2.5</div>
         </div>
       </div>
     );
