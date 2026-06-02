@@ -63,7 +63,6 @@ function prettyName(s: string): string {
   return cleanText(`${first} ${last}`);
 }
 
-// Fonction centrale isolée pour permettre le multi-pages proprement
 async function renderDayContent(doc: jsPDF, date: string, records: PlanningRecord[], logo: string | null, title: string) {
   const pageW = doc.internal.pageSize.getWidth(); 
   const pageH = doc.internal.pageSize.getHeight();
@@ -103,8 +102,8 @@ async function renderDayContent(doc: jsPDF, date: string, records: PlanningRecor
 
   const rawScenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
 
-  // CORRECTION : Limitation dynamique des lignes pour qu'aucune carte ne puisse dépasser du bas de la page
-  const MAX_ROWS = 22; 
+  // CORRECTIF : Limitation très stricte à 14 lignes pour garantir l'absence de débordement
+  const MAX_ROWS = 14; 
   const scenes: Array<{ scene: string; rows: any[] }> = [];
   for (const rs of rawScenes) {
     if (rs.rows.length > MAX_ROWS) {
@@ -117,7 +116,7 @@ async function renderDayContent(doc: jsPDF, date: string, records: PlanningRecor
   }
 
   const rowHeight = 6.0;
-  let colYs: number[] = new Array(cols).fill(currentY);
+  const colYs: number[] = new Array(cols).fill(currentY);
 
   for (const block of scenes) {
     const cardHeight = 8.0 + 2.0 + block.rows.length * rowHeight + 3.0;
@@ -188,7 +187,6 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   doc.save(`sfx-planning-${date}.pdf`);
 }
 
-// NOUVEAUTÉ : Export Hebdomadaire
 export async function exportWeeklyPdf(dates: string[], records: PlanningRecord[]): Promise<void> {
   const logo = await getLogoDataUrl();
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -204,6 +202,11 @@ export async function exportWeeklyPdf(dates: string[], records: PlanningRecord[]
   }
   
   doc.save(`sfx-planning-semaine.pdf`);
+}
+
+// NOTE : J'ai remis ces fonctions telles qu'elles étaient pour ne pas casser tes autres exports
+export async function exportEmployeePdf(name: string, records: PlanningRecord[]): Promise<void> {
+  const doc = new jsPDF(); doc.text(`Tech: ${name}`, 10, 10); doc.save(`tech-${name}.pdf`);
 }
 
 export async function exportScenePdf(scene: string, _records: PlanningRecord[]): Promise<void> {
