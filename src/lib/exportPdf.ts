@@ -5,7 +5,6 @@ import { getFOAssociations, isTrainingScene, getSceneColor } from './utils';
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
 const GREY_DARK: [number, number, number] = [40, 40, 44];
-const GREY_LINE: [number, number, number] = [220, 220, 224];
 
 const MONTH_FR: Record<string, string> = {
   '01': 'janv.', '02': 'févr.', '03': 'mars', '04': 'avril', '05': 'mai',
@@ -64,12 +63,6 @@ function prettyName(s: string): string {
   return cleanText(`${first} ${last}`);
 }
 
-function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number) {
-  doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]); doc.setLineWidth(0.2); doc.line(marginX, pageH - 11, pageW - marginX, pageH - 11);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
-  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
-}
-
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const logo = await getLogoDataUrl();
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -125,7 +118,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     }
 
     if (minY + cardHeight > bottomMargin) {
-      drawFooter(doc, pageW, pageH, marginX); 
+      doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12);
       doc.addPage();
       currentY = drawHeaderLocal(doc, pageW, marginX, 10, 'Vue globale du jour (suite)', fmtDate(date));
       colYs.fill(currentY);
@@ -169,11 +162,10 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     }
     colYs[bestCol] = y + cardHeight + 4; 
   }
-  drawFooter(doc, pageW, pageH, marginX); doc.save(`sfx-planning-${date}.pdf`);
-}
-
-export async function exportEmployeePdf(employee: string, _records: PlanningRecord[]): Promise<void> {
-  const doc = new jsPDF(); doc.text(`Planning: ${employee}`, 10, 10); doc.save(`planning-${employee}.pdf`);
+  doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
+  doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
+  doc.save(`sfx-planning-${date}.pdf`);
 }
 
 export async function exportScenePdf(scene: string, _records: PlanningRecord[]): Promise<void> {
@@ -182,8 +174,4 @@ export async function exportScenePdf(scene: string, _records: PlanningRecord[]):
 
 export function listScenes(records: PlanningRecord[]): string[] {
   const set = new Set<string>(); for (const r of records) if (r.scene) set.add(r.scene); return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
-}
-
-export async function exportGlobalRecapPdf(_records: PlanningRecord[]): Promise<void> {
-  const doc = new jsPDF(); doc.text("Recap", 10, 10); doc.save("recap.pdf");
 }
