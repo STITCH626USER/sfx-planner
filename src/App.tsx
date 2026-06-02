@@ -1386,20 +1386,35 @@ function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
       return false;
     };
 
-    const handleGlobalClick = (e: MouseEvent) => {
+    // Desktop click
+    const handleMouseDown = (e: MouseEvent) => {
       if (isInteractive(e.target)) return;
       spawnSparkle(e.clientX, e.clientY);
     };
-    const handleGlobalTouch = (e: TouchEvent) => {
-      if (isInteractive(e.target)) return;
-      const t = e.touches[0] || e.changedTouches[0];
-      if (t) spawnSparkle(t.clientX, t.clientY);
+
+    // Mobile tap — only fire if finger didn't move (not a scroll)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) { touchStartX = t.clientX; touchStartY = t.clientY; }
     };
-    window.addEventListener('mousedown', handleGlobalClick);
-    window.addEventListener('touchstart', handleGlobalTouch, { passive: true });
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isInteractive(e.target)) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = Math.abs(t.clientX - touchStartX);
+      const dy = Math.abs(t.clientY - touchStartY);
+      if (dx < 12 && dy < 12) spawnSparkle(t.clientX, t.clientY);
+    };
+
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
     return () => {
-      window.removeEventListener('mousedown', handleGlobalClick);
-      window.removeEventListener('touchstart', handleGlobalTouch);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [spawnSparkle]);
 

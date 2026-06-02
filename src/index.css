@@ -2527,3 +2527,97 @@ nav.seg button[aria-selected="true"] {
 .animate-stagger-3 { animation-delay: 0.15s; }
 .animate-stagger-4 { animation-delay: 0.2s; }
 .animate-stagger-5 { animation-delay: 0.25s; }
+
+/* ================================================================
+   LIGHT MODE — overrides finales (après HUD !important section)
+   Toutes avec !important pour battre les styles HUD dark
+   ================================================================ */
+
+:root[data-theme="light"] .stat-card {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(40, 28, 16, 0.1) !important;
+  box-shadow: 0 4px 16px rgba(90, 75, 60, 0.06) !important;
+}
+:root[data-theme="light"] .stat-card:hover {
+  box-shadow: 0 8px 24px rgba(90, 75, 60, 0.10) !important;
+  border-color: var(--amber) !important;
+}
+:root[data-theme="light"] .stat-card::after {
+  opacity: 0.4 !important;
+}
+
+:root[data-theme="light"] .seg {
+  background: rgba(40, 28, 16, 0.06) !important;
+  border-color: rgba(40, 28, 16, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(90, 75, 60, 0.06) !important;
+}
+:root[data-theme="light"] .seg button {
+  color: var(--fg-muted) !important;
+}
+
+:root[data-theme="light"] .btn-export {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(40, 28, 16, 0.12) !important;
+  color: var(--on-fg) !important;
+}
+:root[data-theme="light"] .btn-export:hover {
+  background: rgba(214, 104, 10, 0.06) !important;
+  border-color: var(--amber) !important;
+  color: var(--on-fg) !important;
+  box-shadow: 0 4px 12px rgba(214, 104, 10, 0.1) !important;
+}
+
+:root[data-theme="light"] .daily-scene-group {
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+:root[data-theme="light"] .daily-scene-group:hover {
+  background: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08) !important;
+}
+:root[data-theme="light"] .daily-group-head {
+  background: linear-gradient(135deg, rgba(0, 143, 123, 0.06), rgba(214, 104, 10, 0.04)) !important;
+}
+
+:root[data-theme="light"] .compact-team-row {
+  color: var(--fg) !important;
+}
+:root[data-theme="light"] .compact-team-name {
+  color: var(--fg) !important;
+}
+:root[data-theme="light"] .compact-team-sub {
+  color: var(--fg-muted) !important;
+}
+
+:root[data-theme="light"] .day-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+:root[data-theme="light"] .day-scene,
+:root[data-theme="light"] .day-name {
+  color: var(--fg) !important;
+}
+
+:root[data-theme="light"] .source-block-name,
+:root[data-theme="light"] .daily-group-scene,
+:root[data-theme="light"] .scene-name {
+  color: var(--fg) !important;
+}
+
+:root[data-theme="light"] .week-label,
+:root[data-theme="light"] .section-title,
+:root[data-theme="light"] .dept-title {
+  color: var(--fg) !important;
+}
+
+:root[data-theme="light"] .search-input,
+:root[data-theme="light"] .search-wrap input {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(40, 28, 16, 0.12) !important;
+  color: var(--fg) !important;
+}
+
+:root[data-theme="light"] .source-pill {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(40, 28, 16, 0.12) !important;
+  color: var(--fg-muted) !important;
+}
+
