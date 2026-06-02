@@ -460,13 +460,11 @@ async function generateGridGlobalPdf(opts: {
   
   const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'fr'));
   
-  const logo = await getLogoDataUrl();
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const C_MARGIN = 10;
+  const C_MARGIN = 8;
   
-  // Group dates into 7-day chunks (weeks)
   const weeks: string[][] = [];
   for (let i = 0; i < allDates.length; i += 7) {
     weeks.push(allDates.slice(i, i + 7));
@@ -480,10 +478,10 @@ async function generateGridGlobalPdf(opts: {
     
     if (activeEmps.length === 0) continue;
 
-    const rowH = 6;
-    const headerH = 8;
-    const startY = 32;
-    const maxRowsPerPage = Math.floor((pageH - 15 - startY - headerH) / rowH);
+    const rowH = 3.9;
+    const headerH = 5;
+    const startY = 16;
+    const maxRowsPerPage = Math.floor((pageH - 8 - startY - headerH) / rowH);
 
     for (let i = 0; i < activeEmps.length; i += maxRowsPerPage) {
       const pageEmps = activeEmps.slice(i, i + maxRowsPerPage);
@@ -491,13 +489,17 @@ async function generateGridGlobalPdf(opts: {
       if (pageCount > 0) doc.addPage();
       pageCount++;
 
+      // Ultra-compact Header
       const weekSub = opts.subtitle + (weeks.length > 1 ? ` (Partie ${weeks.indexOf(weekDates)+1}/${weeks.length})` : '');
-      drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, weekSub, logo);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20, 30, 50);
+      doc.text(`${opts.title} — ${weekSub}`, C_MARGIN, 10);
+      
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(100, 110, 130);
+      doc.text('SFX Planner', pageW - C_MARGIN, 10, {align: 'right'});
 
       let y = startY;
       
-      // Draw Table Header
-      const colNameW = 45;
+      const colNameW = 38;
       const colDayW = (pageW - C_MARGIN*2 - colNameW) / 7;
       
       doc.setFillColor(30, 40, 60);
@@ -505,19 +507,18 @@ async function generateGridGlobalPdf(opts: {
       
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.text("TECHNICIEN", C_MARGIN + 2, y + 5);
+      doc.setFontSize(7);
+      doc.text("TECHNICIEN", C_MARGIN + 1.5, y + 3.8);
       
       for (let d = 0; d < 7; d++) {
         const dx = C_MARGIN + colNameW + d * colDayW;
         if (d < weekDates.length) {
-          doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
+          doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 3.8, {align: 'center'});
         }
       }
       
       y += headerH;
 
-      // Draw Rows
       for (const emp of pageEmps) {
         const isEven = pageEmps.indexOf(emp) % 2 === 0;
         doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
@@ -529,17 +530,16 @@ async function generateGridGlobalPdf(opts: {
         
         doc.setTextColor(20, 30, 40);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
+        doc.setFontSize(6);
         let nm = prettyName(emp);
         if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
-        doc.text(nm, C_MARGIN + 2, y + 4);
+        doc.text(nm, C_MARGIN + 1.5, y + 2.8);
         
         doc.line(C_MARGIN + colNameW, y, C_MARGIN + colNameW, y + rowH);
         
-        // Days
         for (let d = 0; d < 7; d++) {
           const dx = C_MARGIN + colNameW + d * colDayW;
-          if (d > 0) doc.line(dx, y, dx, y + rowH); // left border for cell
+          if (d > 0) doc.line(dx, y, dx, y + rowH);
           
           if (d >= weekDates.length) continue;
           const date = weekDates[d];
@@ -550,24 +550,24 @@ async function generateGridGlobalPdf(opts: {
           const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
           
           if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
-            doc.setFillColor(230, 235, 240);
-            doc.rect(dx+0.5, y+0.5, colDayW-1, rowH-1, 'F');
-            doc.setTextColor(100, 110, 120);
+            doc.setFillColor(235, 238, 242);
+            doc.rect(dx+0.2, y+0.2, colDayW-0.4, rowH-0.4, 'F');
+            doc.setTextColor(130, 140, 150);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            doc.text('OFF', dx + colDayW/2, y + 4, {align: 'center'});
+            doc.setFontSize(5.5);
+            doc.text('OFF', dx + colDayW/2, y + 2.8, {align: 'center'});
           } else {
             const sc = getSceneColor(mainRec.scene);
             const sceneAbbr = shortenSceneName(mainRec.scene);
             
-            const boxW = 15;
+            const boxW = 14.5;
             doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-            doc.rect(dx+0.5, y+0.5, boxW, rowH-1, 'F');
+            doc.rect(dx+0.2, y+0.2, boxW, rowH-0.4, 'F');
             
             doc.setTextColor(255, 255, 255);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.5);
-            doc.text(sceneAbbr, dx + 0.5 + boxW/2, y + 4, {align: 'center'});
+            doc.setFontSize(5);
+            doc.text(sceneAbbr, dx + 0.2 + boxW/2, y + 2.6, {align: 'center'});
             
             let timeStr = mainRec.time;
             if (recs.length > 1) {
@@ -576,8 +576,8 @@ async function generateGridGlobalPdf(opts: {
             }
             doc.setTextColor(20, 30, 40);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            doc.text(timeStr, dx + 0.5 + boxW + (colDayW - boxW - 1)/2, y + 4, {align: 'center'});
+            doc.setFontSize(6);
+            doc.text(timeStr, dx + 0.2 + boxW + (colDayW - boxW - 0.4)/2, y + 2.8, {align: 'center'});
           }
         }
         
@@ -587,8 +587,6 @@ async function generateGridGlobalPdf(opts: {
       doc.setDrawColor(30, 40, 60);
       doc.setLineWidth(0.3);
       doc.rect(C_MARGIN, startY, pageW - C_MARGIN*2, y - startY);
-
-      drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
     }
   }
 
@@ -604,8 +602,8 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
   const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
 
   await generateGridGlobalPdf({
-    title: 'Planning Global Master',
-    subtitle: `Période totale : ${period}`,
+    title: 'Planning Master',
+    subtitle: period,
     filename: `sfx-master-roster.pdf`,
     records
   });
