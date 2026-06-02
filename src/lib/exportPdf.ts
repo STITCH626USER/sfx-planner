@@ -210,7 +210,6 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   const scenes = Array.from(sceneMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([scene, rows]) => ({ scene: cleanText(scene), rows: rows.sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
 
   const rowHeight = 6.0;
-  let _colIndex = 0;
   const colYs: number[] = new Array(cols).fill(currentY);
 
   for (const block of scenes) {
