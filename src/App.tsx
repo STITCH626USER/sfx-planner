@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.18</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.19</span>
               </span>
             </div>
           </div>
@@ -1135,23 +1135,20 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             onClick={() => setMode('day')}
           >
             <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
-            <span className="export-opt-sub">Format cartes par scènes / équipes (très lisible)</span>
           </button>
           <button
             type="button"
             className={'export-opt' + (mode === 'scene' ? ' on' : '')}
             onClick={() => setMode('scene')}
           >
-            <span className="export-opt-title">Scène sur période</span>
-            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
+            <span className="export-opt-title">Scène sur la période exportée</span>
           </button>
           <button
             type="button"
             className={'export-opt' + (mode === 'global' ? ' on' : '')}
             onClick={() => setMode('global')}
           >
-            <span className="export-opt-title">Vue Globale complète</span>
-            <span className="export-opt-sub">Toutes les scènes et techniciens sur la période</span>
+            <span className="export-opt-title">Vue globale</span>
           </button>
           {mode === 'scene' && (
             <select
