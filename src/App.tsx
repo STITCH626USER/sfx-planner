@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.25</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.26</span>
               </span>
             </div>
           </div>
@@ -904,9 +904,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     return new Set(present.filter(r => !r.isFOVirtual).map(r => r.employee)).size;
   }, [present]);
 
-  const activeFOsCount = useMemo(() => {
-    return present.filter(r => isTrainingScene(r.originalScene || r.scene) && !r.isFOVirtual).length;
-  }, [present]);
 
   const sceneTeam = useMemo(() => {
     if (!openScene) return [];
@@ -936,19 +933,10 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         />
       ) : (
         <>
-          <div className="stats-grid" data-testid="stats-grid" style={{ marginBottom: 16 }}>
-            <div className="stat-card">
-              <div className="stat-value">{uniqueTechs}</div>
-              <div className="stat-label">Techniciens actifs</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{byScene.length}</div>
-              <div className="stat-label">Scènes & FO</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{activeFOsCount}</div>
-              <div className="stat-label">En formation (FO)</div>
-            </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 16px', marginBottom: 16 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)' }}>{uniqueTechs}</span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>techniciens présents</span>
           </div>
 
           <div className="section-h" style={{ marginTop: 6 }}>
