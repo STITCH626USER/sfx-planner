@@ -442,83 +442,157 @@ export function listScenes(records: PlanningRecord[]): string[] {
   return Array.from(set).sort((a,b)=>a.localeCompare(b,'fr'));
 }
 
-async function generateCompactGlobalPdf(opts: {
+function shortenSceneName(scene: string): string {
+  let s = cleanText(scene).toUpperCase();
+  s = s.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '');
+  s = s.split(/\s+/)[0];
+  if (s.length > 9) s = s.substring(0, 9);
+  return s;
+}
+
+async function generateGridGlobalPdf(opts: {
   title: string; subtitle: string; filename: string;
-  days: Array<{
-    date: string;
-    scenes: Array<{
-      name: string;
-      time: string;
-      technicians: string[];
-    }>
-  }>
+  records: PlanningRecord[];
 }) {
+  const { records } = opts;
+  const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
+  if (allDates.length === 0) return;
+  
+  const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'fr'));
+  
   const logo = await getLogoDataUrl();
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const C_MARGIN = 15;
-  const bottom = pageH - 15;
-  const cols = 3;
-  const gutter = 10;
-  const colW = (pageW - C_MARGIN*2 - gutter*(cols-1)) / cols;
-
-  let currentY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo) + 5;
-  const startY = currentY;
-  const colYs = new Array(cols).fill(startY);
-  let bestCol = 0;
-
-  for (const day of opts.days) {
-    let dayH = 8.5; // header
-    for (const sc of day.scenes) {
-      dayH += 5.5; // title
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
-      const lines = doc.splitTextToSize(sc.technicians.join('  •  '), colW - 6);
-      dayH += lines.length * 3.8 + 2;
-    }
-    dayH += 6; // padding bottom
-
-    bestCol = 0;
-    for (let i=1; i<cols; i++) if (colYs[i] < colYs[bestCol]) bestCol = i;
-
-    if (colYs[bestCol] + dayH > bottom) {
-      drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
-      doc.addPage();
-      const ny = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle + ' (suite)', logo) + 5;
-      colYs.fill(ny);
-      bestCol = 0;
-    }
-
-    const x = C_MARGIN + bestCol*(colW+gutter);
-    let y = colYs[bestCol];
-
-    // Day Header
-    doc.setFillColor(240, 242, 248);
-    doc.roundedRect(x, y, colW, 7, 1, 1, 'F');
-    doc.setFillColor(255, 176, 58); // AMBER
-    doc.roundedRect(x, y, 2, 7, 1, 1, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(20, 30, 50);
-    doc.text(fmtDate(day.date).toUpperCase(), x+4, y+5);
-    y += 8.5;
-
-    // Scenes
-    for (const sc of day.scenes) {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(232, 130, 30);
-      doc.text(`■ ${cleanText(sc.name)} ${sc.time ? `(${sc.time})` : ''}`, x+2, y+4);
-      y += 5.5;
-
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(40, 50, 70);
-      const lines = doc.splitTextToSize(sc.technicians.join('  •  '), colW - 6);
-      doc.text(lines, x+4, y+3);
-      y += lines.length * 3.8 + 2;
-    }
-
-    y += 4;
-    colYs[bestCol] = y;
+  const C_MARGIN = 10;
+  
+  // Group dates into 7-day chunks (weeks)
+  const weeks: string[][] = [];
+  for (let i = 0; i < allDates.length; i += 7) {
+    weeks.push(allDates.slice(i, i + 7));
   }
 
-  drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
-  doc.save(opts.filename);
+  let pageCount = 0;
+
+  for (const weekDates of weeks) {
+    const weekRecs = records.filter(r => weekDates.includes(r.date));
+    const activeEmps = allEmps.filter(emp => weekRecs.some(r => r.employee === emp));
+    
+    if (activeEmps.length === 0) continue;
+
+    const rowH = 6;
+    const headerH = 8;
+    const startY = 32;
+    const maxRowsPerPage = Math.floor((pageH - 15 - startY - headerH) / rowH);
+
+    for (let i = 0; i < activeEmps.length; i += maxRowsPerPage) {
+      const pageEmps = activeEmps.slice(i, i + maxRowsPerPage);
+      
+      if (pageCount > 0) doc.addPage();
+      pageCount++;
+
+      const weekSub = opts.subtitle + (weeks.length > 1 ? ` (Partie ${weeks.indexOf(weekDates)+1}/${weeks.length})` : '');
+      drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, weekSub, logo);
+
+      let y = startY;
+      
+      // Draw Table Header
+      const colNameW = 45;
+      const colDayW = (pageW - C_MARGIN*2 - colNameW) / 7;
+      
+      doc.setFillColor(30, 40, 60);
+      doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text("TECHNICIEN", C_MARGIN + 2, y + 5);
+      
+      for (let d = 0; d < 7; d++) {
+        const dx = C_MARGIN + colNameW + d * colDayW;
+        if (d < weekDates.length) {
+          doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
+        }
+      }
+      
+      y += headerH;
+
+      // Draw Rows
+      for (const emp of pageEmps) {
+        const isEven = pageEmps.indexOf(emp) % 2 === 0;
+        doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
+        doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, rowH, 'F');
+        
+        doc.setDrawColor(220, 225, 230);
+        doc.setLineWidth(0.1);
+        doc.line(C_MARGIN, y+rowH, pageW-C_MARGIN, y+rowH);
+        
+        doc.setTextColor(20, 30, 40);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        let nm = prettyName(emp);
+        if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
+        doc.text(nm, C_MARGIN + 2, y + 4);
+        
+        doc.line(C_MARGIN + colNameW, y, C_MARGIN + colNameW, y + rowH);
+        
+        // Days
+        for (let d = 0; d < 7; d++) {
+          const dx = C_MARGIN + colNameW + d * colDayW;
+          if (d > 0) doc.line(dx, y, dx, y + rowH); // left border for cell
+          
+          if (d >= weekDates.length) continue;
+          const date = weekDates[d];
+          
+          const recs = weekRecs.filter(r => r.date === date && r.employee === emp);
+          if (recs.length === 0) continue;
+          
+          const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
+          
+          if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
+            doc.setFillColor(230, 235, 240);
+            doc.rect(dx+0.5, y+0.5, colDayW-1, rowH-1, 'F');
+            doc.setTextColor(100, 110, 120);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.text('OFF', dx + colDayW/2, y + 4, {align: 'center'});
+          } else {
+            const sc = getSceneColor(mainRec.scene);
+            const sceneAbbr = shortenSceneName(mainRec.scene);
+            
+            const boxW = 15;
+            doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+            doc.rect(dx+0.5, y+0.5, boxW, rowH-1, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.5);
+            doc.text(sceneAbbr, dx + 0.5 + boxW/2, y + 4, {align: 'center'});
+            
+            let timeStr = mainRec.time;
+            if (recs.length > 1) {
+              const fO = recs.find(r => isTrainingScene(r.scene));
+              if (fO) timeStr += ' +FO';
+            }
+            doc.setTextColor(20, 30, 40);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.text(timeStr, dx + 0.5 + boxW + (colDayW - boxW - 1)/2, y + 4, {align: 'center'});
+          }
+        }
+        
+        y += rowH;
+      }
+      
+      doc.setDrawColor(30, 40, 60);
+      doc.setLineWidth(0.3);
+      doc.rect(C_MARGIN, startY, pageW - C_MARGIN*2, y - startY);
+
+      drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
+    }
+  }
+
+  if (pageCount > 0) doc.save(opts.filename);
 }
 
 export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
@@ -529,61 +603,10 @@ export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<v
   const pEnd = fmtDate(allDates[allDates.length-1]);
   const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
 
-  const days: Array<{
-    date: string;
-    scenes: Array<{name: string, time: string, technicians: string[]}>
-  }> = [];
-
-  for (let i = 0; i < allDates.length; i++) {
-    const date = allDates[i];
-    const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-    const activeFOs  = dayRecs.filter(r =>  isTrainingScene(r.scene));
-    const dayAssoc   = getFOAssociations(dayRecs);
-    const sceneMap   = new Map<string, Array<{name:string;time:string}>>();
-
-    for (const r of activeRegs) {
-      if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
-      sceneMap.get(r.scene)!.push({name:prettyName(r.employee), time:r.time});
-    }
-    for (const r of activeFOs) {
-      const assoc = dayAssoc.get(r.employee)??[];
-      const gk = r.scene;
-      if (!sceneMap.has(gk)) sceneMap.set(gk,[]);
-      sceneMap.get(gk)!.push({name:`${prettyName(r.employee)}${assoc.length>0?` (FO)`:''}`, time:r.time});
-      for (const sc of assoc) {
-        if (!sceneMap.has(sc)) sceneMap.set(sc,[]);
-        sceneMap.get(sc)!.push({name:`${prettyName(r.employee)} (FO)`, time:r.time});
-      }
-    }
-
-    const scenes = Array.from(sceneMap.entries())
-      .sort((a,b) => a[0].localeCompare(b[0],'fr'))
-      .map(([scene,rows]) => {
-        const counts = new Map<string, number>();
-        for (const r of rows) counts.set(r.time, (counts.get(r.time)||0)+1);
-        let bestTime = '', max = 0;
-        for (const [t,c] of counts.entries()) if (c > max) { bestTime = t; max = c; }
-        
-        const sortedRows = rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
-        const technicians = sortedRows.map(r => r.name + (r.time !== bestTime && r.time ? ` [${r.time}]` : ''));
-        
-        return {
-          name: scene,
-          time: bestTime,
-          technicians
-        };
-      });
-
-    if (scenes.length > 0) {
-      days.push({ date, scenes });
-    }
-  }
-
-  await generateCompactGlobalPdf({
-    title: 'Vue Globale',
+  await generateGridGlobalPdf({
+    title: 'Planning Global Master',
     subtitle: `Période totale : ${period}`,
-    filename: `sfx-vue-globale.pdf`,
-    days
+    filename: `sfx-master-roster.pdf`,
+    records
   });
 }
