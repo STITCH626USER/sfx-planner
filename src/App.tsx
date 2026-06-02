@@ -46,6 +46,7 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 export default function App() {
   const [tab, setTab] = useState<Tab>('daily');
   
+  // FIX: Détection automatique du mode clair/sombre
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -65,12 +66,14 @@ export default function App() {
 
   const activeDate = tab === 'daily' ? dailyDate : '';
 
+  // FIX: Application du thème
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
   }, [theme]);
 
+  // FIX: Écoute des changements de thème du téléphone
   useEffect(() => {
     if (!window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -125,7 +128,7 @@ export default function App() {
         || (isIOS && !/Safari\//.test(ua));
       if (inApp) {
         setError(
-          'Cette page est ouverte dans une app (WhatsApp, etc.) qui limite la lecture des PDF. Ouvre le lien dans Safari pour importer ton planning. Détail : ' + raw,
+          'Cette page est ouverte dans une app qui limite la lecture des PDF. Ouvre le lien dans Safari pour importer ton planning. Détail : ' + raw,
         );
         setErrorHint('safari');
       } else if (isIOS) {
@@ -211,7 +214,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement.
+                Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
               </span>
             </div>
           </div>
@@ -361,7 +364,7 @@ export default function App() {
           <div className="footer-warning-card">
             <span className="warning-text">
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-              Contrôle obligatoire sur UKG personnel. Données traitées localement.
+              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
             </span>
           </div>
         </footer>
@@ -1159,6 +1162,9 @@ function EmptyAllPanel() {
 }
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
+  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
+  const scenes = useMemo(() => listScenes(records), [records]);
+  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -1167,14 +1173,21 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const handleExportSingleDay = async () => {
+  const handleExport = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      await exportDayPdf(date, records);
+      if (mode === 'day') {
+        await exportDayPdf(date, records);
+      } else if (mode === 'scene' && selectedScene) {
+        await exportScenePdf(selectedScene, records);
+      } else if (mode === 'global') {
+        await exportGlobalRecapPdf(records);
+      }
       onClose();
     } catch (e) {
       console.error('PDF export failed', e);
+    } finally {
       setBusy(false);
     }
   };
@@ -1183,31 +1196,45 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
       <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="export-head">
-          <div className="export-title">Exporter le planning quotidien</div>
+          <div className="export-title">Exporter en PDF</div>
           <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
         </div>
-        <div className="export-body" style={{ padding: '16px 0' }}>
-          <p style={{ margin: '0 0 16px 0', fontSize: '14px', opacity: 0.85 }}>
-            Vous allez générer un document PDF contenant uniquement les cartes des équipes prévues pour cette date.
-          </p>
+        <div className="export-body">
           <button
             type="button"
-            className="export-opt on"
-            onClick={handleExportSingleDay}
+            className={'export-opt' + (mode === 'day' ? ' on' : '')}
+            onClick={() => setMode('day')}
           >
             <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
             <span className="export-opt-sub">Format cartes par scènes / équipes (très lisible)</span>
           </button>
+          <button
+            type="button"
+            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
+            onClick={() => setMode('scene')}
+          >
+            <span className="export-opt-title">Scène sur période</span>
+            <span className="export-opt-sub">Une scène sur toutes les dates importées</span>
+          </button>
+          {mode === 'scene' && (
+            <select
+              className="export-scene-select"
+              value={selectedScene}
+              onChange={(e) => setSelectedScene(e.target.value)}
+            >
+              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
         </div>
         <div className="export-foot">
           <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
           <button
             type="button"
             className="btn"
-            disabled={busy}
-            onClick={handleExportSingleDay}
+            disabled={busy || (mode === 'scene' && !selectedScene)}
+            onClick={handleExport}
           >
-            {busy ? 'Génération…' : 'Générer le PDF'}
+            {busy ? 'Génération…' : 'Exporter'}
           </button>
         </div>
       </div>
