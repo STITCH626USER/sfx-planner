@@ -123,132 +123,159 @@ function drawAvatar(doc: jsPDF, x: number, y: number, name: string, color: [numb
 }
 
 /* ─── Scene Card ─── */
+/* ─── Compact card dimensions ─── */
+const C_HEADER = 6.0;  // card header height mm
+const C_PAD_T  = 0.8;  // padding top
+const C_PAD_B  = 1.8;  // padding bottom
+const C_CARD_GAP = 2.8; // gap between cards
+const C_ROW_H  = 4.5;  // row height (was 6.0)
+const C_GUTTER = 4.5;  // column gutter
+const C_MARGIN = 10;   // page margin
+
 function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   sceneName: string, rows: Array<{name:string;time:string;isFO?:boolean}>,
-  rowH = 6.0): number {
+  rowH = C_ROW_H): number {
   const sc = getSceneColor(sceneName);
   const accentRgb: [number,number,number] = [
     Math.round(sc.rgbText[0]*0.7 + 30),
     Math.round(sc.rgbText[1]*0.7 + 30),
     Math.round(sc.rgbText[2]*0.7 + 30),
   ];
-  const headerH = 8.5;
-  const padX = 4; const padTop = 1.5; const padBot = 3;
+  const headerH = C_HEADER;
+  const padX = 3.5; const padTop = C_PAD_T; const padBot = C_PAD_B;
   const totalRows = Math.max(1, rows.length);
   const cardH = headerH + padTop + totalRows * rowH + padBot;
 
-  // Card background (very light scene color)
+  // Card background
   doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
   doc.setDrawColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.setLineWidth(0.15);
-  doc.roundedRect(x, y, w, cardH, 2, 2, 'FD');
+  doc.setLineWidth(0.12);
+  doc.roundedRect(x, y, w, cardH, 1.5, 1.5, 'FD');
 
-  // Left accent bar (3px, full height, scene color)
+  // Left accent bar
   doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.roundedRect(x, y, 3, cardH, 1.5, 1.5, 'F');
-  doc.rect(x+1.5, y, 1.5, cardH, 'F');
+  doc.roundedRect(x, y, 2.5, cardH, 1.2, 1.2, 'F');
+  doc.rect(x+1.2, y, 1.3, cardH, 'F');
 
   // Header band
   doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.roundedRect(x, y, w, headerH, 2, 2, 'F');
-  doc.rect(x, y+2, w, headerH-2, 'F');
-  // Scene name
-  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...WHITE);
-  const sn = doc.splitTextToSize(cleanText(sceneName), w-padX*2-8)[0] as string;
-  doc.text(sn, x+padX+1, y+headerH*0.67);
-  // Tech count badge
+  doc.roundedRect(x, y, w, headerH, 1.5, 1.5, 'F');
+  doc.rect(x, y+1.5, w, headerH-1.5, 'F');
+
+  // Scene name (compact font)
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...WHITE);
+  const sn = doc.splitTextToSize(cleanText(sceneName), w-padX*2-10)[0] as string;
+  doc.text(sn, x+padX+1.5, y+headerH*0.66);
+
+  // Count badge
   if (rows.length > 0) {
     const badge = String(rows.length);
-    const bw = doc.getTextWidth(badge)+4; const bh = 4.5;
-    const bx = x+w-padX-bw; const by = y+(headerH-bh)/2;
-    doc.setFillColor(...WHITE); doc.setDrawColor(...WHITE); doc.roundedRect(bx, by, bw, bh, bh/2, bh/2, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(sc.rgbText[0],sc.rgbText[1],sc.rgbText[2]);
+    const bw = doc.getTextWidth(badge)+3.5; const bh = 3.8;
+    const bx = x+w-padX-bw-0.5; const by = y+(headerH-bh)/2;
+    doc.setFillColor(...WHITE); doc.roundedRect(bx, by, bw, bh, bh/2, bh/2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(sc.rgbText[0],sc.rgbText[1],sc.rgbText[2]);
     doc.text(badge, bx+bw/2, by+bh*0.72, {align:'center'});
   }
 
   // Rows
-  let ry = y + headerH + padTop + 1;
+  let ry = y + headerH + padTop + 0.5;
   if (rows.length === 0) {
-    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-    doc.text('Aucun technicien', x+padX+4, ry+rowH*0.55);
+    doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(...MUTED);
+    doc.text('Aucun technicien', x+padX+3, ry+rowH*0.55);
   } else {
     for (const row of rows) {
-      // Avatar
-      const avSize = rowH * 0.75;
+      const avSize = Math.min(rowH * 0.72, 3.5);
       const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
       drawAvatar(doc, x+padX+1, ry+(rowH-avSize)/2, row.name, avColor, avSize);
-      let nameX = x+padX+1+avSize+2;
-      // FO badge
+      let nameX = x+padX+1+avSize+1.5;
       if (row.isFO) {
-        const fow=6.5; const foh=avSize*0.8; const fox=nameX; const foy=ry+(rowH-foh)/2;
-        doc.setFillColor(...VIOLET); doc.roundedRect(fox, foy, fow, foh, 0.8, 0.8, 'F');
-        doc.setTextColor(...WHITE); doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+        const fow=5.5; const foh=avSize*0.9; const fox=nameX; const foy=ry+(rowH-foh)/2;
+        doc.setFillColor(...VIOLET); doc.roundedRect(fox, foy, fow, foh, 0.6, 0.6, 'F');
+        doc.setTextColor(...WHITE); doc.setFont('helvetica','bold'); doc.setFontSize(5.5);
         doc.text('FO', fox+fow/2, foy+foh*0.72, {align:'center'});
-        nameX += fow+1.5;
+        nameX += fow+1.2;
       }
-      // Time pill
-      doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
       const timeStr = row.time||'';
-      const tw = doc.getTextWidth(timeStr)+5; const th = rowH*0.72;
+      const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
       const px = x+w-padX-tw; const py = ry+(rowH-th)/2;
       const pillColor: [number,number,number] = /^off$/i.test(timeStr) ? MUTED : AMBER;
       doc.setFillColor(...pillColor); doc.roundedRect(px, py, tw, th, th/2, th/2, 'F');
       doc.setTextColor(...WHITE); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
-      // Name
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...INK);
-      const maxW = px - nameX - 2;
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...INK);
+      const maxW = px - nameX - 1.5;
       const nm = doc.splitTextToSize(row.name, maxW)[0] as string;
-      doc.text(nm, nameX, ry+rowH*0.62);
+      doc.text(nm, nameX, ry+rowH*0.65);
       ry += rowH;
     }
   }
   return cardH;
 }
 
-/* ─── Layout chooser ─── */
-interface Layout { orientation:'portrait'|'landscape'; cols:number; fontTitle:number; fontSub:number; fontSection:number; fontRow:number; rowHeight:number; sectionGap:number; rowGap:number; dense:boolean; }
+/* ─── Simulate layout to count pages (pure, no rendering) ─── */
+function simulatePages(
+  blocks: Array<{rows: Array<unknown>}>,
+  cols: number, rowH: number,
+  pageW: number, pageH: number, headerH: number
+): number {
+  const bottom = pageH - 13;
+  const gutter = C_GUTTER;
+  const _colW = (pageW - C_MARGIN*2 - gutter*(cols-1)) / cols; // computed but not needed
+  void _colW;
+  const colYs = new Array(cols).fill(headerH);
+  let pages = 1;
+  for (const block of blocks) {
+    const nRows = Math.max(1, block.rows.length);
+    const cardH = C_HEADER + C_PAD_T + nRows * rowH + C_PAD_B;
+    let bestCol = 0; let minY = colYs[0];
+    for (let i=1; i<cols; i++) if (colYs[i] < minY) { minY=colYs[i]; bestCol=i; }
+    if (minY + cardH > bottom) {
+      pages++; colYs.fill(headerH); bestCol=0;
+    }
+    colYs[bestCol] += cardH + C_CARD_GAP;
+  }
+  return pages;
+}
 
-function chooseLayout(items:number, rows:number): Layout {
-  const d = items + rows*0.6;
-  if (d<=30)  return {orientation:'portrait',  cols:1, fontTitle:18,fontSub:11,fontSection:12,fontRow:10,rowHeight:6.0,sectionGap:4,  rowGap:0.6,dense:false};
-  if (d<=60)  return {orientation:'portrait',  cols:2, fontTitle:17,fontSub:10,fontSection:11,fontRow:9.5,rowHeight:5.2,sectionGap:3.2,rowGap:0.4,dense:false};
-  if (d<=110) return {orientation:'landscape', cols:2, fontTitle:16,fontSub:10,fontSection:10,fontRow:9,  rowHeight:4.8,sectionGap:2.8,rowGap:0.3,dense:false};
-  if (d<=180) return {orientation:'landscape', cols:3, fontTitle:15,fontSub:9.5,fontSection:10,fontRow:8.5,rowHeight:4.2,sectionGap:2.4,rowGap:0.2,dense:true};
-  return                {orientation:'landscape', cols:4, fontTitle:14,fontSub:9, fontSection:9.5,fontRow:8,  rowHeight:3.8,sectionGap:2,  rowGap:0.2,dense:true};
+/* ─── Find optimal column count to minimize pages ─── */
+function findBestCols(
+  blocks: Array<{rows: Array<unknown>}>,
+  pageW: number, pageH: number, headerH: number,
+  rowH: number
+): number {
+  for (const cols of [2,3,4,5,6]) {
+    const pages = simulatePages(blocks, cols, rowH, pageW, pageH, headerH);
+    if (pages <= 1) return cols;
+  }
+  return 6; // max cols as fallback
 }
 
 /* ─── Multi-column card layout engine ─── */
 function layoutCards(doc: jsPDF, blocks: Array<{header:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>,
   startY: number, marginX: number, pageW: number, pageH: number, cols: number, rowH: number, _gap: number, logo: string|null,
   headerTitle: string, headerSub: string): void {
-  const bottom = pageH - 14;
-  const gutter = 5;
+  const bottom = pageH - 13;
+  const gutter = C_GUTTER;
   const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
   const colYs: number[] = new Array(cols).fill(startY);
 
-  const cardGap = 4;
-
   for (const block of blocks) {
     const nRows = Math.max(1, block.rows.length);
-    const headerH = 8.5; const padTop=1.5; const padBot=3;
-    const cardH = headerH + padTop + nRows * rowH + padBot;
+    const cardH = C_HEADER + C_PAD_T + nRows * rowH + C_PAD_B;
 
-    // Find shortest column
     let bestCol = 0; let minY = colYs[0];
     for (let i=1; i<cols; i++) if (colYs[i] < minY) { minY=colYs[i]; bestCol=i; }
 
-    // Page break?
     if (minY + cardH > bottom) {
       drawPremiumFooter(doc, pageW, pageH, marginX);
       doc.addPage();
       const ny = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub+' (suite)', logo);
-      colYs.fill(ny);
-      bestCol=0; minY=ny;
+      colYs.fill(ny); bestCol=0; minY=ny;
     }
 
     const x = marginX + bestCol*(colW+gutter);
     const h = drawSceneCard(doc, x, colYs[bestCol], colW, block.header, block.rows, rowH);
-    colYs[bestCol] += h + cardGap;
+    colYs[bestCol] += h + C_CARD_GAP;
   }
 }
 
@@ -259,13 +286,16 @@ async function generateAndSave(opts:{
   itemCount:number; totalRows:number; filename:string;
 }): Promise<void> {
   const logo = await getLogoDataUrl();
-  const layout = chooseLayout(opts.itemCount, opts.totalRows);
-  const doc = new jsPDF({orientation:layout.orientation, unit:'mm', format:'a4'});
+  // Always landscape — better for columns
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const startY = drawPremiumHeader(doc, pageW, 10, 10, opts.title, opts.subtitle, logo);
-  layoutCards(doc, opts.blocks, startY, 10, pageW, pageH, layout.cols, layout.rowHeight, layout.sectionGap, logo, opts.title, opts.subtitle);
-  drawPremiumFooter(doc, pageW, pageH, 10);
+  const APPROX_HEADER = 37; // header height + start margin
+  const rowH = C_ROW_H;
+  const cols = findBestCols(opts.blocks, pageW, pageH, APPROX_HEADER, rowH);
+  const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo);
+  layoutCards(doc, opts.blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, opts.title, opts.subtitle);
+  drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
   doc.save(opts.filename);
 }
 

@@ -170,7 +170,7 @@ input:focus, select:focus {
   max-width: 480px;
   margin-inline: auto;
   margin-block: 0;
-  padding: 16px 16px calc(140px + env(safe-area-inset-bottom)) 16px;
+  padding: 4px 16px calc(100px + env(safe-area-inset-bottom)) 16px;
   min-height: 100%;
 }
 
@@ -1182,6 +1182,25 @@ input:focus, select:focus {
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+/* Sticky date bar — stays visible while scrolling content */
+.main-date-bar {
+  position: sticky;
+  top: 56px;
+  z-index: 25;
+  margin-bottom: 12px;
+  border-radius: var(--r-md);
+  background: var(--bg-1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--line);
+  padding: 4px 0 2px 0;
+}
+:root[data-theme="light"] .main-date-bar {
+  background: rgba(255,255,255,0.92);
+  border-color: var(--line);
 }
 .daily-date-bar .date-row {
   padding: 10px 4px 16px 4px;
@@ -2657,3 +2676,33 @@ nav.seg button[aria-selected="true"] {
   color: var(--fg-muted) !important;
 }
 
+
+/* ── v3.9 final overrides ───────────────────────────────────────── */
+
+/* Bouton principal lisible en mode clair */
+:root[data-theme="light"] .btn {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25) !important;
+}
+
+/* Uploader en mode clair */
+:root[data-theme="light"] .uploader {
+  background: rgba(255,255,255,0.85) !important;
+  border-color: rgba(200,92,0,0.25) !important;
+}
+:root[data-theme="light"] .uploader-title {
+  color: var(--fg) !important;
+}
+:root[data-theme="light"] .uploader-meta {
+  color: var(--fg-muted) !important;
+}
+
+/* Footer notice plus compact */
+.app-footer-notice {
+  font-size: 10.5px !important;
+  padding: 6px 12px calc(4px + env(safe-area-inset-bottom)) 12px !important;
+}
+.footer-warning-card {
+  padding: 6px 14px !important;
+  gap: 8px !important;
+}
