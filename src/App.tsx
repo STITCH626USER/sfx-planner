@@ -1342,29 +1342,41 @@ function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
     }
   }, [triggerCount, spawnRocket]);
 
+  const spawnSparkle = useCallback((x: number, y: number) => {
+    const count = 4 + Math.floor(Math.random() * 3);
+    const sparkleColors = ['#ffb03a', '#ffe066', '#fff8dc', '#00e5c6'];
+    const color = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.6 + Math.random() * 1.8;
+      particlesRef.current.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.8,
+        color,
+        alpha: 0.85,
+        decay: 0.06 + Math.random() * 0.06,
+        size: 0.8 + Math.random() * 1.2
+      });
+    }
+  }, []);
+
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
-      const path = e.composedPath() as HTMLElement[];
-      const isInteractive = path.some(el =>
-        el.tagName === 'BUTTON' ||
-        el.tagName === 'INPUT' ||
-        el.tagName === 'SELECT' ||
-        el.tagName === 'A' ||
-        (el.classList && (
-          el.classList.contains('day-card') ||
-          el.classList.contains('seg') ||
-          el.classList.contains('source-pill') ||
-          el.classList.contains('daily-group-head')
-        ))
-      );
-      if (isInteractive) return;
-
-      spawnExplosion(e.clientX, e.clientY);
+      spawnSparkle(e.clientX, e.clientY);
     };
-
+    const handleGlobalTouch = (e: TouchEvent) => {
+      const t = e.touches[0] || e.changedTouches[0];
+      if (t) spawnSparkle(t.clientX, t.clientY);
+    };
     window.addEventListener('mousedown', handleGlobalClick);
-    return () => window.removeEventListener('mousedown', handleGlobalClick);
-  }, [spawnExplosion]);
+    window.addEventListener('touchstart', handleGlobalTouch, { passive: true });
+    return () => {
+      window.removeEventListener('mousedown', handleGlobalClick);
+      window.removeEventListener('touchstart', handleGlobalTouch);
+    };
+  }, [spawnSparkle]);
+
 
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext('2d'); if (!ctx) return;
