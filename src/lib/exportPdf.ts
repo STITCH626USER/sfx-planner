@@ -397,42 +397,33 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
    EXPORT PAR SCÈNE — Planning d'une scène
 ═══════════════════════════════════════════════ */
 export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
-  const sceneRecs = records.filter(r => r.scene===scene && r.time!=='OFF');
-  const foRecs    = records.filter(r => isTrainingScene(r.scene) && r.time!=='OFF');
-  const dayAssoc  = computeAllFOAssociations(records);
-  const dateMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+  const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
+  if (allDates.length === 0) return;
 
-  for (const r of sceneRecs) {
-    if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    let isFO=false; let name=prettyName(r.employee);
-    if (isTrainingScene(r.scene)) {
-      isFO=true;
-      const assoc=dayAssoc.get(getFOAssociationKey(r.date,r.employee))??[];
-      if (assoc.length>0) name=`${prettyName(r.employee)} (${assoc.join(', ')})`;
+  const pStart = fmtDate(allDates[0]);
+  const pEnd = fmtDate(allDates[allDates.length-1]);
+  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
+
+  const dayAssoc = computeAllFOAssociations(records);
+  const filteredRecords: PlanningRecord[] = [];
+  
+  for (const r of records) {
+    if (r.time === 'OFF') continue;
+    if (r.scene === scene) {
+      filteredRecords.push(r);
+    } else if (isTrainingScene(r.scene)) {
+      const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) || [];
+      if (assoc.includes(scene)) {
+        filteredRecords.push(r);
+      }
     }
-    dateMap.get(r.date)!.push({name,time:r.time,isFO});
-  }
-  for (const r of foRecs) {
-    const assoc=dayAssoc.get(getFOAssociationKey(r.date,r.employee))??[];
-    if (assoc.includes(scene)) {
-      if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-      dateMap.get(r.date)!.push({name:`${prettyName(r.employee)} (${r.scene||'FO'})`, time:r.time, isFO:true});
-    }
   }
 
-  const allDates  = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
-  const dates     = allDates.map(d => ({date:d, rows:(dateMap.get(d)??[]).sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
-  const pStart    = allDates[0] ? fmtDate(allDates[0]) : '';
-  const pEnd      = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
-  const period    = pStart&&pEnd&&pStart!==pEnd ? `${pStart} - ${pEnd}` : pStart;
-
-  await generateAndSave({
+  await generateGridGlobalPdf({
     title: cleanText(scene),
-    subtitle: period ? `Période : ${period}` : 'Période',
-    blocks: dates.map(d => ({header:fmtDateShort(d.date), rows:d.rows})),
-    itemCount: dates.length,
-    totalRows: dates.reduce((a,d)=>a+Math.max(1,d.rows.length),0),
+    subtitle: `Période : ${period}`,
     filename: `sfx-planning-${slug(scene)}.pdf`,
+    records: filteredRecords
   });
 }
 
