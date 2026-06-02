@@ -146,24 +146,29 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   const totalRows = Math.max(1, rows.length);
   const cardH = headerH + padTop + totalRows * rowH + padBot;
 
-  // Card background
+  // Card background (White)
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(220, 220, 225); // Subtle border
+  doc.setLineWidth(0.2);
+  doc.roundedRect(x, y, w, cardH, 2.0, 2.0, 'FD');
+
+  // Header band (Pastel subtle color)
   doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-  doc.setDrawColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.setLineWidth(0.12);
-  doc.roundedRect(x, y, w, cardH, 1.5, 1.5, 'FD');
+  doc.roundedRect(x, y, w, headerH, 2.0, 2.0, 'F');
+  doc.rect(x, y+2.0, w, headerH-2.0, 'F');
+  // Bottom line of header
+  doc.setDrawColor(235, 235, 240);
+  doc.setLineWidth(0.15);
+  doc.line(x, y+headerH, x+w, y+headerH);
 
-  // Left accent bar
+  // Left accent bar (thinner, more elegant)
   doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.roundedRect(x, y, 2.5, cardH, 1.2, 1.2, 'F');
-  doc.rect(x+1.2, y, 1.3, cardH, 'F');
-
-  // Header band
-  doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.roundedRect(x, y, w, headerH, 1.5, 1.5, 'F');
-  doc.rect(x, y+1.5, w, headerH-1.5, 'F');
+  doc.roundedRect(x, y, 1.8, cardH, 1.5, 1.5, 'F');
+  doc.rect(x+0.9, y, 0.9, cardH, 'F');
 
   // Scene name (compact font)
-  doc.setFont('helvetica','bold'); doc.setTextColor(...WHITE);
+  doc.setFont('helvetica','bold'); 
+  doc.setTextColor(30, 20, 10); // Dark premium text
   let snSize = 7.5;
   doc.setFontSize(snSize);
   const maxWText = w - padX*2 - 10;
@@ -182,7 +187,10 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
     const badge = String(rows.length);
     const bw = doc.getTextWidth(badge)+3.5; const bh = 3.8;
     const bx = x+w-padX-bw-0.5; const by = y+(headerH-bh)/2;
-    doc.setFillColor(...WHITE); doc.roundedRect(bx, by, bw, bh, bh/2, bh/2, 'F');
+    doc.setFillColor(255, 255, 255); 
+    doc.setDrawColor(220, 220, 225);
+    doc.setLineWidth(0.1);
+    doc.roundedRect(bx, by, bw, bh, bh/2, bh/2, 'FD');
     doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(sc.rgbText[0],sc.rgbText[1],sc.rgbText[2]);
     doc.text(badge, bx+bw/2, by+bh*0.72, {align:'center'});
   }
@@ -209,9 +217,12 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
       const timeStr = row.time||'';
       const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
       const px = x+w-padX-tw; const py = ry+(rowH-th)/2;
-      const pillColor: [number,number,number] = /^off$/i.test(timeStr) ? MUTED : AMBER;
+      const isOff = /^off$/i.test(timeStr);
+      const pillColor: [number,number,number] = isOff ? [240, 240, 243] : [255, 240, 225];
+      const pillText: [number,number,number] = isOff ? MUTED : AMBER;
       doc.setFillColor(...pillColor); doc.roundedRect(px, py, tw, th, th/2, th/2, 'F');
-      doc.setTextColor(...WHITE); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...pillText); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
       doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...INK);
       const maxW = px - nameX - 1.5;
       const nm = doc.splitTextToSize(row.name, maxW)[0] as string;

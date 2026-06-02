@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.13</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.14</span>
               </span>
             </div>
           </div>
@@ -317,8 +317,6 @@ export default function App() {
             </button>
           </nav>
         </div>
-
-        {/* Removed TechFinder from sidebar to avoid confusion with RecherchePanel */}
       </aside>
 
       <main className="app-main">
@@ -1078,91 +1076,7 @@ function DatePicker({ dates, date, records, onChange }: {
   );
 }
 
-function TechFinder({ records, activeDate }: { records: PlanningRecord[]; activeDate: string }) {
-  const [query, setQuery] = useState('');
 
-  const result = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return null;
-    if (!activeDate) {
-      return { kind: 'no-date' as const };
-    }
-    const tokens = q.split(/\s+/).filter(Boolean);
-    const dayAllRecs = records.filter(r => r.date === activeDate && r.time !== 'OFF');
-    const dayAssoc = getFOAssociations(dayAllRecs);
-    const dayRecs = dayAllRecs
-      .filter(r => tokens.every(t => searchHaystack(r.employee).includes(t)))
-      .map(r => ({
-        ...r,
-        assocScenes: dayAssoc.get(r.employee)
-      }));
-    if (dayRecs.length === 0) {
-      return { kind: 'off' as const };
-    }
-    return { kind: 'found' as const, recs: dayRecs };
-  }, [query, activeDate, records]);
-
-  return (
-    <div className="tech-finder" data-testid="tech-finder">
-      <div className="tech-finder-input-wrap">
-        <span className="tech-finder-icon" aria-hidden><IconSearch /></span>
-        <input
-          type="search"
-          inputMode="search"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Vérifier un technicien…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          data-testid="input-tech-finder"
-        />
-        {query && (
-          <button
-            type="button"
-            className="tech-finder-clear"
-            data-testid="btn-tech-finder-clear"
-            onClick={() => setQuery('')}
-          >×</button>
-        )}
-      </div>
-      {result && (
-        <div className="tech-finder-result" data-testid="tech-finder-result">
-          {result.kind === 'no-date' ? (
-            <div className="tf-status-card tf-card-info">
-              <span className="tf-status-icon"><IconCalendar /></span>
-              <span className="tf-status-text">
-                Choisissez une date dans Vue globale.
-              </span>
-            </div>
-          ) : result.kind === 'off' ? (
-            <div className="tf-status-card tf-card-off" data-testid="tf-off">
-              <span className="tf-status-icon"><IconMoon /></span>
-              <span className="tf-status-text">la personne est OFF</span>
-            </div>
-          ) : (
-            <div className="tf-found-list">
-              {result.recs.map(rec => {
-                const isFO = isTrainingScene(rec.scene);
-                const assocScenes = (rec as any).assocScenes;
-                return (
-                  <div className="tf-found-row" key={`${rec.employee}-${rec.date}`} data-testid={`tf-found-${rec.employee}`}>
-                    <span className="tf-name">
-                      {isFO ? `🎓 ` : ''}{prettyName(rec.employee)}
-                    </span>
-                    <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
-                    <span className="tf-scene" title={rec.scene}>
-                      {isFO && assocScenes && assocScenes.length > 0 ? `${rec.scene} (${assocScenes.join(', ')})` : rec.scene}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function EmptyAllPanel() {
   return <div className="empty" data-testid="empty-root" />;
