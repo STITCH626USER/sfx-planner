@@ -496,29 +496,41 @@ input:focus, select:focus {
   position: relative;
 }
 .search-wrap input {
-  padding-left: 46px;
-  height: 50px;
+  padding-left: 56px;
+  height: 60px;
   border-radius: 999px;
   background: var(--bg-1);
-  border: 1px solid var(--line);
-  font-size: 15px;
-  font-weight: 500;
+  border: 2px solid var(--line);
+  font-size: 17px;
+  font-weight: 600;
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  transition: var(--spring-transition);
+}
+.search-wrap input::placeholder {
+  color: var(--fg-muted);
+  opacity: 0.8;
+  font-weight: 500;
 }
 .search-wrap input:focus {
   background: var(--bg-2);
   border-color: var(--amber);
-  box-shadow: 0 0 0 4px rgba(255, 176, 58, 0.18);
+  box-shadow: 0 8px 32px rgba(255, 176, 58, 0.2), 0 0 0 4px rgba(255, 176, 58, 0.12);
+  transform: translateY(-2px);
 }
 .search-wrap .search-icon {
   position: absolute;
-  left: 18px;
+  left: 22px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--fg-dim);
   pointer-events: none;
+  transition: var(--spring-transition);
+}
+.search-wrap:focus-within .search-icon {
+  color: var(--amber);
+  transform: translateY(-50%) scale(1.15);
 }
 
 /* Premium Lists & rows design */

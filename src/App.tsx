@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.12</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.13</span>
               </span>
             </div>
           </div>
@@ -318,9 +318,7 @@ export default function App() {
           </nav>
         </div>
 
-        {records.length > 0 && activeDate && tab === 'recherche' && (
-          <TechFinder records={records} activeDate={activeDate} />
-        )}
+        {/* Removed TechFinder from sidebar to avoid confusion with RecherchePanel */}
       </aside>
 
       <main className="app-main">
@@ -470,7 +468,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
           inputMode="search"
           autoComplete="off"
           spellCheck={false}
-          placeholder="Rechercher un technicien…"
+          placeholder="Rechercher un technicien (ex: Tom)..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           data-testid="input-search"
