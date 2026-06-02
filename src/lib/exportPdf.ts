@@ -17,7 +17,6 @@ const MONTH_FR: Record<string, string> = {
 const DAY_FR_FULL = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const DAY_FR_SHORT = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
 
-// Nettoyage radical des caractères bizarres du PDF
 function cleanText(text: string): string {
   if (!text) return '';
   return text.replace(/[Ø<ß"«»®©]/g, '').replace(/\s+/g, ' ').trim();
@@ -98,7 +97,7 @@ function drawHeader(doc: jsPDF, pageW: number, marginX: number, marginTop: numbe
   return marginTop + bannerH + 4;
 }
 
-function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number, _dense: boolean, _denseNote: boolean) {
+function drawFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number) {
   doc.setDrawColor(GREY_LINE[0], GREY_LINE[1], GREY_LINE[2]); doc.setLineWidth(0.2); doc.line(marginX, pageH - 11, pageW - marginX, pageH - 11);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(ORANGE[0], ORANGE[1], ORANGE[2]);
   doc.text("ATTENTION : Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.", pageW / 2, pageH - 7, { align: 'center' });
@@ -158,13 +157,13 @@ async function generateAndSave(opts: { title: string; subtitle: string; blocks: 
     const doc = new jsPDF({ orientation: layout.orientation, unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
     const contentY = drawHeader(doc, pageW, 10, 9, opts.title, opts.subtitle, layout, logo);
-    if (drawBlocks(doc, opts.blocks, contentY, 10, 10, pageW, pageH, layout)) { drawFooter(doc, pageW, pageH, 10, layout.dense, layout.dense); doc.save(opts.filename); return; }
+    if (drawBlocks(doc, opts.blocks, contentY, 10, 10, pageW, pageH, layout)) { drawFooter(doc, pageW, pageH, 10); doc.save(opts.filename); return; }
   }
   const layout: LayoutChoice = { orientation: 'landscape', cols: 6, fontTitle: 12, fontSub: 8, fontSection: 8.5, fontRow: 7, rowHeight: 2.9, sectionGap: 1.4, rowGap: 0.1, dense: true };
   const doc = new jsPDF({ orientation: layout.orientation, unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth(); const pageH = doc.internal.pageSize.getHeight();
   const contentY = drawHeader(doc, pageW, 8, 8, opts.title, opts.subtitle, layout, logo);
-  drawBlocks(doc, opts.blocks, contentY, 8, 8, pageW, pageH, layout); drawFooter(doc, pageW, pageH, 8, layout.dense, layout.dense); doc.save(opts.filename);
+  drawBlocks(doc, opts.blocks, contentY, 8, 8, pageW, pageH, layout); drawFooter(doc, pageW, pageH, 8); doc.save(opts.filename);
 }
 
 // ----------------------------------------------------
@@ -263,21 +262,4 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   }
   for (const r of foRecs) {
     const assoc = dayAssoc.get(getFOAssociationKey(r.date, r.employee)) ?? [];
-    if (assoc.includes(scene)) { if (!dateMap.has(r.date)) dateMap.set(r.date, []); const label = r.scene ? ` (${r.scene})` : ''; dateMap.get(r.date)!.push({ name: `${prettyName(r.employee)}${label}`, time: r.time, isFO: true }); }
-  }
-  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
-  const dates = allDates.map(d => ({ date: d, rows: (dateMap.get(d) ?? []).sort((a, b) => a.name.localeCompare(b.name, 'fr')) }));
-  const periodStart = allDates[0] ? fmtDate(allDates[0]) : ''; const periodEnd = allDates[allDates.length - 1] ? fmtDate(allDates[allDates.length - 1]) : '';
-  const period = periodStart && periodEnd && periodStart !== periodEnd ? `${periodStart} au ${periodEnd}` : periodStart;
-  await generateAndSave({ title: scene, subtitle: period ? `Période : ${period}` : 'Période', blocks: dates.map(d => ({ header: fmtDateShort(d.date), rows: d.rows })), itemCount: dates.length, totalRows: dates.reduce((acc, d) => acc + Math.max(1, d.rows.length), 0), filename: `sfx-planning-${slug(scene)}.pdf` });
-}
-
-export function listScenes(records: PlanningRecord[]): string[] {
-  const set = new Set<string>(); for (const r of records) if (r.scene) set.add(r.scene); return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
-}
-
-export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
-  const allDates = Array.from(new Set(records.map(r => r.date).filter(Boolean))).sort();
-  if (allDates.length === 0) return;
-  await exportDayPdf(allDates[0], records); // Redirige proprement vers la vue quotidienne
-}
+    if (assoc.includes(scene)) { if (!dateMap.has(r.date)) dateMap.set(r.date, []); const label = r.scene ? ` (${r.scene})` : ''; dateMap.get(r.date)!.push({ name: `${prettyName(r.emp
