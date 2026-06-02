@@ -2527,3 +2527,26 @@ nav.seg button[aria-selected="true"] {
 .animate-stagger-3 { animation-delay: 0.15s; }
 .animate-stagger-4 { animation-delay: 0.2s; }
 .animate-stagger-5 { animation-delay: 0.25s; }
+
+/* FORCER LE MODE CLAIR SUR LES COMPOSANTS ENFANTS */
+.light .app-sidebar,
+.light .main-content-panel,
+.light .card,
+.light .export-modal,
+.light .app-shell-empty-container {
+    background-color: #ffffff;
+    color: #0f172a;
+    border-color: #e2e8f0;
+}
+
+.light .daily-scene-group {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.light .btn, 
+.light .export-opt {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
