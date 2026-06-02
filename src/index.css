@@ -2616,15 +2616,16 @@ nav.seg button[aria-selected="true"] {
 }
 
 :root[data-theme="light"] .btn-export {
-  background: rgba(255, 255, 255, 0.85) !important;
-  border-color: rgba(40, 28, 16, 0.12) !important;
-  color: var(--on-fg) !important;
+  background: #ffffff !important;
+  border-color: rgba(40, 28, 16, 0.2) !important;
+  color: var(--fg) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
 }
 :root[data-theme="light"] .btn-export:hover {
-  background: rgba(214, 104, 10, 0.06) !important;
+  background: rgba(200, 92, 0, 0.06) !important;
   border-color: var(--amber) !important;
-  color: var(--on-fg) !important;
-  box-shadow: 0 4px 12px rgba(214, 104, 10, 0.1) !important;
+  color: var(--amber-2) !important;
+  box-shadow: 0 4px 12px rgba(200, 92, 0, 0.1) !important;
 }
 
 :root[data-theme="light"] .daily-scene-group {
@@ -2686,8 +2687,8 @@ nav.seg button[aria-selected="true"] {
 
 /* Bouton principal lisible en mode clair */
 :root[data-theme="light"] .btn {
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.25) !important;
+  color: #1e1408 !important;
+  text-shadow: none !important;
 }
 
 /* Uploader en mode clair */
