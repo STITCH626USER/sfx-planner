@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.14</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.16</span>
               </span>
             </div>
           </div>
@@ -458,15 +458,23 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   }
 
   return (
-    <div data-testid="panel-recherche">
-      <div className="search-wrap" style={{ marginBottom: 12 }}>
+    <div data-testid="panel-recherche" className="recherche-panel-container">
+      <div className="recherche-header">
+        <h2 className="recherche-title">Planning Individuel</h2>
+        <p className="recherche-subtitle">Recherchez un technicien pour afficher son planning complet ou l'exporter en PDF.</p>
+      </div>
+
+      <div className="search-wrap">
         <span className="search-icon"><IconSearch /></span>
         <input
+          id="tech-search-input"
+          name="tech-search-nope"
           type="search"
           inputMode="search"
-          autoComplete="off"
+          autoComplete="nope"
+          autoCorrect="off"
           spellCheck={false}
-          placeholder="Rechercher un technicien (ex: Tom)..."
+          placeholder="Taper un nom (ex: Tom)..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           data-testid="input-search"

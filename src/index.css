@@ -491,8 +491,36 @@ input:focus, select:focus {
   -webkit-backdrop-filter: blur(16px);
 }
 
+/* Recherche Panel */
+.recherche-panel-container {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.recherche-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-top: 12px;
+}
+.recherche-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--fg);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+.recherche-subtitle {
+  font-size: 14px;
+  color: var(--fg-dim);
+  line-height: 1.4;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
 /* Modern search container */
 .search-wrap {
+  margin-bottom: 24px;
   position: relative;
 }
 .search-wrap input {
