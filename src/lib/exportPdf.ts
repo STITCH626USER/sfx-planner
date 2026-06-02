@@ -205,7 +205,7 @@ export async function exportWeeklyPdf(dates: string[], records: PlanningRecord[]
 }
 
 // NOTE : J'ai remis ces fonctions telles qu'elles étaient pour ne pas casser tes autres exports
-export async function exportEmployeePdf(name: string, records: PlanningRecord[]): Promise<void> {
+export async function exportEmployeePdf(name: string, _records: PlanningRecord[]): Promise<void> {
   const doc = new jsPDF(); doc.text(`Tech: ${name}`, 10, 10); doc.save(`tech-${name}.pdf`);
 }
 
