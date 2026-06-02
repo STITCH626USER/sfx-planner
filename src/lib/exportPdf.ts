@@ -5,7 +5,6 @@ import { getFOAssociations, isTrainingScene, getSceneColor } from './utils';
 const ORANGE: [number, number, number] = [232, 130, 30];
 const TEAL: [number, number, number] = [31, 122, 112];
 const GREY_DARK: [number, number, number] = [40, 40, 44];
-const GREY_MED: [number, number, number] = [110, 110, 116];
 const GREY_LINE: [number, number, number] = [220, 220, 224];
 
 const MONTH_FR: Record<string, string> = {
@@ -15,7 +14,6 @@ const MONTH_FR: Record<string, string> = {
 };
 
 const DAY_FR_FULL = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-const DAY_FR_SHORT = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
 
 function cleanText(text: string): string {
   if (!text) return '';
@@ -174,24 +172,18 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   drawFooter(doc, pageW, pageH, marginX); doc.save(`sfx-planning-${date}.pdf`);
 }
 
-export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
-  const doc = new jsPDF();
-  doc.text(`Planning: ${employee}`, 10, 10);
-  doc.save(`planning-${employee}.pdf`);
+export async function exportEmployeePdf(employee: string, _records: PlanningRecord[]): Promise<void> {
+  const doc = new jsPDF(); doc.text(`Planning: ${employee}`, 10, 10); doc.save(`planning-${employee}.pdf`);
 }
 
-export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
-  const doc = new jsPDF();
-  doc.text(`Scene: ${scene}`, 10, 10);
-  doc.save(`scene-${scene}.pdf`);
+export async function exportScenePdf(scene: string, _records: PlanningRecord[]): Promise<void> {
+  const doc = new jsPDF(); doc.text(`Scene: ${scene}`, 10, 10); doc.save(`scene-${scene}.pdf`);
 }
 
 export function listScenes(records: PlanningRecord[]): string[] {
   const set = new Set<string>(); for (const r of records) if (r.scene) set.add(r.scene); return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
-export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
-  const doc = new jsPDF();
-  doc.text("Recap", 10, 10);
-  doc.save("recap.pdf");
+export async function exportGlobalRecapPdf(_records: PlanningRecord[]): Promise<void> {
+  const doc = new jsPDF(); doc.text("Recap", 10, 10); doc.save("recap.pdf");
 }
