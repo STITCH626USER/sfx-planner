@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
-import { exportDayPdf, exportEmployeePdf } from './lib/exportPdf';
+import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey, getSceneColor } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
@@ -28,6 +28,7 @@ function formatDateLong(iso: string): string {
   if (!m) return iso;
   return `${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
 }
+
 function dayInitials(name: string): string {
   const parts = name.replace(/[(*)]/g, '').split(/[, ]+/).filter(Boolean);
   if (parts.length === 0) return '?';
@@ -60,6 +61,9 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.className = theme;
+    document.body.className = theme;
+    
     if (theme === 'light') {
       document.body.style.backgroundColor = '#f1f5f9';
       document.body.style.color = '#0f172a';
@@ -93,6 +97,11 @@ export default function App() {
     }
   }, [sources]);
 
+  const removeSource = useCallback((name: string) => {
+    setRecords(prev => prev.filter(r => r.sourceFile !== name));
+    setSources(prev => prev.filter(s => s.name !== name));
+  }, []);
+
   if (records.length === 0) {
     return (
       <div className="app-shell-empty-container">
@@ -117,6 +126,18 @@ export default function App() {
           <button type="button" className="app-logo" onClick={() => setTheme(c => c === 'dark' ? 'light' : 'dark')}><Logo /></button>
           <div style={{ minWidth: 0 }}><div className="app-title">SFX Planner</div></div>
         </header>
+
+        <Uploader loading={loading} drag={drag} compact={true} onPick={() => fileRef.current?.click()} onDragOver={(e: any) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e: any) => { e.preventDefault(); setDrag(false); if (e.dataTransfer?.files) handleFiles(e.dataTransfer.files); }} />
+        <input ref={fileRef} type="file" accept=".pdf,application/pdf" multiple style={{ display: 'none' }} onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+
+        {sources.length > 0 && (
+          <div className="sources-strip">
+            {sources.map(s => (
+              <span className="source-pill" key={s.name}><span className="dot" /><span title={s.name}>{s.name.slice(0,10)}</span><button onClick={() => removeSource(s.name)}>×</button></span>
+            ))}
+          </div>
+        )}
+
         <div className="sidebar-nav-block">
           <nav className="seg">
             <button aria-selected={tab === 'recherche'} onClick={() => setTab('recherche')}><IconSearch /><span className="tab-label-full">Planning individuel</span></button>
@@ -125,6 +146,7 @@ export default function App() {
         </div>
       </aside>
       <main className="app-main">
+        {error && <div className="banner-error">{error}</div>}
         {tab === 'daily' && <div className="main-date-bar"><DailyDateBar records={records} date={dailyDate} onDateChange={setDailyDate} /></div>}
         <div className="main-content-panel">
           {tab === 'recherche' ? <RecherchePanel records={records} /> : <DailyPanel records={records} date={dailyDate} />}
@@ -134,10 +156,14 @@ export default function App() {
   );
 }
 
-function shortName(n: string): string { return n.replace(/\.pdf$/i, '').slice(0, 10); }
-
 function Uploader({ loading, compact, onPick }: any) {
-  return <button className="btn" onClick={onPick} disabled={loading}>{compact ? 'Ajouter' : 'Importer PDF'}</button>;
+  return (
+    <div style={{ padding: '12px', width: '100%' }}>
+      <button className="btn" onClick={onPick} disabled={loading} style={{ width: '100%' }}>
+        {loading ? 'Lecture...' : compact ? 'Ajouter PDF' : 'Importer PDF Chronos'}
+      </button>
+    </div>
+  );
 }
 
 function RecherchePanel({ records }: { records: PlanningRecord[] }) {
@@ -149,14 +175,25 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   if (selected) return <EmployeeDetail name={selected} records={records.filter(r => r.employee === selected)} onBack={() => setSelected(null)} />;
   return (
     <div>
-      <input type="search" placeholder="Rechercher…" value={query} onChange={(e) => setQuery(e.target.value)} />
-      <div className="list">{filtered.map(name => <button key={name} className="row" onClick={() => setSelected(name)}><div className="avatar">{dayInitials(name)}</div><div>{name}</div></button>)}</div>
+      <div className="search-wrap" style={{ marginBottom: 12 }}><input type="search" placeholder="Rechercher un technicien…" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
+      <div className="list">
+        {filtered.map(name => <button key={name} className="row" onClick={() => setSelected(name)}><div className="avatar">{dayInitials(name)}</div><div>{name}</div></button>)}
+      </div>
     </div>
   );
 }
 
 function EmployeeDetail({ name, records, onBack }: any) {
-  return <div><button className="btn-link" onClick={onBack}>← Retour</button><div className="card">{name} ({records.length} entrées)</div></div>;
+  const [busy, setBusy] = useState(false);
+  return (
+    <div>
+      <button className="btn-link" onClick={onBack}>← Retour</button>
+      <div className="card" style={{ marginTop: 8, display: 'flex', justifyContent: 'between', alignItems: 'center' }}>
+        <div>{name}</div>
+        <button className="btn-export" disabled={busy} onClick={async () => { setBusy(true); try { await exportEmployeePdf(name, records); } catch {} finally { setBusy(false); } }}>Export PDF</button>
+      </div>
+    </div>
+  );
 }
 
 function DailyDateBar({ records, date, onDateChange }: any) {
@@ -184,7 +221,7 @@ function DailyPanel({ records, date }: { records: PlanningRecord[]; date: string
   const byScene = useMemo(() => {
     const groups = new Map<string, any[]>();
     for (const rec of present) { if (!groups.has(rec.scene)) groups.set(rec.scene, []); groups.get(rec.scene)!.push(rec); }
-    return Array.from(groups.entries());
+    return Array.from(groups.entries()).sort((a,b) => a[0].localeCompare(b[0], 'fr'));
   }, [present]);
 
   return (
@@ -199,8 +236,8 @@ function DailyPanel({ records, date }: { records: PlanningRecord[]; date: string
           <section className="daily-scene-group" key={scene} style={{ borderLeft: `4.5px solid ${getSceneColor(scene).accent}` }}>
             <div className="daily-group-head"><div className="daily-group-scene">{scene}</div></div>
             <div className="compact-list">
-              {sceneRecords.map((rec: any) => (
-                <div className="compact-team-row" key={rec.employee}>
+              {sceneRecords.map((rec: any, idx: number) => (
+                <div className="compact-team-row" key={`${rec.employee}-${idx}`}>
                   <div>{rec.isFOVirtual ? `🎓 ` : ''}{rec.employee}</div>
                   <span className={timePillClass(rec.time, rec.scene)}>{rec.time}</span>
                 </div>
@@ -215,13 +252,32 @@ function DailyPanel({ records, date }: { records: PlanningRecord[]; date: string
 
 function ExportDialog({ records, date, onClose }: any) {
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<'day' | 'scene'>('day');
+  const scenes = useMemo(() => listScenes(records), [records]);
+  const [selectedScene, setSelectedScene] = useState(scenes[0] ?? '');
+
   return (
     <div className="export-overlay" onClick={onClose}>
       <div className="export-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="export-body">
-          <button className="export-opt on" onClick={async () => { setBusy(true); try { await exportDayPdf(date, records); onClose(); } catch {} finally { setBusy(false); } }}>
-            <span>{busy ? 'Génération...' : `Générer la journée du ${date.split('-')[2]}`}</span>
-          </button>
+        <div className="export-head"><div className="export-title">Exporter en PDF</div><button onClick={onClose}>×</button></div>
+        <div className="export-body" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button className={'export-opt' + (mode === 'day' ? ' on' : '')} onClick={() => setMode('day')}>Journée</button>
+          <button className={'export-opt' + (mode === 'scene' ? ' on' : '')} onClick={() => setMode('scene')}>Par Scène</button>
+          {mode === 'scene' && (
+            <select value={selectedScene} onChange={(e) => setSelectedScene(e.target.value)} style={{ padding: '6px', borderRadius: '4px' }}>
+              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="export-foot" style={{ padding: '12px', display: 'flex', justifyContent: 'end' }}>
+          <button className="btn" disabled={busy} onClick={async () => {
+            setBusy(true);
+            try {
+              if (mode === 'day') await exportDayPdf(date, records);
+              else await exportScenePdf(selectedScene, records);
+              onClose();
+            } catch {} finally { setBusy(false); }
+          }}>{busy ? 'Génération...' : 'Exporter'}</button>
         </div>
       </div>
     </div>
@@ -229,7 +285,6 @@ function ExportDialog({ records, date, onClose }: any) {
 }
 
 function IconSearch() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>; }
-function IconCalendar() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="3" /></svg>; }
-function IconDownload() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v12" /></svg>; }
+function IconCalendar() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="3" /><path d="M3 10h18" /></svg>; }
+function IconDownload() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v12m-5-5 5 5 5-5" /></svg>; }
 function Logo() { return <img className="logo-img" src={`${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`} alt="" width="56" height="56" />; }
-function FireworksCanvas() { return <div style={{ display: 'none' }} />; }
