@@ -263,4 +263,17 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     for (const row of block.rows) {
       let nameX = marginX + 4.0;
       if (row.isFO) {
-        doc.setFillColor
+        doc.setFillColor(108, 92, 231); doc.roundedRect(marginX + 4.0, ry, 7, 4.5, 0.8, 0.8, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.text('FO', marginX + 7.5, ry + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); nameX = marginX + 13.0;
+      }
+      doc.setTextColor(GREY_DARK[0], GREY_DARK[1], GREY_DARK[2]); doc.text(row.name, nameX, ry + 3.5);
+      const timeW = doc.getTextWidth(row.time || '') + 5; const pillX = pageW - marginX - 4.0 - timeW;
+      doc.setFillColor(ORANGE[0], ORANGE[1], ORANGE[2]); doc.roundedRect(pillX, ry, timeW, 4.8, 1, 1, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.text(row.time || '', pillX + timeW / 2, ry + 3.4, { align: 'center' });
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); ry += 6.0;
+    }
+    currentY += cardHeight + 5;
+  }
+  doc.setDrawColor(220, 220, 224); doc.setLineWidth(0.2); doc.line(marginX, pageH - 12, pageW - marginX, pageH - 12); doc.save(`sfx-planning-${date}.pdf`);
+}
