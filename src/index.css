@@ -1461,26 +1461,37 @@ input:focus, select:focus {
 /* Tablet responsive constraint */
 @media (min-width: 720px) and (max-width: 1023px) {
   .app-shell {
-    max-width: 540px;
+    max-width: 560px;
     padding-top: 30px;
   }
 }
 
-/* Desktop split-grid dashboard layout */
+/* Desktop split-grid SaaS layout */
 @media (min-width: 1024px) {
   .app-shell {
-    max-width: 1080px;
+    max-width: 1200px;
     display: grid;
-    grid-template-columns: 360px 1fr;
-    grid-template-rows: auto auto auto auto 1fr;
-    gap: 16px 32px;
+    grid-template-columns: 300px 1fr;
+    gap: 36px;
     align-items: start;
-    padding-top: 36px;
+    padding: 36px 36px calc(140px + env(safe-area-inset-bottom)) 36px;
+    margin: 0 auto;
+  }
+
+  .app-sidebar {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-self: start;
+  }
+
+  .app-main {
+    min-width: 0;
   }
 
   .app-header {
-    grid-column: 1;
-    grid-row: 1;
     position: static;
     background: transparent !important;
     backdrop-filter: none !important;
@@ -1490,49 +1501,65 @@ input:focus, select:focus {
     padding: 0;
   }
 
-  .uploader {
-    grid-column: 1;
-    grid-row: 2;
+  /* Reforce daily groups column count on desktop */
+  .daily-groups {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
+    gap: 20px !important;
   }
+}
 
-  .sources-strip {
-    grid-column: 1;
-    grid-row: 3;
-    margin-top: 4px;
+/* Stats Dashboard Grid Styling */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.stat-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: var(--spring-transition);
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-card);
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--amber);
+  line-height: 1.1;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
-
-  .tabs-block {
-    grid-column: 1;
-    grid-row: 4;
-    position: sticky;
-    top: 24px;
-    background: transparent;
-    padding: 0;
-    margin: 0;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+  .stat-value {
+    font-size: 18px;
   }
-
-  /* Right column views placement */
-  .banner-error {
-    grid-column: 2;
-    grid-row: 1;
-    margin-top: 0 !important;
-  }
-
-  .app-shell > .empty,
-  .app-shell > [data-testid="panel-recherche"],
-  .app-shell > [data-testid="panel-daily"],
-  .app-shell > [data-testid="panel-employee"],
-  .app-shell > [data-testid="panel-scene-detail"] {
-    grid-column: 2;
-    grid-row: 1 / 6;
-    margin-top: 0;
-  }
-
-  /* Hide mobile spacing elements in grid to avoid layout shifts */
-  .app-shell > div[style*="height"] {
-    display: none !important;
+  .stat-label {
+    font-size: 9.5px;
   }
 }
 
