@@ -1783,6 +1783,9 @@ input:focus, select:focus {
   overflow-wrap: normal;
   word-break: normal;
 }
+.export-opt.on .export-opt-title {
+  color: var(--on-fg);
+}
 .export-opt-sub {
   display: block;
   width: 100%;
@@ -1792,6 +1795,10 @@ input:focus, select:focus {
   overflow-wrap: normal;
   word-break: normal;
   font-weight: 500;
+}
+.export-opt.on .export-opt-sub {
+  color: var(--on-fg);
+  opacity: 0.8;
 }
 .export-scene-select {
   display: block;
