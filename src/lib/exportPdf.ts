@@ -107,7 +107,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.setDrawColor(...AMBER); doc.setLineWidth(0.3); doc.line(marginX, fy-2, pageW-marginX, fy-2);
   // Warning text
   doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AMBER2);
-  doc.text("⚠ Contrôle obligatoire sur UKG personnel. Données indicatives — formations (FO) à titre informatif.", pageW/2, fy+1.5, {align:'center'});
+  doc.text("ATTENTION: Controle obligatoire sur UKG personnel. Donnees indicatives - formations (FO) a titre informatif.", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
   doc.text('SFX Planner · v3.6', pageW-marginX, fy+1.5, {align:'right'});
