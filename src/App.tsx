@@ -54,26 +54,16 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Apply theme to DOM
   useEffect(() => {
+    // On garde uniquement ces attributs HTML, et on laisse index.css gérer les couleurs
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
+    
+    // Nettoyage des vieux styles inline persistants lors du changement
     document.body.style.backgroundColor = '';
     document.body.style.color = '';
-    // Update mobile browser chrome color
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#04060a' : '#f1f5f9');
   }, [theme]);
-
-  // Auto-sync with OS dark/light mode preference changes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files).filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
@@ -107,7 +97,6 @@ export default function App() {
             </button>
           </div>
           <input ref={fileRef} type="file" accept=".pdf,application/pdf" multiple style={{ display: 'none' }} onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-          <div style={{ marginTop: 24, fontSize: 11, color: 'var(--fg-dim)', opacity: 0.5 }}>v2.51</div>
         </div>
       </div>
     );

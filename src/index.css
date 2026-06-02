@@ -5,10 +5,10 @@
 
 :root {
   /* Surface colors (Space-Midnight theme) */
-  --bg-0:        #04060a;                            /* Page background */
-  --bg-1:        rgba(13, 20, 35, 0.45);             /* Card frosted glass base */
-  --bg-2:        rgba(22, 32, 56, 0.65);             /* Elevated menu / dialog */
-  --bg-3:        rgba(35, 50, 85, 0.8);              /* Input / active elements */
+  --bg-0:        #04060a;                           /* Page background */
+  --bg-1:        rgba(13, 20, 35, 0.45);            /* Card frosted glass base */
+  --bg-2:        rgba(22, 32, 56, 0.65);            /* Elevated menu / dialog */
+  --bg-3:        rgba(35, 50, 85, 0.8);             /* Input / active elements */
   --bg-soft:     rgba(9, 13, 24, 0.6);
   --line:        rgba(255, 255, 255, 0.08);          /* Frosted border */
   --line-strong: rgba(255, 255, 255, 0.16);         /* Highlighted border */
@@ -2151,10 +2151,9 @@ body {
 }
 
 :root[data-theme="light"] .landing-title {
-  background: none !important;
-  -webkit-background-clip: initial !important;
-  -webkit-text-fill-color: #1e293b !important;
-  color: #1e293b !important;
+  background: none;
+  -webkit-text-fill-color: initial;
+  color: var(--fg);
 }
 
 .landing-subtitle {
@@ -2506,6 +2505,8 @@ nav.seg button[aria-selected="true"] {
   50% { transform: translateX(-80px) scale(0.9); }
 }
 
+
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -2527,167 +2528,25 @@ nav.seg button[aria-selected="true"] {
 .animate-stagger-4 { animation-delay: 0.2s; }
 .animate-stagger-5 { animation-delay: 0.25s; }
 
-/* CORRECTIF MODE CLAIR : Redéfinition des variables de couleurs */
-:root[data-theme="light"] {
-  --bg-0: #f4f6fa;
-  --bg-1: rgba(255, 255, 255, 0.85);
-  --bg-2: rgba(240, 243, 248, 0.95);
-  --bg-3: #ffffff;
-  --bg-soft: rgba(255, 255, 255, 0.6);
-  --line: rgba(0, 0, 0, 0.1);
-  --line-strong: rgba(0, 0, 0, 0.2);
-  --fg: #0f172a;
-  --fg-muted: #475569;
-  --fg-dim: #64748b;
-  --chip-fg: #ffffff;
-  --group-bg: rgba(255, 255, 255, 0.95);
-  --subtle-row-line: rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-soft: 0 2px 8px rgba(0,0,0,0.04);
-  --page-glow-amber: rgba(214, 104, 10, 0.04);
-  --page-glow-teal: rgba(0, 143, 123, 0.03);
-  --on-bg: rgba(214, 104, 10, 0.08);
-  --on-fg: #c2410c;
-  --on-line: rgba(214, 104, 10, 0.2);
-  --form-bg: rgba(108, 77, 224, 0.08);
-  --form-fg: #553bb8;
-  --form-line: rgba(108, 77, 224, 0.18);
-  --off-bg: rgba(0,0,0,0.03);
-  --off-fg: #64748b;
-  --smoke-opacity: 0.015;
-  --smoke-blend: multiply;
-  color-scheme: light;
+/* FORCER LE MODE CLAIR SUR LES COMPOSANTS ENFANTS */
+.light .app-sidebar,
+.light .main-content-panel,
+.light .card,
+.light .export-modal,
+.light .app-shell-empty-container {
+    background-color: #ffffff;
+    color: #0f172a;
+    border-color: #e2e8f0;
 }
 
-/* ---- Light mode component overrides (missing from base) ---- */
-
-:root[data-theme="light"] .app-sidebar {
-  background: rgba(255,255,255,0.92);
-  border-right-color: rgba(0,0,0,0.08);
-  backdrop-filter: blur(20px);
+.light .daily-scene-group {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
 }
 
-:root[data-theme="light"] .app-main {
-  background: var(--bg-0);
+.light .btn, 
+.light .export-opt {
+    background-color: #e2e8f0;
+    color: #0f172a;
 }
-
-:root[data-theme="light"] .app-logo {
-  background: #ffffff;
-  border-color: rgba(0,0,0,0.08);
-}
-
-
-
-:root[data-theme="light"] .search-wrap input {
-  background: #ffffff;
-  border-color: rgba(0,0,0,0.1);
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .search-wrap input:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(0, 229, 198, 0.1);
-}
-
-:root[data-theme="light"] .row {
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .row:hover {
-  background: rgba(0,0,0,0.03);
-}
-
-:root[data-theme="light"] .list {
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .section-title {
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .card {
-  background: #ffffff;
-  border-color: rgba(0,0,0,0.08);
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .btn {
-  background: linear-gradient(135deg, var(--amber), var(--amber-2)) !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-}
-
-:root[data-theme="light"] .btn-export {
-  background: rgba(255,255,255,0.8) !important;
-  color: var(--teal) !important;
-  border-color: rgba(0,0,0,0.1) !important;
-}
-
-:root[data-theme="light"] .btn-export:hover {
-  border-color: var(--teal) !important;
-  background: rgba(0, 229, 198, 0.06) !important;
-}
-
-:root[data-theme="light"] .btn-link {
-  color: var(--teal);
-}
-
-:root[data-theme="light"] .date-pill {
-  background: #ffffff;
-  border-color: rgba(0,0,0,0.1);
-  color: #475569;
-}
-
-:root[data-theme="light"] .compact-team-row {
-  color: #0f172a;
-  border-top-color: rgba(0,0,0,0.05);
-}
-
-:root[data-theme="light"] .time-pill {
-  box-shadow: none;
-}
-
-:root[data-theme="light"] .export-overlay {
-  background: rgba(15,23,42,0.25);
-}
-
-:root[data-theme="light"] .export-modal {
-  background: #ffffff;
-  border-color: rgba(0,0,0,0.1);
-  color: #0f172a;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
-}
-
-:root[data-theme="light"] .export-head {
-  border-bottom-color: rgba(0,0,0,0.08);
-}
-
-:root[data-theme="light"] .export-title {
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .export-opt {
-  background: rgba(0,0,0,0.02);
-  border-color: rgba(0,0,0,0.1);
-  color: #0f172a;
-}
-
-:root[data-theme="light"] .export-opt:hover {
-  background: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.15);
-}
-
-:root[data-theme="light"] .export-opt.on {
-  background: var(--on-bg);
-  border-color: var(--amber);
-}
-
-:root[data-theme="light"] .export-foot {
-  border-top-color: rgba(0,0,0,0.08);
-}
-
-:root[data-theme="light"] .smoke-bg {
-  opacity: 0.015;
-  mix-blend-mode: multiply;
-}
-
