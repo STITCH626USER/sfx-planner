@@ -445,5 +445,31 @@ export function listScenes(records: PlanningRecord[]): string[] {
 export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   if (allDates.length===0) return;
-  await exportDayPdf(allDates[0], records);
+
+  const blocks = allDates.map(date => {
+    const dayRecs = records.filter(r => r.date === date && !/^off$/i.test(r.time));
+    const rows = dayRecs.map(r => ({
+      name: prettyName(r.employee),
+      time: String(r.scene || 'FO'),
+      isFO: isTrainingScene(r.scene)
+    })).sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+    
+    return {
+      header: fmtDateShort(date),
+      rows
+    };
+  });
+
+  const pStart = fmtDate(allDates[0]);
+  const pEnd = fmtDate(allDates[allDates.length-1]);
+  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} → ${pEnd}` : pStart;
+
+  await generateAndSave({
+    title: 'Vue Globale',
+    subtitle: `Toutes scènes confondues - Période : ${period}`,
+    blocks,
+    itemCount: allDates.length,
+    totalRows: blocks.reduce((a,b) => a + Math.max(1, b.rows.length), 0),
+    filename: `sfx-vue-globale.pdf`
+  });
 }
