@@ -1362,10 +1362,36 @@ function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
   }, []);
 
   useEffect(() => {
+    const isInteractive = (target: EventTarget | null): boolean => {
+      let el = target as HTMLElement | null;
+      while (el) {
+        if (
+          el.tagName === 'BUTTON' ||
+          el.tagName === 'INPUT' ||
+          el.tagName === 'SELECT' ||
+          el.tagName === 'A' ||
+          el.tagName === 'LABEL' ||
+          (el.classList && (
+            el.classList.contains('date-pill') ||
+            el.classList.contains('seg') ||
+            el.classList.contains('btn') ||
+            el.classList.contains('day-card') ||
+            el.classList.contains('export-opt') ||
+            el.classList.contains('row') ||
+            el.classList.contains('compact-team-row')
+          ))
+        ) return true;
+        el = el.parentElement;
+      }
+      return false;
+    };
+
     const handleGlobalClick = (e: MouseEvent) => {
+      if (isInteractive(e.target)) return;
       spawnSparkle(e.clientX, e.clientY);
     };
     const handleGlobalTouch = (e: TouchEvent) => {
+      if (isInteractive(e.target)) return;
       const t = e.touches[0] || e.changedTouches[0];
       if (t) spawnSparkle(t.clientX, t.clientY);
     };
