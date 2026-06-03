@@ -102,14 +102,15 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
   if (tokens.length === 0) return [];
 
   // --- Locate header row
-  const dimancheTok = tokens.find(t => t.text === 'dimanche');
+  const cleanStr = (s: string) => s.trim().toLowerCase();
+  const dimancheTok = tokens.find(t => cleanStr(t.text) === 'dimanche');
   if (!dimancheTok) return [];
   const headerY = dimancheTok.y;
-  const dayTokens = HEADER_DAYS.map(d => tokens.find(t => t.text === d && approxEq(t.y, headerY, 3)));
+  const dayTokens = HEADER_DAYS.map(d => tokens.find(t => cleanStr(t.text) === d && approxEq(t.y, headerY, 3)));
   if (dayTokens.some(t => !t)) return [];
   const dayX = dayTokens.map(t => (t as TokenT).x);
 
-  const idHeader = tokens.find(t => t.text === 'ID' && approxEq(t.y, headerY, 3));
+  const idHeader = tokens.find(t => cleanStr(t.text) === 'id' && approxEq(t.y, headerY, 3));
   if (!idHeader) return [];
 
   // --- Day column x-bounds (midpoints between adjacent day-header tokens)
@@ -131,21 +132,21 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
   let weekStartIso = '';
   let weekEndIso = '';
   for (const t of tokens) {
-    const m = t.text.match(/Du:\s*(\d{2})-(\d{2})-(\d{4})\s*Au:\s*(\d{2})-(\d{2})-(\d{4})/);
+    const m = t.text.match(/Du:\s*(\d{2})-(\d{2})-(\d{4})\s*Au:\s*(\d{2})-(\d{2})-(\d{4})/i);
     if (m) {
       year = m[3];
       weekStartIso = `${m[3]}-${m[2]}-${m[1]}`;
       weekEndIso = `${m[6]}-${m[5]}-${m[4]}`;
       break;
     }
-    const m2 = t.text.match(/Du:\s*(\d{2})-(\d{2})-(\d{4})/);
+    const m2 = t.text.match(/Du:\s*(\d{2})-(\d{2})-(\d{4})/i);
     if (m2) { year = m2[3]; weekStartIso = `${m2[3]}-${m2[2]}-${m2[1]}`; }
   }
 
   // Week number from "Semaine:202621" → week 21
   let weekLabel = ctx.lastWeekLabel;
   for (const t of tokens) {
-    const m = t.text.match(/Semaine:\s*\d{4}(\d{2})/);
+    const m = t.text.match(/Semaine:\s*\d{4}(\d{2})/i);
     if (m && weekStartIso && weekEndIso) {
       const s = weekStartIso.split('-');
       const e = weekEndIso.split('-');
