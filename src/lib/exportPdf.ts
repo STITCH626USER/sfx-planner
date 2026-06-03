@@ -119,7 +119,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.2.0', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.2.2', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -493,7 +493,6 @@ async function generateGridGlobalPdf(opts: {
     y = 22;
   };
 
-  const rowH = 6.8;
   const headerH = 7.5;
   const colNameW = 55;
   const colDayW = (pageW - C_MARGIN*2 - colNameW) / 7;
@@ -503,102 +502,101 @@ async function generateGridGlobalPdf(opts: {
     const activeEmps = allEmps.filter(emp => weekRecs.some(r => r.employee === emp));
     if (activeEmps.length === 0) continue;
 
-    if (y + headerH + rowH * 2 > bottom) drawPageHeader();
+    const halfLen = Math.ceil(activeEmps.length / 2);
+    const halves = [activeEmps.slice(0, halfLen), activeEmps.slice(halfLen)];
 
-    // Draw Week Header
-    doc.setFillColor(30, 40, 60);
-    doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-    doc.text("TECHNICIEN", C_MARGIN + 2, y + 5);
-    
-    for (let d = 0; d < 7; d++) {
-      const dx = C_MARGIN + colNameW + d * colDayW;
-      if (d < weekDates.length) {
-        doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
-      }
-    }
-    y += headerH;
+    for (let part = 0; part < halves.length; part++) {
+      const emps = halves[part];
+      if (emps.length === 0) continue;
 
-    for (const emp of activeEmps) {
-      if (y + rowH > bottom) {
-        drawPageHeader();
-        
-        // Redraw Header
-        doc.setFillColor(30, 40, 60);
-        doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        doc.text("TECHNICIEN (suite)", C_MARGIN + 2, y + 5);
-        for (let d = 0; d < 7; d++) {
-          const dx = C_MARGIN + colNameW + d * colDayW;
-          if (d < weekDates.length) {
-            doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
-          }
-        }
-        y += headerH;
-      }
+      drawPageHeader();
 
-      const isEven = activeEmps.indexOf(emp) % 2 === 0;
-      doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
-      doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, rowH, 'F');
-      
-      doc.setDrawColor(220, 225, 230); doc.setLineWidth(0.1);
-      doc.line(C_MARGIN, y+rowH, pageW-C_MARGIN, y+rowH); // bottom
-      
-      doc.setTextColor(20, 30, 40); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-      let nm = rosterName(emp);
-      if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
-      doc.text(nm, C_MARGIN + 2, y + 4.5);
-      
-      doc.line(C_MARGIN, y, C_MARGIN, y + rowH); // left edge
-      doc.line(C_MARGIN + colNameW, y, C_MARGIN + colNameW, y + rowH); // col edge
-      doc.line(pageW - C_MARGIN, y, pageW - C_MARGIN, y + rowH); // right edge
+      // Draw Week Header
+      doc.setFillColor(30, 40, 60);
+      doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+      doc.text(part === 0 ? "TECHNICIEN" : "TECHNICIEN (suite)", C_MARGIN + 2, y + 5);
       
       for (let d = 0; d < 7; d++) {
         const dx = C_MARGIN + colNameW + d * colDayW;
-        if (d > 0) doc.line(dx, y, dx, y + rowH);
-        
-        if (d >= weekDates.length) continue;
-        const date = weekDates[d];
-        const recs = weekRecs.filter(r => r.date === date && r.employee === emp);
-        if (recs.length === 0) continue;
-        
-        const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
-        
-        if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
-          doc.setFillColor(240, 242, 245);
-          doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
-          doc.setTextColor(148, 163, 184);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-          doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1.2, {align: 'center'});
-        } else {
-          const sc = getSceneColor(mainRec.scene);
-          const sceneAbbr = shortenSceneName(mainRec.scene);
-          
-          const boxW = 17.5;
-          doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-          doc.rect(dx+0.4, y+0.4, boxW, rowH-0.8, 'F');
-          
-          doc.setTextColor(255, 255, 255);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.2);
-          doc.text(sceneAbbr, dx + 0.4 + boxW/2, y + rowH/2 + 1, {align: 'center'});
-          
-          let timeStr = mainRec.time;
-          if (recs.length > 1) {
-            const fO = recs.find(r => isTrainingScene(r.scene));
-            if (fO) timeStr += ' +FO';
-          }
-          doc.setTextColor(20, 30, 40);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-          doc.text(timeStr, dx + 0.4 + boxW + (colDayW - boxW - 0.8)/2, y + rowH/2 + 1.2, {align: 'center'});
+        if (d < weekDates.length) {
+          doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
         }
       }
-      y += rowH;
+      y += headerH;
+
+      const availableH = bottom - y;
+      let rowH = availableH / emps.length;
+      if (rowH > 14) rowH = 14; // Cap max height so it doesn't stretch to infinity if only 2 people
+      
+      const fName = Math.max(5, Math.min(8.5, rowH * 0.9));
+      const fTime = Math.max(5, Math.min(7.5, rowH * 0.8));
+      const fScene = Math.max(4, Math.min(6.2, rowH * 0.7));
+      const fOff = Math.max(5, Math.min(7.5, rowH * 0.8));
+      const badgeW = 17.5;
+
+      for (let i = 0; i < emps.length; i++) {
+        const emp = emps[i];
+        const isEven = i % 2 === 0;
+        doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
+        doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, rowH, 'F');
+        
+        doc.setDrawColor(220, 225, 230); doc.setLineWidth(0.1);
+        doc.line(C_MARGIN, y+rowH, pageW-C_MARGIN, y+rowH); // bottom
+        
+        doc.setTextColor(20, 30, 40); doc.setFont('helvetica', 'bold'); doc.setFontSize(fName);
+        let nm = rosterName(emp);
+        if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
+        doc.text(nm, C_MARGIN + 2, y + rowH/2 + 1.2);
+        
+        doc.line(C_MARGIN, y, C_MARGIN, y + rowH); // left edge
+        doc.line(C_MARGIN + colNameW, y, C_MARGIN + colNameW, y + rowH); // col edge
+        doc.line(pageW - C_MARGIN, y, pageW - C_MARGIN, y + rowH); // right edge
+        
+        for (let d = 0; d < 7; d++) {
+          const dx = C_MARGIN + colNameW + d * colDayW;
+          if (d > 0) doc.line(dx, y, dx, y + rowH);
+          
+          if (d >= weekDates.length) continue;
+          const date = weekDates[d];
+          const recs = weekRecs.filter(r => r.date === date && r.employee === emp);
+          if (recs.length === 0) continue;
+          
+          const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
+          
+          if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
+            doc.setFillColor(240, 242, 245);
+            doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
+            doc.setTextColor(148, 163, 184);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(fOff);
+            doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1.2, {align: 'center'});
+          } else {
+            const sc = getSceneColor(mainRec.scene);
+            const sceneAbbr = shortenSceneName(mainRec.scene);
+            
+            doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+            doc.rect(dx+0.4, y+0.4, badgeW, rowH-0.8, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(fScene);
+            doc.text(sceneAbbr, dx + 0.4 + badgeW/2, y + rowH/2 + 1, {align: 'center'});
+            
+            let timeStr = mainRec.time;
+            if (recs.length > 1) {
+              const fO = recs.find(r => isTrainingScene(r.scene));
+              if (fO) timeStr += ' +FO';
+            }
+            doc.setTextColor(20, 30, 40);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(fTime);
+            doc.text(timeStr, dx + 0.4 + badgeW + (colDayW - badgeW - 0.8)/2, y + rowH/2 + 1.2, {align: 'center'});
+          }
+        }
+        y += rowH;
+      }
     }
     
     // Top border of the table is drawn by header.
-    y += 8; // spacing between weeks
   }
 
   if (pageCount > 0) doc.save(opts.filename);
