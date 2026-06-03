@@ -110,7 +110,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.1.8', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.1.10', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -416,21 +416,6 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
   }
 
-  // Also gather FO records if this is a normal scene export, so we can append them.
-  const foMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
-  if (!isFOExport) {
-    const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF');
-    for (const r of foRecs) {
-      if (!foMap.has(r.date)) foMap.set(r.date, []);
-      let displayName = prettyName(r.employee);
-      if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
-        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
-        if (detail) displayName = `${displayName} (${detail})`;
-      }
-      foMap.get(r.date)!.push({name: displayName, time: r.time, isFO: true});
-    }
-  }
-
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   
   const blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>}> = [];
@@ -439,13 +424,6 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     if (sRows.length > 0) {
       sRows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
       blocks.push({ header: fmtDateShort(d), themeColorName: scene, rows: sRows });
-    }
-    if (!isFOExport) {
-      const fRows = foMap.get(d) || [];
-      if (fRows.length > 0) {
-        fRows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
-        blocks.push({ header: `Formations - ${fmtDateShort(d)}`, themeColorName: 'Formations', rows: fRows });
-      }
     }
   }
 
