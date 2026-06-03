@@ -107,10 +107,10 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.setDrawColor(...AMBER); doc.setLineWidth(0.3); doc.line(marginX, fy-2, pageW-marginX, fy-2);
   // Warning text
   doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AMBER2);
-  doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
+  doc.text("⚠ Contrôle obligatoire sur UKG personnel. Données indicatives — formations (FO) à titre informatif.", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.1.2', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner · v3.6', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -386,7 +386,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 
   await generateAndSave({
     title: prettyName(employee),
-    subtitle: period ? `Planning individuel - ${period}` : 'Planning individuel',
+    subtitle: period ? `Planning individuel · ${period}` : 'Planning individuel',
     blocks, itemCount:blocks.length,
     totalRows: blocks.reduce((a,b)=>a+Math.max(1,b.rows.length),0),
     filename: `sfx-planning-indiv-${slug(prettyName(employee))}.pdf`,
@@ -479,7 +479,7 @@ async function generateGridGlobalPdf(opts: {
     if (pageCount > 0) doc.addPage();
     pageCount++;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 30, 50);
-    doc.text(`${opts.title} - ${opts.subtitle}`, C_MARGIN, 15);
+    doc.text(`${opts.title} — ${opts.subtitle}`, C_MARGIN, 15);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 110, 130);
     doc.text('SFX Planner', pageW - C_MARGIN, 15, {align: 'right'});
     y = 22;
