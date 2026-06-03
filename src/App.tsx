@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.1.6</span></h1>
+            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.1.7</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.1.6</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.1.7</span>
               </span>
             </div>
           </div>
@@ -846,10 +846,28 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   const byScene = useMemo(() => {
     const groups = new Map<string, Array<PlanningRecord>>();
     for (const rec of present) {
-      if (!groups.has(rec.scene)) groups.set(rec.scene, []);
-      groups.get(rec.scene)!.push(rec);
+      let groupName = rec.scene;
+      let displayName = prettyName(rec.employee);
+      
+      if (isTrainingScene(rec.scene)) {
+        groupName = 'Formations';
+        if (rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
+          const detail = rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+          if (detail) displayName = `${displayName} (${detail})`;
+        }
+      }
+      
+      if (!groups.has(groupName)) groups.set(groupName, []);
+      // We pass a cloned record with the updated display name so the UI shows it
+      groups.get(groupName)!.push({ ...rec, employee: displayName });
     }
-    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0], 'fr'));
+    return Array.from(groups.entries()).sort((a, b) => {
+      const aFO = isTrainingScene(a[0]);
+      const bFO = isTrainingScene(b[0]);
+      if (aFO && !bFO) return 1;
+      if (!aFO && bFO) return -1;
+      return a[0].localeCompare(b[0], 'fr');
+    });
   }, [present]);
 
   const uniqueTechs = useMemo(() => {

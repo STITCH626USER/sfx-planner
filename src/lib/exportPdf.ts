@@ -110,7 +110,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.1.6', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.1.7', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -322,12 +322,29 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
   const sceneMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
 
   for (const r of dayRecs) {
-    if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
-    sceneMap.get(r.scene)!.push({name:prettyName(r.employee), time:r.time, isFO: isTrainingScene(r.scene)});
+    let groupName = r.scene;
+    let displayName = prettyName(r.employee);
+    
+    if (isTrainingScene(r.scene)) {
+      groupName = 'Formations';
+      if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
+        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+        if (detail) displayName = `${displayName} (${detail})`;
+      }
+    }
+    
+    if (!sceneMap.has(groupName)) sceneMap.set(groupName, []);
+    sceneMap.get(groupName)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
   }
 
   const blocks = Array.from(sceneMap.entries())
-    .sort((a,b) => a[0].localeCompare(b[0],'fr'))
+    .sort((a, b) => {
+      const aFO = isTrainingScene(a[0]);
+      const bFO = isTrainingScene(b[0]);
+      if (aFO && !bFO) return 1;
+      if (!aFO && bFO) return -1;
+      return a[0].localeCompare(b[0], 'fr');
+    })
     .map(([scene,rows]) => ({header:cleanText(scene), themeColorName:scene, rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
 
   await generateAndSave({
