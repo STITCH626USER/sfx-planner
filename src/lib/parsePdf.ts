@@ -283,7 +283,7 @@ function parseCell(tokens: TokenT[]): { time: string; scene: string } {
     scenes.push(txt);
   }
 
-  let scene = scenes[0] || '';
+  let scene = scenes.join(' - ') || '';
   // Fallback: if no non-role line found, accept the first non-time non-HR line (could be a role-only cell)
   if (!scene) {
     for (let i = 0; i < lineTexts.length; i++) {

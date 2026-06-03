@@ -1,4 +1,4 @@
-import type { PlanningRecord } from './parsePdf';
+
 
 export function parseTimeToMinutes(hStr: string): number | null {
   const m = hStr.trim().match(/^(\d{2})[h:](\d{2})$/i) || hStr.trim().match(/^(\d{2})(\d{2})$/);
@@ -28,48 +28,7 @@ export function isTrainingScene(scene: string): boolean {
   return s === 'fo' || s === 'formation';
 }
 
-export function getFOAssociations(dayRecords: PlanningRecord[]): Map<string, string[]> {
-  const associations = new Map<string, string[]>();
-  const activeRecs = dayRecords.filter(r => r.time !== 'OFF');
-  const foRecs = activeRecs.filter(r => isTrainingScene(r.scene));
-  const regRecs = activeRecs.filter(r => !isTrainingScene(r.scene));
 
-  for (const fo of foRecs) {
-    const matchedScenes = new Set<string>();
-    for (const reg of regRecs) {
-      if (reg.scene && reg.scene !== '—' && timesMatch(fo.time, reg.time, 3)) {
-        matchedScenes.add(reg.scene);
-      }
-    }
-    if (matchedScenes.size > 0) {
-      associations.set(fo.employee, Array.from(matchedScenes).sort((a, b) => a.localeCompare(b, 'fr')));
-    }
-  }
-  return associations;
-}
-
-export function getFOAssociationKey(date: string, employee: string): string {
-  return `${date}_${employee}`;
-}
-
-export function computeAllFOAssociations(records: PlanningRecord[]): Map<string, string[]> {
-  const associations = new Map<string, string[]>();
-  const byDate = new Map<string, PlanningRecord[]>();
-  
-  for (const r of records) {
-    if (!r.date) continue;
-    if (!byDate.has(r.date)) byDate.set(r.date, []);
-    byDate.get(r.date)!.push(r);
-  }
-
-  for (const [date, dayRecs] of byDate.entries()) {
-    const dayAssoc = getFOAssociations(dayRecs);
-    for (const [employee, scenes] of dayAssoc.entries()) {
-      associations.set(getFOAssociationKey(date, employee), scenes);
-    }
-  }
-  return associations;
-}
 
 export interface SceneColor {
   bg: string;

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { getFOAssociations, computeAllFOAssociations, getFOAssociationKey, isTrainingScene, getSceneColor } from './utils';
+import { isTrainingScene, getSceneColor } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
 const NAVY:    [number,number,number] = [13,  20,  35];
@@ -110,7 +110,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.1.4', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.1.5', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -326,24 +326,11 @@ async function generateAndSave(opts:{
 ═══════════════════════════════════════════════ */
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const dayRecs = records.filter(r => r.date===date && r.time!=='OFF');
-  const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-  const activeFOs  = dayRecs.filter(r =>  isTrainingScene(r.scene));
-  const dayAssoc   = getFOAssociations(dayRecs);
   const sceneMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
 
-  for (const r of activeRegs) {
+  for (const r of dayRecs) {
     if (!sceneMap.has(r.scene)) sceneMap.set(r.scene, []);
-    sceneMap.get(r.scene)!.push({name:prettyName(r.employee), time:r.time});
-  }
-  for (const r of activeFOs) {
-    const assoc = dayAssoc.get(r.employee)??[];
-    const gk = r.scene;
-    if (!sceneMap.has(gk)) sceneMap.set(gk,[]);
-    sceneMap.get(gk)!.push({name:`${prettyName(r.employee)}${assoc.length>0?` (${assoc.join(', ')})`:''}`  , time:r.time, isFO:true});
-    for (const sc of assoc) {
-      if (!sceneMap.has(sc)) sceneMap.set(sc,[]);
-      sceneMap.get(sc)!.push({name:`${prettyName(r.employee)} (${r.scene||'FO'})`, time:r.time, isFO:true});
-    }
+    sceneMap.get(r.scene)!.push({name:prettyName(r.employee), time:r.time, isFO: isTrainingScene(r.scene)});
   }
 
   const blocks = Array.from(sceneMap.entries())
@@ -366,7 +353,6 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 ═══════════════════════════════════════════════ */
 export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
   const empRecs = records.filter(r => r.employee===employee);
-  const dayAssoc = computeAllFOAssociations(records);
   const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
 
   for (const r of empRecs) {
@@ -374,8 +360,6 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
     let name = r.scene||'-'; let isFO=false;
     if (isTrainingScene(r.scene)) {
       isFO=true;
-      const assoc = dayAssoc.get(getFOAssociationKey(r.date,r.employee))??[];
-      if (assoc.length>0) name=`${assoc.join(', ')} (${r.scene})`;
     }
     dateMap.get(r.date)!.push(r.time==='OFF' ? {name:'Repos / Congé',time:'OFF'} : {name,time:r.time,isFO});
   }
@@ -405,26 +389,11 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 ═══════════════════════════════════════════════ */
 export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
   const sceneRecs = records.filter(r => r.scene===scene && r.time!=='OFF');
-  const foRecs    = records.filter(r => isTrainingScene(r.scene) && r.time!=='OFF');
-  const dayAssoc  = computeAllFOAssociations(records);
   const dateMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
 
   for (const r of sceneRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    let isFO=false; let name=prettyName(r.employee);
-    if (isTrainingScene(r.scene)) {
-      isFO=true;
-      const assoc=dayAssoc.get(getFOAssociationKey(r.date,r.employee))??[];
-      if (assoc.length>0) name=`${prettyName(r.employee)} (${assoc.join(', ')})`;
-    }
-    dateMap.get(r.date)!.push({name,time:r.time,isFO});
-  }
-  for (const r of foRecs) {
-    const assoc=dayAssoc.get(getFOAssociationKey(r.date,r.employee))??[];
-    if (assoc.includes(scene)) {
-      if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-      dateMap.get(r.date)!.push({name:`${prettyName(r.employee)} (${r.scene||'FO'})`, time:r.time, isFO:true});
-    }
+    dateMap.get(r.date)!.push({name:prettyName(r.employee),time:r.time,isFO:isTrainingScene(r.scene)});
   }
 
   const allDates  = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();

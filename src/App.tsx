@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { getFOAssociations, isTrainingScene, computeAllFOAssociations, getFOAssociationKey, getSceneColor } from './lib/utils';
+import { isTrainingScene, getSceneColor } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.1.4</span></h1>
+            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.1.5</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.1.4</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.1.5</span>
               </span>
             </div>
           </div>
@@ -591,10 +591,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   const [openEmployee, setOpenEmployee] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const dayAssocMap = useMemo(() => {
-    if (!allRecords) return new Map<string, string[]>();
-    return computeAllFOAssociations(allRecords);
-  }, [allRecords]);
+
 
   const handleExportIndiv = async () => {
     if (exporting) return;
@@ -611,20 +608,8 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   const teamForOpen = useMemo(() => {
     if (!openScene || !allRecords) return [];
     const dayRecs = allRecords.filter(r => r.date === openScene.date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-    const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
-    const dayAssoc = getFOAssociations(dayRecs);
     
-    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
-    for (const fo of activeFOs) {
-      const assoc = dayAssoc.get(fo.employee) ?? [];
-      result.push({ ...fo, assocScenes: assoc, originalScene: fo.scene });
-      for (const scene of assoc) {
-        result.push({ ...fo, scene, isFOVirtual: true, assocScenes: assoc, originalScene: fo.scene });
-      }
-    }
-    
-    return result
+    return dayRecs
       .filter(r => r.scene === openScene.scene)
       .sort((a, b) => prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr'));
   }, [openScene, allRecords]);
@@ -694,13 +679,10 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
             </div>
           </div>
           {weekRecs.map(rec => {
-            const key = getFOAssociationKey(rec.date, rec.employee);
-            const assoc = dayAssocMap.get(key) ?? [];
             return (
               <DayCard
                 key={rec.date}
                 rec={rec}
-                assocScenes={assoc}
                 onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
               />
             );
@@ -711,7 +693,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   );
 }
 
-function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assocScenes?: string[]; onOpenScene?: () => void }) {
+function DayCard({ rec, onOpenScene }: { rec: PlanningRecord; onOpenScene?: () => void }) {
   const isOff = rec.time === 'OFF';
   const dayPart = rec.date.split('-')[2];
   const interactive = !isOff && !!onOpenScene && !!rec.scene;
@@ -739,6 +721,7 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
       <div className="day-tag">
         <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
         <span className="n">{dayPart}</span>
+        <div className="day-date">{rec.date.split('-').length === 3 ? `${rec.date.split('-')[2]}/${rec.date.split('-')[1]}` : rec.date}</div>
       </div>
       <div style={{ minWidth: 0 }}>
         <div
@@ -748,11 +731,6 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
         >
           {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
         </div>
-        {assocScenes && assocScenes.length > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 500, marginTop: 2 }}>
-            Associé à : {assocScenes.join(', ')}
-          </div>
-        )}
         <div className="row-meta" style={{ marginTop: 2 }}>
           {formatDateLong(rec.date)}
         </div>
@@ -858,33 +836,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [date]);
 
   const present = useMemo(() => {
-    const dayRecs = records.filter(r => r.date === date && r.time !== 'OFF');
-    const activeRegs = dayRecs.filter(r => !isTrainingScene(r.scene));
-    const activeFOs = dayRecs.filter(r => isTrainingScene(r.scene));
-
-    const dayAssoc = getFOAssociations(dayRecs);
-    const result: Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }> = [...activeRegs];
-    
-    for (const fo of activeFOs) {
-      const assoc = dayAssoc.get(fo.employee) ?? [];
-      result.push({
-        ...fo,
-        assocScenes: assoc,
-        originalScene: fo.scene
-      });
-      
-      for (const scene of assoc) {
-        result.push({
-          ...fo,
-          scene,
-          isFOVirtual: true,
-          assocScenes: assoc,
-          originalScene: fo.scene
-        });
-      }
-    }
-
-    return result.sort((a, b) => {
+    return records.filter(r => r.date === date && r.time !== 'OFF').sort((a, b) => {
       const byScene = a.scene.localeCompare(b.scene, 'fr');
       if (byScene !== 0) return byScene;
       return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
@@ -892,7 +844,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [records, date]);
 
   const byScene = useMemo(() => {
-    const groups = new Map<string, Array<PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string }>>();
+    const groups = new Map<string, Array<PlanningRecord>>();
     for (const rec of present) {
       if (!groups.has(rec.scene)) groups.set(rec.scene, []);
       groups.get(rec.scene)!.push(rec);
@@ -901,7 +853,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [present]);
 
   const uniqueTechs = useMemo(() => {
-    return new Set(present.filter(r => !r.isFOVirtual).map(r => r.employee)).size;
+    return new Set(present.map(r => r.employee)).size;
   }, [present]);
 
 
