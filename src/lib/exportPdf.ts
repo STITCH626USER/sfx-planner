@@ -133,9 +133,9 @@ const C_GUTTER = 4.5;  // column gutter
 const C_MARGIN = 10;   // page margin
 
 function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
-  sceneName: string, rows: Array<{name:string;time:string;isFO?:boolean}>,
-  rowH = C_ROW_H): number {
-  const sc = getSceneColor(sceneName);
+  headerText: string, rows: Array<{name:string;time:string;isFO?:boolean}>,
+  rowH: number, themeColorName: string): number {
+  const sc = getSceneColor(themeColorName);
   const accentRgb: [number,number,number] = [
     Math.round(sc.rgbText[0]*0.7 + 30),
     Math.round(sc.rgbText[1]*0.7 + 30),
@@ -172,7 +172,7 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   let snSize = 7.5;
   doc.setFontSize(snSize);
   const maxWText = w - padX*2 - 10;
-  let sn = cleanText(sceneName);
+  let sn = cleanText(headerText);
   while(doc.getTextWidth(sn) > maxWText && snSize > 5.0) {
     snSize -= 0.5;
     doc.setFontSize(snSize);
@@ -262,17 +262,18 @@ function simulatePages(
 function findBestCols(
   blocks: Array<{rows: Array<unknown>}>,
   pageW: number, pageH: number, headerH: number,
-  rowH: number
+  rowH: number, maxCols: number
 ): number {
-  for (const cols of [2,3,4,5,6]) {
+  const possibleCols = [2,3,4,5,6].filter(c => c <= maxCols);
+  for (const cols of possibleCols) {
     const pages = simulatePages(blocks, cols, rowH, pageW, pageH, headerH);
     if (pages <= 1) return cols;
   }
-  return 6; // max cols as fallback
+  return possibleCols[possibleCols.length - 1]; // fallback to max allowed
 }
 
 /* ─── Multi-column card layout engine ─── */
-function layoutCards(doc: jsPDF, blocks: Array<{header:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>,
+function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>,
   startY: number, marginX: number, pageW: number, pageH: number, cols: number, rowH: number, _gap: number, logo: string|null,
   headerTitle: string, headerSub: string): void {
   const bottom = pageH - 13;
@@ -295,7 +296,7 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;rows:Array<{name:s
     }
 
     const x = marginX + bestCol*(colW+gutter);
-    const h = drawSceneCard(doc, x, colYs[bestCol], colW, block.header, block.rows, rowH);
+    const h = drawSceneCard(doc, x, colYs[bestCol], colW, block.header, block.rows, rowH, block.themeColorName);
     colYs[bestCol] += h + C_CARD_GAP;
   }
 }
@@ -303,8 +304,8 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;rows:Array<{name:s
 /* ─── generateAndSave (employee + scene exports) ─── */
 async function generateAndSave(opts:{
   title:string; subtitle:string;
-  blocks:Array<{header:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>;
-  itemCount:number; totalRows:number; filename:string;
+  blocks:Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>;
+  itemCount:number; totalRows:number; filename:string; maxCols?:number;
 }): Promise<void> {
   const logo = await getLogoDataUrl();
   // Always landscape — better for columns
@@ -313,7 +314,7 @@ async function generateAndSave(opts:{
   const pageH = doc.internal.pageSize.getHeight();
   const APPROX_HEADER = 37; // header height + start margin
   const rowH = C_ROW_H;
-  const cols = findBestCols(opts.blocks, pageW, pageH, APPROX_HEADER, rowH);
+  const cols = findBestCols(opts.blocks, pageW, pageH, APPROX_HEADER, rowH, opts.maxCols || 6);
   const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo);
   layoutCards(doc, opts.blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, opts.title, opts.subtitle);
   drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
@@ -347,7 +348,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 
   const blocks = Array.from(sceneMap.entries())
     .sort((a,b) => a[0].localeCompare(b[0],'fr'))
-    .map(([scene,rows]) => ({header:cleanText(scene), rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
+    .map(([scene,rows]) => ({header:cleanText(scene), themeColorName:scene, rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
 
   await generateAndSave({
     title: 'Vue globale du jour',
@@ -356,6 +357,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     itemCount: blocks.length,
     totalRows: blocks.reduce((a,b)=>a+Math.max(1,b.rows.length),0),
     filename: `sfx-planning-${date}.pdf`,
+    maxCols: 4
   });
 }
 
@@ -379,7 +381,11 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
   }
 
   const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
-  const blocks   = allDates.map(d => ({header:fmtDateShort(d), rows:dateMap.get(d)??[]}));
+  const blocks   = allDates.map(d => {
+    const rows = dateMap.get(d)??[];
+    const themeColorName = rows.length > 0 ? rows[0].name : '';
+    return {header:fmtDateShort(d), themeColorName, rows};
+  });
   const pStart   = allDates[0] ? fmtDate(allDates[0]) : '';
   const pEnd     = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
   const period   = pStart&&pEnd&&pStart!==pEnd ? `${pStart} - ${pEnd}` : pStart;
@@ -390,6 +396,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
     blocks, itemCount:blocks.length,
     totalRows: blocks.reduce((a,b)=>a+Math.max(1,b.rows.length),0),
     filename: `sfx-planning-indiv-${slug(prettyName(employee))}.pdf`,
+    maxCols: 4
   });
 }
 
@@ -429,10 +436,11 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   await generateAndSave({
     title: cleanText(scene),
     subtitle: period ? `Période : ${period}` : 'Période',
-    blocks: dates.map(d => ({header:fmtDateShort(d.date), rows:d.rows})),
+    blocks: dates.map(d => ({header:fmtDateShort(d.date), themeColorName:scene, rows:d.rows})),
     itemCount: dates.length,
     totalRows: dates.reduce((a,d)=>a+Math.max(1,d.rows.length),0),
     filename: `sfx-planning-${slug(scene)}.pdf`,
+    maxCols: 3
   });
 }
 

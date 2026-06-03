@@ -251,7 +251,7 @@ export default function App() {
             <Logo />
           </button>
           <div style={{ minWidth: 0 }}>
-            <div className="app-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.85em', marginLeft: 4 }}>3.1.2</span></div>
+            <div className="app-title">SFX Planner</div>
           </div>
         </header>
 
