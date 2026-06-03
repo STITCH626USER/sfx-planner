@@ -25,7 +25,7 @@ export function timesMatch(t1: string, t2: string, tolerance = 3): boolean {
 export function isTrainingScene(scene: string): boolean {
   if (!scene) return false;
   const s = scene.toLowerCase().trim();
-  return s.startsWith('fo') || s.startsWith('formation');
+  return s.includes('formation') || s.includes('fomation') || s.startsWith('fo ') || s === 'fo';
 }
 
 

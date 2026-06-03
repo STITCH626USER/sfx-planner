@@ -283,7 +283,15 @@ function parseCell(tokens: TokenT[]): { time: string; scene: string } {
     scenes.push(txt);
   }
 
-  let scene = scenes.join(' - ') || '';
+  let scene = '';
+  if (scenes.length > 0) {
+    const firstLower = scenes[0].toLowerCase();
+    if (firstLower.includes('formation') || firstLower.includes('fomation') || firstLower.startsWith('fo ') || firstLower === 'fo') {
+      scene = scenes.join(' - ');
+    } else {
+      scene = scenes[0];
+    }
+  }
   // Fallback: if no non-role line found, accept the first non-time non-HR line (could be a role-only cell)
   if (!scene) {
     for (let i = 0; i < lineTexts.length; i++) {
