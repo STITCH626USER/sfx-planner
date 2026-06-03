@@ -1042,6 +1042,27 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   );
 }
 
+function spawnSparkle(e: React.MouseEvent) {
+  const x = e.clientX;
+  const y = e.clientY;
+  const container = document.createElement('div');
+  container.className = 'sparkle-container';
+  container.style.left = x + 'px';
+  container.style.top = y + 'px';
+  
+  for(let i=0; i<6; i++) {
+    const p = document.createElement('div');
+    p.className = 'sparkle-particle';
+    const angle = (i / 6) * Math.PI * 2;
+    const dist = 15 + Math.random() * 20;
+    p.style.setProperty('--tx', `${Math.cos(angle)*dist}px`);
+    p.style.setProperty('--ty', `${Math.sin(angle)*dist}px`);
+    container.appendChild(p);
+  }
+  document.body.appendChild(container);
+  setTimeout(() => container.remove(), 600);
+}
+
 function DatePicker({ dates, date, records, onChange }: {
   dates: string[]; date: string; records: PlanningRecord[]; onChange: (date: string) => void;
 }) {
@@ -1060,7 +1081,10 @@ function DatePicker({ dates, date, records, onChange }: {
             aria-selected={sel}
             className="date-pill"
             data-testid={`date-pill-${d}`}
-            onClick={() => onChange(d)}
+            onClick={(e) => {
+              spawnSparkle(e);
+              onChange(d);
+            }}
           >
             <span className="dpd">{DAY_FR_SHORT[day] ?? ''}</span>
             <span className="dpn">{dn}</span>
