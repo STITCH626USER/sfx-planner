@@ -54,17 +54,27 @@ export function getSceneColor(scene: string): SceneColor {
   
   let hue = 0;
   if (lower.includes('arendelle')) {
-    hue = 200; // Blue
+    hue = 210; // Blue
   } else if (lower.includes('cascade')) {
-    hue = 35;  // Amber
+    hue = 35;  // Orange
   } else if (lower.includes('castle')) {
-    hue = 150; // Emerald/Green
+    hue = 160; // Teal/Green
   } else if (lower.includes('dfact') || lower.includes('fact')) {
-    hue = 260; // Indigo/Purple
+    hue = 320; // Pink
   } else if (lower.includes('illumination')) {
-    hue = 340; // Rose
+    hue = 350; // Red/Rose
   } else if (lower.includes('fo') || lower.includes('formation')) {
-    hue = 280; // Violet
+    hue = 280; // Purple
+  } else if (lower.includes('marvel')) {
+    hue = 195; // Cyan
+  } else if (lower.includes('matmops')) {
+    hue = 80;  // Olive/Lime
+  } else if (lower.includes('pooltechn')) {
+    hue = 15;  // Rust/Red-Orange
+  } else if (lower.includes('studiotsh')) {
+    hue = 120; // Bright Green
+  } else if (lower.includes('lionking')) {
+    hue = 45;  // Gold/Yellow
   } else if (lower.includes('repos') || lower.includes('congé') || lower === 'off') {
     return {
       bg: '#f8fafc',
