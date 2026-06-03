@@ -110,7 +110,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.1.10', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.1.11', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -182,18 +182,7 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   }
   doc.text(sn, x+padX+1.5, y+headerH*0.66);
 
-  // Count badge
-  if (rows.length > 0) {
-    const badge = String(rows.length);
-    const bw = doc.getTextWidth(badge)+3.5; const bh = 3.8;
-    const bx = x+w-padX-bw-0.5; const by = y+(headerH-bh)/2;
-    doc.setFillColor(255, 255, 255); 
-    doc.setDrawColor(220, 220, 225);
-    doc.setLineWidth(0.1);
-    doc.roundedRect(bx, by, bw, bh, bh/2, bh/2, 'FD');
-    doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(sc.rgbText[0],sc.rgbText[1],sc.rgbText[2]);
-    doc.text(badge, bx+bw/2, by+bh*0.72, {align:'center'});
-  }
+  // Count badge removed per user request
 
   // Rows
   let ry = y + headerH + padTop + 0.5;
