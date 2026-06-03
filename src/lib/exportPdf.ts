@@ -68,8 +68,30 @@ function getLogoDataUrl(): Promise<string|null> {
       const res = await fetch(`${base}sfx-dragon-logo.jpg`);
       if (!res.ok) return null;
       const blob = await res.blob();
-      return await new Promise<string>((resolve,reject) => {
-        const r = new FileReader(); r.onload=()=>resolve(String(r.result)); r.onerror=reject; r.readAsDataURL(blob);
+      const objUrl = URL.createObjectURL(blob);
+      return await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const size = Math.min(img.width, img.height);
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(objUrl);
+          
+          ctx.beginPath();
+          ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2, true);
+          ctx.closePath();
+          ctx.clip();
+          
+          const dx = (img.width - size) / 2;
+          const dy = (img.height - size) / 2;
+          ctx.drawImage(img, dx, dy, size, size, 0, 0, size, size);
+          
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = reject;
+        img.src = objUrl;
       });
     } catch { return null; }
   })();
@@ -87,7 +109,7 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   doc.setFillColor(...TEAL); doc.rect(pageW-marginX-3, y+2, 0.5, h-4, 'F');
   // Logo
   let tx = marginX + 5;
-  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'JPEG',lx,ly,ls,ls); tx=lx+ls+4; } catch {} }
+  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'PNG',lx,ly,ls,ls); tx=lx+ls+4; } catch {} }
   // Title
   doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...WHITE);
   doc.text(cleanText(title), tx, y+8.5);
@@ -110,7 +132,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.2.6', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.2.7', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */

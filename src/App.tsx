@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.2.6</span></h1>
+            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.2.7</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.2.6</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.2.7</span>
               </span>
             </div>
           </div>
@@ -469,9 +469,9 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
         <input
           id="tech-search-input"
           name="tech-search-nope"
-          type="search"
-          inputMode="search"
-          autoComplete="nope"
+          type="text"
+          inputMode="text"
+          autoComplete="new-password"
           autoCorrect="off"
           spellCheck={false}
           placeholder="Taper un nom (ex: Tom)..."
