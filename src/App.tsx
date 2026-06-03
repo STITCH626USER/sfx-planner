@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.2.7</span></h1>
+            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.2.8</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -221,7 +221,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.2.7</span>
+                Contrôle obligatoire sur UKG personnel. Données traitées localement. <span style={{opacity: 0.45, fontSize: '10px', marginLeft: '6px'}}>v3.2.8</span>
               </span>
             </div>
           </div>
@@ -466,20 +466,27 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
 
       <div className="search-wrap">
         <span className="search-icon"><IconSearch /></span>
-        <input
-          id="tech-search-input"
-          name="tech-search-nope"
-          type="text"
-          inputMode="text"
-          autoComplete="new-password"
-          autoCorrect="off"
-          spellCheck={false}
-          placeholder="Taper un nom (ex: Tom)..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          data-testid="input-search"
-          aria-label="Rechercher un technicien"
-        />
+        <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ flex: 1, display: 'flex', minWidth: 0, margin: 0, padding: 0 }}>
+          <input
+            id="q_input_field"
+            name="q_random_field"
+            type="text"
+            inputMode="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            data-lpignore="true"
+            data-form-type="other"
+            role="presentation"
+            placeholder="Rechercher (ex: Tom)..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            data-testid="input-search"
+            aria-label="Recherche"
+            style={{ flex: 1, width: '100%' }}
+          />
+        </form>
       </div>
 
       <div className="section-h">
