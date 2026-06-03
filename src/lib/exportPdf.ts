@@ -44,15 +44,6 @@ function prettyName(s: string): string {
   const tc = (w: string) => w.split(/([-'])/).map(p => /^[-']$/.test(p)?p:p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('');
   const tcp = (str: string) => str.trim().split(/\s+/).map(tc).join(' ');
   const idx = s.indexOf(',');
-  if (idx === -1) return cleanText(tcp(s));
-  const last = tcp(s.slice(0,idx)); const first = tcp(s.slice(idx+1));
-  if (!first) return cleanText(last); if (!last) return cleanText(first);
-  return cleanText(`${first} ${last}`);
-}
-function rosterName(s: string): string {
-  const tc = (w: string) => w.split(/([-'])/).map(p => /^[-']$/.test(p)?p:p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('');
-  const tcp = (str: string) => str.trim().split(/\s+/).map(tc).join(' ');
-  const idx = s.indexOf(',');
   if (idx === -1) return cleanText(s).toUpperCase();
   const last = s.slice(0,idx).trim().toUpperCase(); const first = tcp(s.slice(idx+1));
   if (!first) return cleanText(last); if (!last) return cleanText(first);
@@ -119,7 +110,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.2.5', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.2.6', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -466,7 +457,7 @@ async function generateGridGlobalPdf(opts: {
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   if (allDates.length === 0) return;
   
-  const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>rosterName(a).localeCompare(rosterName(b),'fr'));
+  const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>prettyName(a).localeCompare(prettyName(b),'fr'));
   
   // Use A4 landscape for better readability (more pages, less cramped)
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -546,7 +537,7 @@ async function generateGridGlobalPdf(opts: {
         doc.line(C_MARGIN, y+rowH, pageW-C_MARGIN, y+rowH); // bottom
         
         doc.setTextColor(20, 30, 40); doc.setFont('helvetica', 'bold'); doc.setFontSize(fName);
-        let nm = rosterName(emp);
+        let nm = prettyName(emp);
         if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
         doc.text(nm, C_MARGIN + 2, y + rowH/2 + 1.2);
         
