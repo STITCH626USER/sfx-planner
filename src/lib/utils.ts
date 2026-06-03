@@ -36,6 +36,7 @@ export interface SceneColor {
   accent: string;
   rgbBg: [number, number, number];
   rgbText: [number, number, number];
+  rgbAccent: [number, number, number];
 }
 
 export function getSceneColor(scene: string): SceneColor {
@@ -45,7 +46,8 @@ export function getSceneColor(scene: string): SceneColor {
       text: '#475569',
       accent: '#94a3b8',
       rgbBg: [255, 255, 255],
-      rgbText: [71, 85, 105]
+      rgbText: [71, 85, 105],
+      rgbAccent: [148, 163, 184]
     };
   }
 
@@ -81,7 +83,8 @@ export function getSceneColor(scene: string): SceneColor {
       text: '#475569',
       accent: '#94a3b8',
       rgbBg: [248, 250, 252],
-      rgbText: [100, 116, 139]
+      rgbText: [100, 116, 139],
+      rgbAccent: [148, 163, 184]
     };
   } else {
     let hash = 0;
@@ -110,12 +113,14 @@ export function getSceneColor(scene: string): SceneColor {
 
   const rgbBg = hslToRgb(hue, 85, 94);
   const rgbText = hslToRgb(hue, 85, 22);
+  const rgbAccent = hslToRgb(hue, 70, 45);
 
   return {
     bg: `hsl(${hue}, 85%, 94%)`,
     text: `hsl(${hue}, 85%, 22%)`,
     accent: `hsl(${hue}, 70%, 45%)`,
     rgbBg,
-    rgbText
+    rgbText,
+    rgbAccent
   };
 }

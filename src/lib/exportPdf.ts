@@ -119,7 +119,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.2.4', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.2.5', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -575,7 +575,7 @@ async function generateGridGlobalPdf(opts: {
             const sc = getSceneColor(mainRec.scene);
             const sceneAbbr = shortenSceneName(mainRec.scene);
             
-            doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+            doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
             doc.rect(dx+0.4, y+0.4, badgeW, rowH-0.8, 'F');
             
             doc.setTextColor(255, 255, 255);
