@@ -49,6 +49,15 @@ function prettyName(s: string): string {
   if (!first) return cleanText(last); if (!last) return cleanText(first);
   return cleanText(`${first} ${last}`);
 }
+function rosterName(s: string): string {
+  const tc = (w: string) => w.split(/([-'])/).map(p => /^[-']$/.test(p)?p:p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('');
+  const tcp = (str: string) => str.trim().split(/\s+/).map(tc).join(' ');
+  const idx = s.indexOf(',');
+  if (idx === -1) return cleanText(s).toUpperCase();
+  const last = s.slice(0,idx).trim().toUpperCase(); const first = tcp(s.slice(idx+1));
+  if (!first) return cleanText(last); if (!last) return cleanText(first);
+  return cleanText(`${last} ${first}`);
+}
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0]+(parts[1][0]||'')).toUpperCase();
@@ -110,7 +119,7 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
   // Version
   doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.1.11', pageW-marginX, fy+1.5, {align:'right'});
+  doc.text('SFX Planner v3.2.0', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -457,10 +466,10 @@ async function generateGridGlobalPdf(opts: {
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   if (allDates.length === 0) return;
   
-  const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'fr'));
+  const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>rosterName(a).localeCompare(rosterName(b),'fr'));
   
-  // Use A3 to double the density per page
-  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a3'});
+  // Use A4 landscape for better readability (more pages, less cramped)
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const C_MARGIN = 15;
@@ -484,8 +493,8 @@ async function generateGridGlobalPdf(opts: {
     y = 22;
   };
 
-  const rowH = 4.8;
-  const headerH = 6;
+  const rowH = 6.8;
+  const headerH = 7.5;
   const colNameW = 55;
   const colDayW = (pageW - C_MARGIN*2 - colNameW) / 7;
 
@@ -500,13 +509,13 @@ async function generateGridGlobalPdf(opts: {
     doc.setFillColor(30, 40, 60);
     doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text("TECHNICIEN", C_MARGIN + 2, y + 4.2);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+    doc.text("TECHNICIEN", C_MARGIN + 2, y + 5);
     
     for (let d = 0; d < 7; d++) {
       const dx = C_MARGIN + colNameW + d * colDayW;
       if (d < weekDates.length) {
-        doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 4.2, {align: 'center'});
+        doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
       }
     }
     y += headerH;
@@ -519,12 +528,12 @@ async function generateGridGlobalPdf(opts: {
         doc.setFillColor(30, 40, 60);
         doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-        doc.text("TECHNICIEN (suite)", C_MARGIN + 2, y + 4.2);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+        doc.text("TECHNICIEN (suite)", C_MARGIN + 2, y + 5);
         for (let d = 0; d < 7; d++) {
           const dx = C_MARGIN + colNameW + d * colDayW;
           if (d < weekDates.length) {
-            doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 4.2, {align: 'center'});
+            doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
           }
         }
         y += headerH;
@@ -537,10 +546,10 @@ async function generateGridGlobalPdf(opts: {
       doc.setDrawColor(220, 225, 230); doc.setLineWidth(0.1);
       doc.line(C_MARGIN, y+rowH, pageW-C_MARGIN, y+rowH); // bottom
       
-      doc.setTextColor(20, 30, 40); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-      let nm = prettyName(emp);
+      doc.setTextColor(20, 30, 40); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+      let nm = rosterName(emp);
       if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
-      doc.text(nm, C_MARGIN + 2, y + 3.4);
+      doc.text(nm, C_MARGIN + 2, y + 4.5);
       
       doc.line(C_MARGIN, y, C_MARGIN, y + rowH); // left edge
       doc.line(C_MARGIN + colNameW, y, C_MARGIN + colNameW, y + rowH); // col edge
@@ -558,31 +567,27 @@ async function generateGridGlobalPdf(opts: {
         const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
         
         if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
-          doc.setFillColor(235, 238, 242);
-          doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
-          doc.setTextColor(130, 140, 150);
+          doc.setFillColor(248, 250, 252);
+          doc.roundedRect(dx+0.8, y+0.8, colDayW-1.6, rowH-1.6, 1.5, 1.5, 'F');
+          doc.setTextColor(148, 163, 184);
           doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-          doc.text('OFF', dx + colDayW/2, y + 3.4, {align: 'center'});
+          doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1, {align: 'center'});
         } else {
           const sc = getSceneColor(mainRec.scene);
           const sceneAbbr = shortenSceneName(mainRec.scene);
           
-          const boxW = 18;
-          doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-          doc.rect(dx+0.4, y+0.4, boxW, rowH-0.8, 'F');
-          
-          doc.setTextColor(255, 255, 255);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
-          doc.text(sceneAbbr, dx + 0.4 + boxW/2, y + 3.2, {align: 'center'});
+          doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
+          doc.roundedRect(dx+0.8, y+0.8, colDayW-1.6, rowH-1.6, 1.5, 1.5, 'F');
           
           let timeStr = mainRec.time;
           if (recs.length > 1) {
             const fO = recs.find(r => isTrainingScene(r.scene));
             if (fO) timeStr += ' +FO';
           }
-          doc.setTextColor(20, 30, 40);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-          doc.text(timeStr, dx + 0.4 + boxW + (colDayW - boxW - 0.8)/2, y + 3.4, {align: 'center'});
+          
+          doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+          doc.text(`${sceneAbbr} • ${timeStr}`, dx + colDayW/2, y + rowH/2 + 1, {align: 'center'});
         }
       }
       y += rowH;
