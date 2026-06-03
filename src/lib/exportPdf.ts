@@ -398,26 +398,67 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
    EXPORT PAR SCÈNE — Planning d'une scène
 ═══════════════════════════════════════════════ */
 export async function exportScenePdf(scene: string, records: PlanningRecord[]): Promise<void> {
-  const sceneRecs = records.filter(r => r.scene===scene && r.time!=='OFF');
-  const dateMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+  const isFOExport = scene === 'Formations';
+  const sceneRecs = records.filter(r => {
+    if (r.time === 'OFF') return false;
+    if (isFOExport) return isTrainingScene(r.scene);
+    return r.scene === scene;
+  });
 
+  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
   for (const r of sceneRecs) {
-    if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    dateMap.get(r.date)!.push({name:prettyName(r.employee),time:r.time,isFO:isTrainingScene(r.scene)});
+    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
+    let displayName = prettyName(r.employee);
+    if (isFOExport && r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
+      const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+      if (detail) displayName = `${displayName} (${detail})`;
+    }
+    dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
   }
 
-  const allDates  = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
-  const dates     = allDates.map(d => ({date:d, rows:(dateMap.get(d)??[]).sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
-  const pStart    = allDates[0] ? fmtDate(allDates[0]) : '';
-  const pEnd      = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
-  const period    = pStart&&pEnd&&pStart!==pEnd ? `${pStart} - ${pEnd}` : pStart;
+  // Also gather FO records if this is a normal scene export, so we can append them.
+  const foMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+  if (!isFOExport) {
+    const foRecs = records.filter(r => isTrainingScene(r.scene) && r.time !== 'OFF');
+    for (const r of foRecs) {
+      if (!foMap.has(r.date)) foMap.set(r.date, []);
+      let displayName = prettyName(r.employee);
+      if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
+        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+        if (detail) displayName = `${displayName} (${detail})`;
+      }
+      foMap.get(r.date)!.push({name: displayName, time: r.time, isFO: true});
+    }
+  }
+
+  const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
+  
+  const blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>}> = [];
+  for (const d of allDates) {
+    const sRows = dateMap.get(d) || [];
+    if (sRows.length > 0) {
+      sRows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+      blocks.push({ header: fmtDateShort(d), themeColorName: scene, rows: sRows });
+    }
+    if (!isFOExport) {
+      const fRows = foMap.get(d) || [];
+      if (fRows.length > 0) {
+        fRows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+        blocks.push({ header: `Formations - ${fmtDateShort(d)}`, themeColorName: 'Formations', rows: fRows });
+      }
+    }
+  }
+
+  const pStart = allDates[0] ? fmtDate(allDates[0]) : '';
+  const pEnd   = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
+  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
 
   await generateAndSave({
     title: cleanText(scene),
     subtitle: period ? `Période : ${period}` : 'Période',
-    blocks: dates.map(d => ({header:fmtDateShort(d.date), themeColorName:scene, rows:d.rows})),
-    itemCount: dates.length,
-    totalRows: dates.reduce((a,d)=>a+Math.max(1,d.rows.length),0),
+    blocks,
+    itemCount: blocks.length,
+    totalRows: blocks.reduce((a,b) => a + Math.max(1, b.rows.length), 0),
     filename: `sfx-planning-${slug(scene)}.pdf`,
     maxCols: 3
   });
@@ -425,7 +466,11 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
 
 export function listScenes(records: PlanningRecord[]): string[] {
   const set = new Set<string>();
-  for (const r of records) if (r.scene) set.add(r.scene);
+  for (const r of records) {
+    if (r.scene) {
+      set.add(isTrainingScene(r.scene) ? 'Formations' : r.scene);
+    }
+  }
   return Array.from(set).sort((a,b)=>a.localeCompare(b,'fr'));
 }
 
