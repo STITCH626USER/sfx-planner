@@ -206,13 +206,6 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
       const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
       drawAvatar(doc, x+padX+1, ry+(rowH-avSize)/2, row.name, avColor, avSize);
       let nameX = x+padX+1+avSize+1.5;
-      if (row.isFO) {
-        const fow=5.5; const foh=avSize*0.9; const fox=nameX; const foy=ry+(rowH-foh)/2;
-        doc.setFillColor(...VIOLET); doc.roundedRect(fox, foy, fow, foh, 0.6, 0.6, 'F');
-        doc.setTextColor(...WHITE); doc.setFont('helvetica','bold'); doc.setFontSize(5.5);
-        doc.text('FO', fox+fow/2, foy+foh*0.72, {align:'center'});
-        nameX += fow+1.2;
-      }
       doc.setFont('helvetica','bold'); doc.setFontSize(7);
       const timeStr = row.time||'';
       const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
