@@ -567,27 +567,31 @@ async function generateGridGlobalPdf(opts: {
         const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
         
         if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
-          doc.setFillColor(248, 250, 252);
-          doc.roundedRect(dx+0.8, y+0.8, colDayW-1.6, rowH-1.6, 1.5, 1.5, 'F');
+          doc.setFillColor(240, 242, 245);
+          doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
           doc.setTextColor(148, 163, 184);
           doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-          doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1, {align: 'center'});
+          doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1.2, {align: 'center'});
         } else {
           const sc = getSceneColor(mainRec.scene);
           const sceneAbbr = shortenSceneName(mainRec.scene);
           
-          doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-          doc.roundedRect(dx+0.8, y+0.8, colDayW-1.6, rowH-1.6, 1.5, 1.5, 'F');
+          const boxW = 17.5;
+          doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+          doc.rect(dx+0.4, y+0.4, boxW, rowH-0.8, 'F');
+          
+          doc.setTextColor(255, 255, 255);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.2);
+          doc.text(sceneAbbr, dx + 0.4 + boxW/2, y + rowH/2 + 1, {align: 'center'});
           
           let timeStr = mainRec.time;
           if (recs.length > 1) {
             const fO = recs.find(r => isTrainingScene(r.scene));
             if (fO) timeStr += ' +FO';
           }
-          
-          doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+          doc.setTextColor(20, 30, 40);
           doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-          doc.text(`${sceneAbbr} • ${timeStr}`, dx + colDayW/2, y + rowH/2 + 1, {align: 'center'});
+          doc.text(timeStr, dx + 0.4 + boxW + (colDayW - boxW - 0.8)/2, y + rowH/2 + 1.2, {align: 'center'});
         }
       }
       y += rowH;
