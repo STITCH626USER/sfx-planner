@@ -3,6 +3,12 @@
 /* SFX Planner — Premium Space-Midnight Glassmorphism Aesthetic.
    A-to-Z complete interface redesign. Modern mobile-first layout. */
 
+/* Block containing the segmented control for tabs */
+.sidebar-nav-block {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
 :root {
   /* Surface colors (Space-Midnight theme) */
   --bg-0:        #04060a;                           /* Page background */

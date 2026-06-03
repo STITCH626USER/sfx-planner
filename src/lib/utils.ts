@@ -106,12 +106,24 @@ export function getSceneColor(scene: string): SceneColor {
     hue = 340; // Rose
   } else if (lower.includes('fo') || lower.includes('formation')) {
     hue = 280; // Violet
+  } else if (lower.includes('repos') || lower.includes('congé') || lower === 'off') {
+    return {
+      bg: '#f8fafc',
+      text: '#475569',
+      accent: '#94a3b8',
+      rgbBg: [248, 250, 252],
+      rgbText: [100, 116, 139]
+    };
   } else {
     let hash = 0;
     for (let i = 0; i < s.length; i++) {
       hash = s.charCodeAt(i) + ((hash << 5) - hash);
     }
-    hue = Math.abs(hash) % 360;
+    // Mix the hash to avoid prefix clustering (e.g. all "ENT " scenes)
+    hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
+    hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
+    hash = (hash ^ (hash >>> 16)) >>> 0;
+    hue = hash % 360;
   }
 
   const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
