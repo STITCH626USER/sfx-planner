@@ -65,7 +65,7 @@ const ROLE_KEYWORDS = [
 
 const HR_CODES = new Set(['SM', 'SC', 'SH', 'HS', 'HF', 'HR']);
 
-const TIME_RE = /(\d{2}:\d{2}-\d{2}:\d{2})/;
+const TIME_RE = /(\d{1,2}[:h]\d{2}\s*-\s*\d{1,2}[:h]\d{2})/i;
 const PURE_OFF_RE = /^(Repos|CX|C4)\s*$/;
 
 export interface PlanningRecord {
@@ -194,7 +194,10 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
   const employees = Array.from(buckets.entries())
     .map(([y, toks]) => {
       toks.sort((a, b) => a.x - b.x);
-      let name = toks.map(t => t.text).join(' ').replace(/\s*,\s*/, ', ').trim();
+      let name = toks.map(t => t.text).join(' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\s*,\s*/, ', ')
+        .trim();
       name = name.replace(/\s*\(\*\)\s*$/, '').trim();
       return { y: Number(y), name };
     })
@@ -216,7 +219,7 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
       const xStart = colStarts[d];
       const xEnd = colEnds[d];
       const cellTokens = tokens
-        .filter(t => t.x >= xStart - 1 && t.x < xEnd - 1 && t.y >= emp.yStart && t.y < emp.yEnd)
+        .filter(t => t.x >= xStart - 3 && t.x < xEnd + 3 && t.y >= emp.yStart && t.y < emp.yEnd)
         .sort((a, b) => a.y - b.y || a.x - b.x);
 
       const { time, scene } = parseCell(cellTokens);
@@ -265,7 +268,7 @@ function parseCell(tokens: TokenT[]): { time: string; scene: string } {
     const m = lineTexts[i].match(TIME_RE);
     if (m) {
       timeIdx = i;
-      timeMatch = m[1];
+      timeMatch = m[1].replace(/h/i, ':').replace(/\s+/g, '');
       break;
     }
   }
