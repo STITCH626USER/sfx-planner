@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner <span style={{ color: 'var(--fg-dim)', fontSize: '0.6em', marginLeft: '6px', fontWeight: 500 }}>3.2.9</span></h1>
+            <h1 className="landing-title">SFX Planner <span style={{ color: 'var(--fg-dim)', fontSize: '0.6em', marginLeft: '6px', fontWeight: 500 }}>v3000</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -251,8 +251,8 @@ export default function App() {
             <Logo />
           </button>
           <div style={{ minWidth: 0, display: 'flex', alignItems: 'baseline' }}>
-            <div className="app-title">SFX Planner</div>
-            <span style={{ color: 'var(--fg-dim)', fontSize: '11px', marginLeft: '6px', fontWeight: 500 }}>3.2.9</span>
+            <div className="app-title" onClick={() => { if (confirm('Tout effacer et revenir à l\'accueil ?')) resetAll(); }} style={{ cursor: 'pointer' }}>SFX Planner</div>
+            <span style={{ color: 'var(--fg-dim)', fontSize: '11px', marginLeft: '6px', fontWeight: 500 }}>v3000</span>
           </div>
         </header>
 
