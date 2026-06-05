@@ -22,7 +22,7 @@ const DAY_FR_FULL  = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','
 const DAY_FR_SHORT = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
 
 function cleanText(t: string): string {
-  return (t||'').replace(/[Ø<ß"«»®©]/g,'').replace(/\s+/g,' ').trim();
+  return (t||'').replace(/[Ø<ß"«»®©]/g,'').replace(/ENT\s+/i, '').replace(/PoolTechnicienSfx/i, 'Pool SFX').replace(/\s+/g,' ').trim();
 }
 function weekdayFromIso(iso: string): number|null {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);

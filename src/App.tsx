@@ -186,7 +186,7 @@ export default function App() {
             >
               <Logo />
             </button>
-            <h1 className="landing-title">SFX Planner <span style={{ opacity: 0.5, fontSize: '0.6em' }}>3.2.9</span></h1>
+            <h1 className="landing-title">SFX Planner <span style={{ color: 'var(--fg-dim)', fontSize: '0.6em', marginLeft: '6px', fontWeight: 500 }}>3.2.9</span></h1>
           </header>
           
           <div className="landing-uploader-wrap">
@@ -250,8 +250,9 @@ export default function App() {
           >
             <Logo />
           </button>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, display: 'flex', alignItems: 'baseline' }}>
             <div className="app-title">SFX Planner</div>
+            <span style={{ color: 'var(--fg-dim)', fontSize: '11px', marginLeft: '6px', fontWeight: 500 }}>3.2.9</span>
           </div>
         </header>
 
