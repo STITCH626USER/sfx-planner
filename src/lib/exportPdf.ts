@@ -64,7 +64,7 @@ function getLogoDataUrl(): Promise<string|null> {
   if (logoPromise) return logoPromise;
   return logoPromise = (async () => {
     try {
-      const base = (typeof window!=='undefined'&&(window as any).__BASE_URL__)||((import.meta as any).env?.BASE_URL??'/');
+      const base = (typeof window!=='undefined'&&(window as unknown as {__BASE_URL__:string}).__BASE_URL__)||((import.meta as unknown as {env:{BASE_URL?:string}}).env?.BASE_URL??'/');
       const res = await fetch(`${base}sfx-dragon-logo.jpg`);
       if (!res.ok) return null;
       const blob = await res.blob();
@@ -112,7 +112,7 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   doc.setFillColor(...TEAL); doc.rect(pageW-marginX-3, y+2, 0.5, h-4, 'F');
   // Logo
   let tx = marginX + 5;
-  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'PNG',lx,ly,ls,ls); tx=lx+ls+4; } catch {} }
+  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'PNG',lx,ly,ls,ls); tx=lx+ls+4; } catch (e) { /* ignore */ } }
   // Title
   doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...WHITE);
   doc.text(cleanText(title), tx, y+8.5);
@@ -219,7 +219,7 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
       const avSize = Math.min(rowH * 0.72, 3.5);
       const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
       drawAvatar(doc, x+padX+1, ry+(rowH-avSize)/2, row.name, avColor, avSize);
-      let nameX = x+padX+1+avSize+1.5;
+      const nameX = x+padX+1+avSize+1.5;
       doc.setFont('helvetica','bold'); doc.setFontSize(7);
       const timeStr = row.time||'';
       const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
@@ -299,7 +299,7 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
       drawPremiumFooter(doc, pageW, pageH, marginX);
       doc.addPage();
       const ny = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub+' (suite)', logo);
-      colYs.fill(ny); bestCol=0; minY=ny;
+      colYs.fill(ny); bestCol=0;
     }
 
     const x = marginX + bestCol*(colW+gutter);
@@ -381,7 +381,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    let name = r.scene||'-'; let isFO=false;
+    const name = r.scene||'-'; let isFO=false;
     if (isTrainingScene(r.scene)) {
       isFO=true;
     }
@@ -416,7 +416,7 @@ async function generateIndivPdf(opts: {
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 10;
   
-  let startY = drawPremiumHeader(doc, pageW, marginX, 10, opts.title, opts.subtitle, logo);
+  const startY = drawPremiumHeader(doc, pageW, marginX, 10, opts.title, opts.subtitle, logo);
   
   const cols = 4;
   const gutter = 4.5;
@@ -486,7 +486,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
   doc.text(monthName, x + pictoW/2, py + 14.5, {align: 'center'});
   
-  let rx = x + pictoW + 4;
+  const rx = x + pictoW + 4;
   const bubbleW = w - pictoW - 4;
   const bubbleH = 7.5;
   const gapBubble = 1.5;

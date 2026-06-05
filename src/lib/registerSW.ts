@@ -16,7 +16,7 @@ export function registerOfflineSW(): void {
     for (const registration of registrations) {
       registration.unregister().then((success) => {
         if (success) {
-          // eslint-disable-next-line no-console
+           
           console.info('[sfx-planner] successfully unregistered service worker to bypass cache');
         }
       });

@@ -174,7 +174,7 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
   // --- Employee rows: tokens in Nom column with surname,given pattern
   const nomCandidates = tokens.filter(t =>
     t.x >= nomColStart && t.x < nomColEnd && t.y > headerY + 5 &&
-    (/^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ' \-]+,?$/.test(t.text) || /^[A-Z][A-ZÀ-Þ' \-]+,/.test(t.text)),
+    (/^[A-ZÀ-ÖØ-Þ][A-ZÀ-ÖØ-Þ' -]+,?$/.test(t.text) || /^[A-Z][A-ZÀ-Þ' -]+,/.test(t.text)),
   );
 
   // Group by Y bucket

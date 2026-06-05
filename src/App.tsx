@@ -1213,31 +1213,31 @@ interface FireworkRocket {
   x: number; y: number; tx: number; ty: number; vx: number; vy: number; color: string; size: number;
 }
 
+const FIREWORK_COLORS = ['#ff3366', '#ff9933', '#ffff33', '#33ff66', '#33ccff', '#cc33ff', '#ff00aa', '#00ffcc'];
+
 function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<FireworkParticle[]>([]);
   const rocketsRef = useRef<FireworkRocket[]>([]);
   const animationFrameId = useRef<number | null>(null);
 
-  const colors = ['#ff3366', '#ff9933', '#ffff33', '#33ff66', '#33ccff', '#cc33ff', '#ff00aa', '#00ffcc'];
-
   const spawnExplosion = useCallback((x: number, y: number, color?: string) => {
     const count = 40 + Math.floor(Math.random() * 30);
-    const baseColor = color || colors[Math.floor(Math.random() * colors.length)];
+    const baseColor = color || FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 1 + Math.random() * 4.5;
       particlesRef.current.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.5, color: baseColor, alpha: 1, decay: 0.012 + Math.random() * 0.015, size: 1 + Math.random() * 2 });
     }
-  }, [colors]);
+  }, []);
 
   const spawnRocket = useCallback(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const tx = 100 + Math.random() * (canvas.width - 200); const ty = 80 + Math.random() * (canvas.height * 0.4);
     const x = tx + (Math.random() - 0.5) * 50; const y = canvas.height;
     const dy = ty - y; const dx = tx - x; const duration = 40 + Math.random() * 20;
-    rocketsRef.current.push({ x, y, tx, ty, vx: dx / duration, vy: dy / duration, color: colors[Math.floor(Math.random() * colors.length)], size: 2.2 });
-  }, [colors]);
+    rocketsRef.current.push({ x, y, tx, ty, vx: dx / duration, vy: dy / duration, color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)], size: 2.2 });
+  }, []);
 
   useEffect(() => {
     if (triggerCount > 0) {

@@ -54,7 +54,7 @@ export function getSceneColor(scene: string): SceneColor {
   const s = scene.trim();
   const lower = s.toLowerCase();
   
-  let hue = 0;
+  let hue: number;
   if (lower.includes('arendelle')) {
     hue = 230; // Blue
   } else if (lower.includes('cascade')) {
