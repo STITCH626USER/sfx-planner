@@ -165,6 +165,11 @@ export default function App() {
     setSources(prev => prev.filter(s => s.name !== name));
   }, []);
 
+  const resetAll = useCallback(() => {
+    setRecords([]);
+    setSources([]);
+  }, []);
+
   if (records.length === 0) {
     return (
       <div className="app-shell-empty-container" data-testid="app-root">
