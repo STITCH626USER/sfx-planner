@@ -221,7 +221,7 @@ input:focus, select:focus {
 .app-logo {
   width: 46px;
   height: 46px;
-  border-radius: var(--r-sm);
+  border-radius: 50%;
   display: grid;
   place-items: center;
   background: var(--logo-bg);
