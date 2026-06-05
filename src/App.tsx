@@ -447,6 +447,12 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
     });
   }, [employees, query]);
 
+  useEffect(() => {
+    if (selected && !employees.includes(selected)) {
+      setSelected(null);
+    }
+  }, [selected, employees]);
+
   if (selected) {
     return (
       <EmployeeDetail

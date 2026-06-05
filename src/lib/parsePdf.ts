@@ -159,15 +159,14 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
   // --- Day ISO dates from "DD-MM" tokens on header row
   const dayISODates: (string | null)[] = dayTokens.map((dt) => {
     if (!dt) return null;
-    // search for "DD-MM" near this day token (slightly to the right or below it)
     const candidates = tokens.filter(t =>
-      /^\d{2}-\d{2}$/.test(t.text) &&
+      /^\d{2}[-/]\d{2}$/.test(t.text) &&
       Math.abs(t.y - dt.y) < 6 &&
       t.x > dt.x - 5 && t.x < dt.x + 80,
     );
     candidates.sort((a, b) => a.x - b.x);
     if (!candidates.length) return null;
-    const m = candidates[0].text.match(/^(\d{2})-(\d{2})$/);
+    const m = candidates[0].text.match(/^(\d{2})[-/](\d{2})$/);
     if (!m) return null;
     return `${year || 'YYYY'}-${m[2]}-${m[1]}`;
   });
