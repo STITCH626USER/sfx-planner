@@ -659,8 +659,8 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
 
   return (
     <div data-testid="panel-employee">
-      <button className="btn-link" onClick={onBack} data-testid="btn-back-employees">
-        ← Retour
+      <button className="btn-back" onClick={onBack} data-testid="btn-back-employees">
+        <IconArrowLeft /> Retour
       </button>
       <div className="card" style={{ marginTop: 8, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -789,7 +789,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
 }) {
   return (
     <div data-testid="panel-scene-detail">
-      <button className="btn-link" onClick={onBack} data-testid="btn-back-scenes">← Retour</button>
+      <button className="btn-back" onClick={onBack} data-testid="btn-back-scenes"><IconArrowLeft /> Retour</button>
       <div className="card" style={{ marginTop: 8, marginBottom: 16 }}>
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 17, overflowWrap: 'anywhere' }}
              data-testid="text-scene-name">
@@ -1237,6 +1237,13 @@ function IconChevron() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+function IconArrowLeft() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m15 18-6-6 6-6"/>
     </svg>
   );
 }

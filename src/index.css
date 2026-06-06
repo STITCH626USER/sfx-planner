@@ -398,6 +398,27 @@ input:focus, select:focus {
   transform: scale(1.02);
 }
 
+.btn-back {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-weight: 600;
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.btn-back:hover {
+  background: var(--bg-2);
+  border-color: var(--line-strong);
+  color: var(--amber);
+  transform: translateX(-2px);
+}
+
 /* Info chips */
 .chip {
   display: inline-flex;
