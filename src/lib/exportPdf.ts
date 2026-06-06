@@ -159,7 +159,7 @@ const C_MARGIN = 10;   // page margin
 
 function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   headerText: string, rows: Array<{name:string;time:string;isFO?:boolean}>,
-  rowH: number, themeColorName: string): number {
+  rowH: number, themeColorName: string, dateStr?: string): number {
   const sc = getSceneColor(themeColorName);
   const accentRgb: [number,number,number] = [
     Math.round(sc.rgbText[0]*0.7 + 30),
@@ -169,34 +169,70 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   const headerH = C_HEADER;
   const padX = 3.5; const padTop = C_PAD_T; const padBot = C_PAD_B;
   const totalRows = Math.max(1, rows.length);
-  const cardH = headerH + padTop + totalRows * rowH + padBot;
+  const cardH = Math.max(dateStr ? 16 : 0, headerH + padTop + totalRows * rowH + padBot);
+
+  let cardX = x;
+  let cardW = w;
+  
+  if (dateStr) {
+    const dateObj = new Date(dateStr);
+    const days = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+    const months = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    
+    const dayName = days[dateObj.getDay()].replace('.', '').toUpperCase();
+    const dayNum = dateObj.getDate().toString().padStart(2, '0');
+    const monthName = months[dateObj.getMonth()];
+    
+    const pictoW = 16;
+    const pictoH = 16;
+    
+    // Picto Background
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(220, 220, 225);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(x, y + (cardH - pictoH)/2, pictoW, pictoH, 2.5, 2.5, 'FD');
+    
+    // Picto Text
+    const py = y + (cardH - pictoH)/2;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
+    doc.text(dayName, x + pictoW/2, py + 4.5, {align: 'center'});
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 30, 40);
+    doc.text(dayNum, x + pictoW/2, py + 10.5, {align: 'center'});
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
+    doc.text(monthName, x + pictoW/2, py + 14.5, {align: 'center'});
+    
+    cardX = x + pictoW + 4;
+    cardW = w - pictoW - 4;
+    headerText = `${rows.length} technicien${rows.length > 1 ? 's' : ''}`;
+  }
 
   // Card background (White)
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(220, 220, 225); // Subtle border
   doc.setLineWidth(0.2);
-  doc.roundedRect(x, y, w, cardH, 2.0, 2.0, 'FD');
+  doc.roundedRect(cardX, y, cardW, cardH, 2.0, 2.0, 'FD');
 
   // Header band (Pastel subtle color)
+  // Header band (Pastel subtle color)
   doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-  doc.roundedRect(x, y, w, headerH, 2.0, 2.0, 'F');
-  doc.rect(x, y+2.0, w, headerH-2.0, 'F');
+  doc.roundedRect(cardX, y, cardW, headerH, 2.0, 2.0, 'F');
+  doc.rect(cardX, y+2.0, cardW, headerH-2.0, 'F');
   // Bottom line of header
   doc.setDrawColor(235, 235, 240);
   doc.setLineWidth(0.15);
-  doc.line(x, y+headerH, x+w, y+headerH);
+  doc.line(cardX, y+headerH, cardX+cardW, y+headerH);
 
   // Left accent bar (thinner, more elegant)
   doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.roundedRect(x, y, 1.8, cardH, 1.5, 1.5, 'F');
-  doc.rect(x+0.9, y, 0.9, cardH, 'F');
+  doc.roundedRect(cardX, y, 1.8, cardH, 1.5, 1.5, 'F');
+  doc.rect(cardX+0.9, y, 0.9, cardH, 'F');
 
   // Scene name (compact font)
   doc.setFont('helvetica','bold'); 
   doc.setTextColor(30, 20, 10); // Dark premium text
   let snSize = 7.5;
   doc.setFontSize(snSize);
-  const maxWText = w - padX*2 - 10;
+  const maxWText = cardW - padX*2 - 10;
   let sn = cleanText(headerText);
   while(doc.getTextWidth(sn) > maxWText && snSize > 5.0) {
     snSize -= 0.5;
@@ -205,7 +241,7 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   if (doc.getTextWidth(sn) > maxWText) {
     sn = doc.splitTextToSize(sn, maxWText)[0] as string;
   }
-  doc.text(sn, x+padX+1.5, y+headerH*0.66);
+  doc.text(sn, cardX+padX+1.5, y+headerH*0.66);
 
   // Count badge removed per user request
 
@@ -213,17 +249,17 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   let ry = y + headerH + padTop + 0.5;
   if (rows.length === 0) {
     doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(...MUTED);
-    doc.text('Aucun technicien', x+padX+3, ry+rowH*0.55);
+    doc.text('Aucun technicien', cardX+padX+3, ry+rowH*0.55);
   } else {
     for (const row of rows) {
       const avSize = Math.min(rowH * 0.72, 3.5);
       const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
-      drawAvatar(doc, x+padX+1, ry+(rowH-avSize)/2, row.name, avColor, avSize);
-      const nameX = x+padX+1+avSize+1.5;
+      drawAvatar(doc, cardX+padX+1, ry+(rowH-avSize)/2, row.name, avColor, avSize);
+      const nameX = cardX+padX+1+avSize+1.5;
       doc.setFont('helvetica','bold'); doc.setFontSize(7);
       const timeStr = row.time||'';
       const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
-      const px = x+w-padX-tw; const py = ry+(rowH-th)/2;
+      const px = cardX+cardW-padX-tw; const py = ry+(rowH-th)/2;
       const isOff = /^off$/i.test(timeStr);
       const pillColor: [number,number,number] = isOff ? [240, 240, 243] : [255, 240, 225];
       const pillText: [number,number,number] = isOff ? MUTED : AMBER;
@@ -280,7 +316,7 @@ function findBestCols(
 }
 
 /* ─── Multi-column card layout engine ─── */
-function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>,
+function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>, dateStr?: string}>,
   startY: number, marginX: number, pageW: number, pageH: number, cols: number, rowH: number, _gap: number, logo: string|null,
   headerTitle: string, headerSub: string): void {
   const bottom = pageH - 13;
@@ -288,31 +324,37 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
   const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
   const colYs: number[] = new Array(cols).fill(startY);
 
-  for (const block of blocks) {
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
     const nRows = Math.max(1, block.rows.length);
-    const cardH = C_HEADER + C_PAD_T + nRows * rowH + C_PAD_B;
-
+    const cardH = Math.max(block.dateStr ? 16 : 0, C_HEADER + C_PAD_T + nRows * rowH + C_PAD_B);
+    
+    // Find shortest column
     let bestCol = 0; let minY = colYs[0];
-    for (let i=1; i<cols; i++) if (colYs[i] < minY) { minY=colYs[i]; bestCol=i; }
+    for (let c=1; c<cols; c++) if (colYs[c] < minY) { minY=colYs[c]; bestCol=c; }
 
+    // Page break
     if (minY + cardH > bottom) {
       drawPremiumFooter(doc, pageW, pageH, marginX);
       doc.addPage();
-      const ny = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub+' (suite)', logo);
-      colYs.fill(ny); bestCol=0;
+      const sy = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub + ' (suite)', logo) + 5;
+      colYs.fill(sy);
+      minY = sy;
+      bestCol = 0;
     }
 
-    const x = marginX + bestCol*(colW+gutter);
-    const h = drawSceneCard(doc, x, colYs[bestCol], colW, block.header, block.rows, rowH, block.themeColorName);
+    const x = marginX + bestCol * (colW + gutter);
+    const h = drawSceneCard(doc, x, colYs[bestCol], colW, block.header, block.rows, rowH, block.themeColorName, block.dateStr);
     colYs[bestCol] += h + C_CARD_GAP;
   }
 }
 
 /* ─── generateAndSave (employee + scene exports) ─── */
 async function generateAndSave(opts:{
-  title:string; subtitle:string;
-  blocks:Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>}>;
-  itemCount:number; totalRows:number; filename:string; maxCols?:number;
+  title: string; subtitle: string;
+  blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>, dateStr?: string}>;
+  itemCount: number; totalRows: number;
+  filename: string; maxCols: number;
 }): Promise<void> {
   const logo = await getLogoDataUrl();
   // Always landscape — better for columns
@@ -585,21 +627,27 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
 
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   
-  // Sort rows alphabetically for each date
-  for (const rows of dateMap.values()) {
-    rows.sort((a,b) => a.name.localeCompare(b.name, 'fr'));
+  const blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>, dateStr?: string}> = [];
+  for (const d of allDates) {
+    const sRows = dateMap.get(d) || [];
+    if (sRows.length > 0) {
+      sRows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+      blocks.push({ header: fmtDateShort(d), themeColorName: scene, rows: sRows, dateStr: d });
+    }
   }
 
   const pStart = allDates[0] ? fmtDate(allDates[0]) : '';
   const pEnd   = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
   const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
 
-  await generateIndivPdf({
+  await generateAndSave({
     title: cleanText(scene),
     subtitle: period ? `Période : ${period}` : 'Période',
-    dateMap,
-    allDates,
+    blocks,
+    itemCount: blocks.length,
+    totalRows: blocks.reduce((a,b) => a + Math.max(1, b.rows.length), 0),
     filename: `sfx-planning-${slug(scene)}.pdf`,
+    maxCols: 3
   });
 }
 
