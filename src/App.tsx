@@ -1028,7 +1028,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   </button>
                   <div className="compact-list" data-testid={`scene-team-${scene}`}>
                     {sceneRecords.map(rec => {
-                      const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string };
+                      const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
                       const isFOVirtual = extRec.isFOVirtual;
                       const assocScenes = extRec.assocScenes;
                       const originalScene = extRec.originalScene;
@@ -1059,7 +1059,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             type="button"
                             className="btn-eye compact-eye"
                             data-testid={`btn-view-tech-${rec.employee}`}
-                            onClick={() => setSelectedEmployee(rec.employee)}
+                            onClick={() => setSelectedEmployee(extRec.originalEmployeeName || rec.employee)}
                           >
                             <IconEye />
                           </button>
