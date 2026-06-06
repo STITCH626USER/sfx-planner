@@ -291,7 +291,8 @@ function parseCell(tokens: TokenT[]): { time: string; scene: string } {
     if (firstLower.includes('formation') || firstLower.includes('fomation') || firstLower.startsWith('fo ') || firstLower === 'fo') {
       scene = scenes.join(' - ');
     } else {
-      scene = scenes[0];
+      // Join all parts to avoid truncating "ENT \n StudioTShowOps" into just "ENT"
+      scene = scenes.join(' ').replace(/\s+/g, ' ');
     }
   }
   // Fallback: if no non-role line found, accept the first non-time non-HR line (could be a role-only cell)

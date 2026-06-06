@@ -639,7 +639,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
       const s = timeToScenes.get(r.time);
       if (s && s.size > 0) {
         const assoc = Array.from(s).sort().join(', ');
-        displayName = `${displayName} · ${assoc}`;
+        displayName = `${displayName} (peut correspondre à ${assoc})`;
       }
     }
     dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});

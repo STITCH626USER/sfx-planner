@@ -792,7 +792,11 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                   </div>
                   <div className="team-meta">
                     {rec.weekLabel}
-                    {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · Associé à : ${assocScenes.join(', ')}`}
+                    {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
+                      <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
+                        (peut correspondre à {assocScenes.join(', ')})
+                      </div>
+                    )}
                     {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
                   </div>
                 </div>
@@ -1015,7 +1019,11 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             </div>
                             <div className="team-meta compact-meta">
                               {rec.weekLabel}
-                              {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && ` · ${assocScenes.join(', ')}`}
+                              {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
+                                <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
+                                  (peut correspondre à {assocScenes.join(', ')})
+                                </div>
+                              )}
                               {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
                             </div>
                           </div>
