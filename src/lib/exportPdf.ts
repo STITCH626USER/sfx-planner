@@ -475,16 +475,14 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
     if (isTrainingScene(r.scene)) {
       isFO=true;
       const dayRecs = records.filter(dr => dr.date === r.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
-      const timeToScenes = new Map<string, Set<string>>();
+      const scenesOfDay = new Set<string>();
       for (const dr of dayRecs) {
         let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
         if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-          if (!timeToScenes.has(dr.time)) timeToScenes.set(dr.time, new Set());
-          timeToScenes.get(dr.time)!.add(clean);
+          scenesOfDay.add(clean);
         }
       }
-      const s = timeToScenes.get(r.time);
-      if (s && s.size > 0) subtext = 'Possibilités : ' + Array.from(s).sort().join(', ');
+      if (scenesOfDay.size > 0) subtext = 'Possibilités : ' + Array.from(scenesOfDay).sort().join(', ');
     }
     dateMap.get(r.date)!.push(r.time==='OFF' ? {name:'Repos / Congé',time:'OFF'} : {name,time:r.time,isFO,subtext});
   }
@@ -697,14 +695,14 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     return r.scene === scene;
   });
 
-  const timeToScenes = new Map<string, Set<string>>();
+  const dateToScenes = new Map<string, Set<string>>();
   for (const r of records) {
     if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
       let clean = r.scene.replace(/\bENT\b/gi, '').trim();
       clean = clean.replace(/^[-_]+|[-_]+$/g, '').trim();
       if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-        if (!timeToScenes.has(r.time)) timeToScenes.set(r.time, new Set());
-        timeToScenes.get(r.time)!.add(clean);
+        if (!dateToScenes.has(r.date)) dateToScenes.set(r.date, new Set());
+        dateToScenes.get(r.date)!.add(clean);
       }
     }
   }
@@ -721,7 +719,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
         detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
         if (detail) displayName = `${displayName} (${detail})`;
       }
-      const s = timeToScenes.get(r.time);
+      const s = dateToScenes.get(r.date);
       if (s && s.size > 0) {
         subtext = 'Possibilités : ' + Array.from(s).sort().join(', ');
       }

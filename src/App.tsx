@@ -700,16 +700,14 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
             let assocScenes: string[] | undefined;
             if (allRecords && isTrainingScene(rec.scene)) {
               const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
-              const timeToScenes = new Map<string, Set<string>>();
+              const scenesOfDay = new Set<string>();
               for (const dr of dayRecs) {
                 let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
                 if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-                  if (!timeToScenes.has(dr.time)) timeToScenes.set(dr.time, new Set());
-                  timeToScenes.get(dr.time)!.add(clean);
+                  scenesOfDay.add(clean);
                 }
               }
-              const s = timeToScenes.get(rec.time);
-              if (s && s.size > 0) assocScenes = Array.from(s).sort();
+              if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
             }
             return (
               <DayCard
@@ -886,14 +884,14 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [records, date]);
 
   const byScene = useMemo(() => {
-    const timeToScenes = new Map<string, Set<string>>();
+    const dateToScenes = new Map<string, Set<string>>();
     for (const r of records) {
       if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
         let clean = r.scene.replace(/\bENT\b/gi, '').trim();
         clean = clean.replace(/^[-_]+|[-_]+$/g, '').trim();
         if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-          if (!timeToScenes.has(r.time)) timeToScenes.set(r.time, new Set());
-          timeToScenes.get(r.time)!.add(clean);
+          if (!dateToScenes.has(r.date)) dateToScenes.set(r.date, new Set());
+          dateToScenes.get(r.date)!.add(clean);
         }
       }
     }
@@ -912,7 +910,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
           if (detail) displayName = `${displayName} (${detail})`;
         }
-        const s = timeToScenes.get(rec.time);
+        const s = dateToScenes.get(rec.date);
         if (s && s.size > 0) assocScenes = Array.from(s).sort();
       }
       
