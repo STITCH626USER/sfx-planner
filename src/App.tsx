@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch } from './lib/utils';
 
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
@@ -700,16 +700,16 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
             let assocScenes: string[] | undefined;
             if (allRecords && isTrainingScene(rec.scene)) {
               const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
-              const timeToScenes = new Map<string, Set<string>>();
+              const scenesOfDay = new Set<string>();
               for (const dr of dayRecs) {
-                let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
-                if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-                  if (!timeToScenes.has(dr.time)) timeToScenes.set(dr.time, new Set());
-                  timeToScenes.get(dr.time)!.add(clean);
+                if (timesMatch(dr.time, rec.time, 35)) {
+                  let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+                  if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+                    scenesOfDay.add(clean);
+                  }
                 }
               }
-              const s = timeToScenes.get(rec.time);
-              if (s && s.size > 0) assocScenes = Array.from(s).sort();
+              if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
             }
             return (
               <DayCard
@@ -886,14 +886,14 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [records, date]);
 
   const byScene = useMemo(() => {
-    const timeToScenes = new Map<string, Set<string>>();
+    const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
     for (const r of records) {
       if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
         let clean = r.scene.replace(/\bENT\b/gi, '').trim();
         clean = clean.replace(/^[-_]+|[-_]+$/g, '').trim();
         if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-          if (!timeToScenes.has(r.time)) timeToScenes.set(r.time, new Set());
-          timeToScenes.get(r.time)!.add(clean);
+          if (!dateToScenes.has(r.date)) dateToScenes.set(r.date, []);
+          dateToScenes.get(r.date)!.push({time: r.time, clean});
         }
       }
     }
@@ -912,8 +912,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
           if (detail) displayName = `${displayName} (${detail})`;
         }
-        const s = timeToScenes.get(rec.time);
-        if (s && s.size > 0) assocScenes = Array.from(s).sort();
+        const scenesOfDate = dateToScenes.get(rec.date) || [];
+        const matched = new Set<string>();
+        for (const sc of scenesOfDate) {
+          if (timesMatch(sc.time, rec.time, 35)) matched.add(sc.clean);
+        }
+        if (matched.size > 0) assocScenes = Array.from(matched).sort();
       }
       
       if (!groups.has(groupName)) groups.set(groupName, []);
