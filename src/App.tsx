@@ -702,7 +702,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
               const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
               const scenesOfDay = new Set<string>();
               for (const dr of dayRecs) {
-                if (timesMatch(dr.time, rec.time, 35)) {
+                if (timesMatch(dr.time, rec.time, 5)) {
                   let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
                   if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
                     scenesOfDay.add(clean);
@@ -915,7 +915,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         const scenesOfDate = dateToScenes.get(rec.date) || [];
         const matched = new Set<string>();
         for (const sc of scenesOfDate) {
-          if (timesMatch(sc.time, rec.time, 35)) matched.add(sc.clean);
+          if (timesMatch(sc.time, rec.time, 5)) matched.add(sc.clean);
         }
         if (matched.size > 0) assocScenes = Array.from(matched).sort();
       }

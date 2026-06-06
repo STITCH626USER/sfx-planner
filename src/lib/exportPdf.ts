@@ -477,7 +477,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
       const dayRecs = records.filter(dr => dr.date === r.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
       const scenesOfDay = new Set<string>();
       for (const dr of dayRecs) {
-        if (timesMatch(dr.time, r.time, 35)) {
+        if (timesMatch(dr.time, r.time, 5)) {
           let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
           if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
             scenesOfDay.add(clean);
@@ -724,7 +724,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
       const scenesOfDate = dateToScenes.get(r.date) || [];
       const matched = new Set<string>();
       for (const sc of scenesOfDate) {
-        if (timesMatch(sc.time, r.time, 35)) matched.add(sc.clean);
+        if (timesMatch(sc.time, r.time, 5)) matched.add(sc.clean);
       }
       if (matched.size > 0) {
         subtext = 'Possibilités : ' + Array.from(matched).sort().join(', ');
