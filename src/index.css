@@ -1149,9 +1149,8 @@ input:focus, select:focus {
 }
 .compact-meta {
   font-size: 11.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 .compact-eye {
   width: 36px;
