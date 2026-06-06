@@ -856,10 +856,20 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [records, date]);
 
   const byScene = useMemo(() => {
-    const groups = new Map<string, Array<PlanningRecord>>();
+    const empScenes = new Map<string, Set<string>>();
+    for (const r of records) {
+      if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
+        if (!empScenes.has(r.employee)) empScenes.set(r.employee, new Set());
+        empScenes.get(r.employee)!.add(r.scene);
+      }
+    }
+
+    const groups = new Map<string, Array<PlanningRecord & { assocScenes?: string[] }>>();
     for (const rec of present) {
       let groupName = rec.scene;
       let displayName = prettyName(rec.employee);
+      
+      let assocScenes: string[] | undefined;
       
       if (isTrainingScene(rec.scene)) {
         groupName = 'Formations';
@@ -867,11 +877,13 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           const detail = rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
           if (detail) displayName = `${displayName} (${detail})`;
         }
+        const s = empScenes.get(rec.employee);
+        if (s && s.size > 0) assocScenes = Array.from(s);
       }
       
       if (!groups.has(groupName)) groups.set(groupName, []);
       // We pass a cloned record with the updated display name so the UI shows it
-      groups.get(groupName)!.push({ ...rec, employee: displayName });
+      groups.get(groupName)!.push({ ...rec, employee: displayName, assocScenes });
     }
     return Array.from(groups.entries()).sort((a, b) => {
       const aFO = isTrainingScene(a[0]);
@@ -889,8 +901,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
   const sceneTeam = useMemo(() => {
     if (!openScene) return [];
-    return present.filter(r => r.scene === openScene);
-  }, [openScene, present]);
+    const group = byScene.find(g => g[0] === openScene);
+    return group ? group[1] : [];
+  }, [openScene, byScene]);
 
   if (selectedEmployee) {
     return (

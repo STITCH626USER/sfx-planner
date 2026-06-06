@@ -614,13 +614,28 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     return r.scene === scene;
   });
 
+  const empScenes = new Map<string, Set<string>>();
+  for (const r of records) {
+    if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
+      if (!empScenes.has(r.employee)) empScenes.set(r.employee, new Set());
+      empScenes.get(r.employee)!.add(r.scene);
+    }
+  }
+
   const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
   for (const r of sceneRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
     let displayName = prettyName(r.employee);
-    if (isFOExport && r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
-      const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
-      if (detail) displayName = `${displayName} (${detail})`;
+    if (isFOExport) {
+      if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
+        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+        if (detail) displayName = `${displayName} (${detail})`;
+      }
+      const s = empScenes.get(r.employee);
+      if (s && s.size > 0) {
+        const assoc = Array.from(s).join(', ');
+        displayName = `${displayName} · ${assoc}`;
+      }
     }
     dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
   }
