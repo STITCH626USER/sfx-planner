@@ -56,6 +56,7 @@ export default function App() {
   const [records, setRecords] = useState<PlanningRecord[]>([]);
   const [sources, setSources] = useState<SourceFile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fireworkTrigger, setFireworkTrigger] = useState(1); // 1 = load firework
   const [error, setError] = useState<string | null>(null);
   const [errorHint, setErrorHint] = useState<'safari' | null>(null);
   const [drag, setDrag] = useState(false);
@@ -119,6 +120,9 @@ export default function App() {
       }
       setRecords(prev => [...prev, ...newRecs]);
       setSources(prev => [...prev, ...newSrcs]);
+      if (newRecs.length > 0) {
+        setFireworkTrigger(prev => prev + 1);
+      }
       if (ignored > 0) {
         setError(`${ignored} fichier(s) non-PDF ignoré(s).`);
       }
@@ -174,6 +178,7 @@ export default function App() {
           <div className="smoke-cloud smoke-cloud-2" />
           <div className="smoke-cloud smoke-cloud-3" />
         </div>
+        <FireworksCanvas triggerCount={fireworkTrigger} />
         <div className="empty-landing-card">
           <header className="landing-header">
             <button
@@ -237,6 +242,7 @@ export default function App() {
         <div className="smoke-cloud smoke-cloud-2" />
         <div className="smoke-cloud smoke-cloud-3" />
       </div>
+      <FireworksCanvas triggerCount={fireworkTrigger} />
       <aside className="app-sidebar">
         <header className="app-header">
           <button
@@ -1232,6 +1238,79 @@ function Logo() {
   const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
   return (
     <img className="logo-img" src={logoSrc} alt="" width="56" height="56" decoding="async" aria-hidden="true" />
+  );
+}
+
+interface FireworkParticle {
+  x: number; y: number; vx: number; vy: number; color: string; alpha: number; decay: number; size: number;
+}
+interface FireworkRocket {
+  x: number; y: number; tx: number; ty: number; vx: number; vy: number; color: string; size: number;
+}
+
+const FIREWORK_COLORS = ['#ff3366', '#ff9933', '#ffff33', '#33ff66', '#33ccff', '#cc33ff', '#ff00aa', '#00ffcc'];
+
+function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const particlesRef = useRef<FireworkParticle[]>([]);
+  const rocketsRef = useRef<FireworkRocket[]>([]);
+  const animationFrameId = useRef<number | null>(null);
+
+  const spawnExplosion = useCallback((x: number, y: number, color?: string) => {
+    const count = 40 + Math.floor(Math.random() * 30);
+    const baseColor = color || FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 4.5;
+      particlesRef.current.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.5, color: baseColor, alpha: 1, decay: 0.012 + Math.random() * 0.015, size: 1 + Math.random() * 2 });
+    }
+  }, []);
+
+  const spawnRocket = useCallback(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const tx = 100 + Math.random() * (canvas.width - 200); const ty = 80 + Math.random() * (canvas.height * 0.4);
+    const x = tx + (Math.random() - 0.5) * 50; const y = canvas.height;
+    const dy = ty - y; const dx = tx - x; const duration = 40 + Math.random() * 20;
+    rocketsRef.current.push({ x, y, tx, ty, vx: dx / duration, vy: dy / duration, color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)], size: 2.2 });
+  }, []);
+
+  useEffect(() => {
+    if (triggerCount > 0) {
+      let count = 4 + Math.floor(Math.random() * 3);
+      const interval = setInterval(() => { spawnRocket(); count--; if (count <= 0) clearInterval(interval); }, 150);
+    }
+  }, [triggerCount, spawnRocket]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize(); window.addEventListener('resize', resize);
+
+    const update = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rockets = rocketsRef.current;
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i]; r.x += r.vx; r.y += r.vy;
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.size, 0, Math.PI * 2); ctx.fillStyle = r.color; ctx.shadowColor = r.color; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+        if (r.vy >= 0 || r.y <= r.ty) { spawnExplosion(r.x, r.y, r.color); rockets.splice(i, 1); }
+      }
+      const particles = particlesRef.current;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.045; p.vx *= 0.985; p.vy *= 0.985; p.alpha -= p.decay;
+        if (p.alpha <= 0) { particles.splice(i, 1); continue; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.shadowColor = p.color; ctx.shadowBlur = 4; ctx.fill(); ctx.shadowBlur = 0; ctx.globalAlpha = 1.0;
+      }
+      animationFrameId.current = requestAnimationFrame(update);
+    };
+    animationFrameId.current = requestAnimationFrame(update);
+    return () => { window.removeEventListener('resize', resize); if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current); };
+  }, [spawnExplosion]);
+
+  return (
+    <canvas ref={canvasRef} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 9999 }} />
   );
 }
 
