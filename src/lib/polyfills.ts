@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // iOS/Safari polyfills. Loaded FIRST (before pdfjs is imported) via main.tsx.
 // Also applied inside the pdfjs worker if/when we use one — but we DISABLE the
 // worker on iOS WebViews (WhatsApp/Instagram/etc.) so the parse runs on the

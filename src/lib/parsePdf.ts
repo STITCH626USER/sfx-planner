@@ -14,7 +14,7 @@
 // the main thread, where our polyfills (Promise.withResolvers,
 // Array#at/toSorted/toReversed, structuredClone) are already installed.
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment, @typescript-eslint/no-unused-vars */
 // @ts-ignore — v3 ships only .js, not .mjs, and no .d.ts at this path.
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url';
 import { isInAppBrowser } from './polyfills';

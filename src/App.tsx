@@ -126,9 +126,9 @@ export default function App() {
       if (ignored > 0) {
         setError(`${ignored} fichier(s) non-PDF ignoré(s).`);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      const raw = e?.message ?? String(e ?? 'inconnue');
+      const raw = e instanceof Error ? e.message : String(e ?? 'inconnue');
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
       const isIOS = /iPad|iPhone|iPod/.test(ua);
       const inApp = /WhatsApp|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|Snapchat|Twitter|TikTok|GSA\/|OutlookMobile/i.test(ua)
@@ -907,7 +907,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       if (!aFO && bFO) return -1;
       return a[0].localeCompare(b[0], 'fr');
     });
-  }, [present]);
+  }, [present, records]);
 
   const uniqueTechs = useMemo(() => {
     return new Set(present.map(r => r.employee)).size;
@@ -1008,9 +1008,10 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   </button>
                   <div className="compact-list" data-testid={`scene-team-${scene}`}>
                     {sceneRecords.map(rec => {
-                      const isFOVirtual = (rec as any).isFOVirtual;
-                      const assocScenes = (rec as any).assocScenes;
-                      const originalScene = (rec as any).originalScene;
+                      const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string };
+                      const isFOVirtual = extRec.isFOVirtual;
+                      const assocScenes = extRec.assocScenes;
+                      const originalScene = extRec.originalScene;
                       const isFO = isTrainingScene(rec.scene) || isFOVirtual;
                       return (
                         <div

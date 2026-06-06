@@ -112,7 +112,7 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   doc.setFillColor(...TEAL); doc.rect(pageW-marginX-3, y+2, 0.5, h-4, 'F');
   // Logo
   let tx = marginX + 5;
-  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'PNG',lx,ly,ls,ls); tx=lx+ls+4; } catch (e) { /* ignore */ } }
+  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'PNG',lx,ly,ls,ls); tx=lx+ls+4; } catch { /* ignore */ } }
   // Title
   doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...WHITE);
   doc.text(cleanText(title), tx, y+8.5);
@@ -169,7 +169,20 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   const headerH = C_HEADER;
   const padX = 3.5; const padTop = C_PAD_T; const padBot = C_PAD_B;
   let contentH = 0;
-  for (const r of rows) contentH += r.subtext ? rowH * 1.8 : rowH;
+  for (const r of rows) {
+    if (r.subtext) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
+      const avSize = Math.min(rowH * 0.72, 3.5);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+      const tw = doc.getTextWidth(r.time||'')+4;
+      const maxW = w - padX*2 - 1.5 - avSize - 1.5 - tw - 1.5;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
+      const subLines = doc.splitTextToSize(r.subtext, maxW);
+      contentH += rowH + (subLines.length * rowH * 0.50);
+    } else {
+      contentH += rowH;
+    }
+  }
   if (rows.length === 0) contentH += rowH;
   const cardH = Math.max(dateStr ? 16 : 0, headerH + padTop + contentH + padBot);
 
@@ -254,36 +267,42 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
     doc.text('Aucun technicien', cardX+padX+3, ry+rowH*0.55);
   } else {
     for (const row of rows) {
-      const hasSubtext = !!row.subtext;
-      const currentH = hasSubtext ? rowH * 1.8 : rowH;
-      
+      let subLines: string[] = [];
+      let currentH = rowH;
       const avSize = Math.min(rowH * 0.72, 3.5);
+      
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      const timeStr = row.time||'';
+      const tw = doc.getTextWidth(timeStr)+4;
+      const maxW = w - padX*2 - 1.5 - avSize - 1.5 - tw - 1.5;
+
+      if (row.subtext) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
+        subLines = doc.splitTextToSize(row.subtext, maxW);
+        currentH = rowH + (subLines.length * rowH * 0.50);
+      }
+      
       const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
       drawAvatar(doc, cardX+padX+1, ry+(currentH-avSize)/2, row.name, avColor, avSize);
       
       const nameX = cardX+padX+1+avSize+1.5;
-      doc.setFont('helvetica','bold'); doc.setFontSize(7);
-      
-      const timeStr = row.time||'';
-      const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
+      const th = rowH*0.68;
       const px = cardX+cardW-padX-tw; const py = ry+(currentH-th)/2;
       
       const isOff = /^off$/i.test(timeStr);
       const pillColor: [number,number,number] = isOff ? [240, 240, 243] : [255, 240, 225];
       const pillText: [number,number,number] = isOff ? MUTED : AMBER;
       doc.setFillColor(...pillColor); doc.roundedRect(px, py, tw, th, th/2, th/2, 'F');
-      doc.setFont('helvetica','bold');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
       doc.setTextColor(...pillText); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
       
       doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...INK);
-      const maxW = px - nameX - 1.5;
       const nm = doc.splitTextToSize(row.name, maxW)[0] as string;
-      doc.text(nm, nameX, ry + currentH * (hasSubtext ? 0.45 : 0.65));
+      doc.text(nm, nameX, ry + currentH * (row.subtext ? (0.45 - (subLines.length-1)*0.08) : 0.65));
       
       if (row.subtext) {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
-        const sub = doc.splitTextToSize(row.subtext, maxW)[0] as string;
-        doc.text(sub, nameX, ry + currentH * 0.85);
+        doc.text(subLines, nameX, ry + currentH * (0.85 - (subLines.length-1)*0.1));
       }
       
       ry += currentH;
@@ -306,7 +325,14 @@ function simulatePages(
   let pages = 1;
   for (const block of blocks) {
     let contentH = 0;
-    for (const r of block.rows as any[]) contentH += r.subtext ? rowH * 1.8 : rowH;
+    for (const r of block.rows as Array<{subtext?: string}>) {
+      if (r.subtext) {
+        const estLines = Math.ceil(r.subtext.length / 45);
+        contentH += rowH + (estLines * rowH * 0.50);
+      } else {
+        contentH += rowH;
+      }
+    }
     if (block.rows.length === 0) contentH += rowH;
     const cardH = C_HEADER + C_PAD_T + contentH + C_PAD_B;
     let bestCol = 0; let minY = colYs[0];
@@ -357,7 +383,6 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
       doc.addPage();
       const sy = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub + ' (suite)', logo) + 5;
       colYs.fill(sy);
-      minY = sy;
       bestCol = 0;
     }
 
