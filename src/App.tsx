@@ -697,10 +697,25 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
             </div>
           </div>
           {weekRecs.map(rec => {
+            let assocScenes: string[] | undefined;
+            if (allRecords && isTrainingScene(rec.scene)) {
+              const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
+              const timeToScenes = new Map<string, Set<string>>();
+              for (const dr of dayRecs) {
+                let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+                if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+                  if (!timeToScenes.has(dr.time)) timeToScenes.set(dr.time, new Set());
+                  timeToScenes.get(dr.time)!.add(clean);
+                }
+              }
+              const s = timeToScenes.get(rec.time);
+              if (s && s.size > 0) assocScenes = Array.from(s).sort();
+            }
             return (
               <DayCard
                 key={rec.date}
                 rec={rec}
+                assocScenes={assocScenes}
                 onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
               />
             );
@@ -711,7 +726,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   );
 }
 
-function DayCard({ rec, onOpenScene }: { rec: PlanningRecord; onOpenScene?: () => void }) {
+function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assocScenes?: string[]; onOpenScene?: () => void }) {
   const isOff = rec.time === 'OFF';
   const dayPart = rec.date.split('-')[2];
   const interactive = !isOff && !!onOpenScene && !!rec.scene;
@@ -748,6 +763,11 @@ function DayCard({ rec, onOpenScene }: { rec: PlanningRecord; onOpenScene?: () =
           style={!isOff ? { borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' } : undefined}
         >
           {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+          {assocScenes && assocScenes.length > 0 && (
+            <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
+              Peut correspondre à {assocScenes.join(', ')}
+            </div>
+          )}
         </div>
         <div className="row-meta" style={{ marginTop: 2 }}>
           {formatDateLong(rec.date)}
@@ -812,7 +832,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                   className="btn-eye"
                   aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
                   data-testid={`btn-view-employee-${rec.employee}`}
-                  onClick={() => onViewEmployee(rec.employee)}
+                  onClick={() => onViewEmployee((rec as any).originalEmployeeName || rec.employee)}
                 >
                   <IconEye />
                 </button>
@@ -898,7 +918,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       
       if (!groups.has(groupName)) groups.set(groupName, []);
       // We pass a cloned record with the updated display name so the UI shows it
-      groups.get(groupName)!.push({ ...rec, employee: displayName, assocScenes });
+      groups.get(groupName)!.push({ ...rec, employee: displayName, assocScenes, originalEmployeeName: rec.employee } as any);
     }
     return Array.from(groups.entries()).sort((a, b) => {
       const aFO = isTrainingScene(a[0]);

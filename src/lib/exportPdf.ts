@@ -467,15 +467,26 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 ═══════════════════════════════════════════════ */
 export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
   const empRecs = records.filter(r => r.employee===employee);
-  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>();
 
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    const name = r.scene||'-'; let isFO=false;
+    const name = r.scene||'-'; let isFO=false; let subtext: string | undefined;
     if (isTrainingScene(r.scene)) {
       isFO=true;
+      const dayRecs = records.filter(dr => dr.date === r.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
+      const timeToScenes = new Map<string, Set<string>>();
+      for (const dr of dayRecs) {
+        let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+        if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+          if (!timeToScenes.has(dr.time)) timeToScenes.set(dr.time, new Set());
+          timeToScenes.get(dr.time)!.add(clean);
+        }
+      }
+      const s = timeToScenes.get(r.time);
+      if (s && s.size > 0) subtext = 'Possibilités : ' + Array.from(s).sort().join(', ');
     }
-    dateMap.get(r.date)!.push(r.time==='OFF' ? {name:'Repos / Congé',time:'OFF'} : {name,time:r.time,isFO});
+    dateMap.get(r.date)!.push(r.time==='OFF' ? {name:'Repos / Congé',time:'OFF'} : {name,time:r.time,isFO,subtext});
   }
 
   const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
@@ -496,7 +507,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 async function generateIndivPdf(opts: {
   title: string;
   subtitle: string;
-  dateMap: Map<string, Array<{name:string;time:string;isFO?:boolean}>>;
+  dateMap: Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>;
   allDates: string[];
   filename: string;
 }): Promise<void> {
@@ -521,9 +532,12 @@ async function generateIndivPdf(opts: {
     const rows = opts.dateMap.get(d) || [];
     
     const pictoH = 16;
-    const bubbleH = 7.5;
-    const gapBubble = 1.5;
-    const totalBubblesH = rows.length * bubbleH + Math.max(0, rows.length - 1) * gapBubble;
+    let totalBubblesH = 0;
+    for (let j = 0; j < rows.length; j++) {
+      let bH = 7.5;
+      if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2.5;
+      totalBubblesH += bH + (j < rows.length - 1 ? 1.5 : 0);
+    }
     const blockH = Math.max(pictoH, totalBubblesH);
     const gapBlock = 3;
     
@@ -549,7 +563,7 @@ async function generateIndivPdf(opts: {
   doc.save(opts.filename);
 }
 
-function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: number, dateStr: string, rows: Array<{name:string;time:string;isFO?:boolean}>) {
+function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: number, dateStr: string, rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>) {
   const dateObj = new Date(dateStr);
   const days = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
   const months = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
@@ -578,9 +592,17 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   
   const rx = x + pictoW + 4;
   const bubbleW = w - pictoW - 4;
-  const bubbleH = 7.5;
   const gapBubble = 1.5;
-  const totalBubblesH = rows.length * bubbleH + Math.max(0, rows.length - 1) * gapBubble;
+  let totalBubblesH = 0;
+  for (let j = 0; j < rows.length; j++) {
+    let bH = 7.5;
+    if (rows[j].subtext) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(4.5);
+      const subLines = doc.splitTextToSize(rows[j].subtext!, bubbleW - 4);
+      bH += subLines.length * 2.5;
+    }
+    totalBubblesH += bH + (j < rows.length - 1 ? 1.5 : 0);
+  }
   let ry = y + (h - totalBubblesH) / 2;
   
   if (rows.length === 0) return;
@@ -588,6 +610,14 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   for (const row of rows) {
     const isOff = /^off$/i.test(row.time);
     const isFO = row.isFO;
+    
+    let subLines: string[] = [];
+    let currentBubbleH = 7.5;
+    if (row.subtext) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(4.5);
+      subLines = doc.splitTextToSize(row.subtext, bubbleW - 4);
+      currentBubbleH += subLines.length * 2.5;
+    }
     
     let bgColor: [number,number,number];
     let textColor: [number,number,number];
@@ -611,11 +641,11 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     doc.setFillColor(...bgColor);
     doc.setDrawColor(...accentColor);
     doc.setLineWidth(0.15);
-    doc.roundedRect(rx, ry, bubbleW, bubbleH, 1.5, 1.5, 'FD');
+    doc.roundedRect(rx, ry, bubbleW, currentBubbleH, 1.5, 1.5, 'FD');
     
     doc.setFillColor(...accentColor);
-    doc.roundedRect(rx, ry, 1.5, bubbleH, 1.2, 1.2, 'F');
-    doc.rect(rx+0.8, ry, 0.7, bubbleH, 'F');
+    doc.roundedRect(rx, ry, 1.5, currentBubbleH, 1.2, 1.2, 'F');
+    doc.rect(rx+0.8, ry, 0.7, currentBubbleH, 'F');
     
     let nmMaxW = bubbleW - 4;
     const timeStr = row.time || '';
@@ -623,9 +653,9 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     if (timeStr) {
       doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
       const tw = doc.getTextWidth(timeStr) + 4;
-      const th = bubbleH * 0.75;
+      const th = 7.5 * 0.75;
       const tx = rx + bubbleW - 1.5 - tw;
-      const ty = ry + (bubbleH - th)/2;
+      const ty = ry + (currentBubbleH - th)/2;
       
       const pillBg: [number,number,number] = isOff ? [235, 238, 242] : [255, 255, 255];
       const pillText: [number,number,number] = isOff ? [160, 170, 180] : AMBER;
@@ -645,9 +675,14 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     if (doc.getTextWidth(nm) > nmMaxW) {
       nm = doc.splitTextToSize(nm, nmMaxW)[0] as string;
     }
-    doc.text(nm, rx + 3.5, ry + bubbleH*0.65);
+    doc.text(nm, rx + 3.5, ry + (row.subtext ? 4.0 : 4.9));
     
-    ry += bubbleH + gapBubble;
+    if (row.subtext) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(4.5); doc.setTextColor(130, 140, 150);
+      doc.text(subLines, rx + 3.5, ry + 7.5);
+    }
+    
+    ry += currentBubbleH + gapBubble;
   }
 }
 
