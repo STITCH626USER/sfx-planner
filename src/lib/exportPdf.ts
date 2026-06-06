@@ -158,7 +158,7 @@ const C_GUTTER = 4.5;  // column gutter
 const C_MARGIN = 10;   // page margin
 
 function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
-  headerText: string, rows: Array<{name:string;time:string;isFO?:boolean}>,
+  headerText: string, rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>,
   rowH: number, themeColorName: string, dateStr?: string): number {
   const sc = getSceneColor(themeColorName);
   const accentRgb: [number,number,number] = [
@@ -168,8 +168,10 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   ];
   const headerH = C_HEADER;
   const padX = 3.5; const padTop = C_PAD_T; const padBot = C_PAD_B;
-  const totalRows = Math.max(1, rows.length);
-  const cardH = Math.max(dateStr ? 16 : 0, headerH + padTop + totalRows * rowH + padBot);
+  let contentH = 0;
+  for (const r of rows) contentH += r.subtext ? rowH * 1.8 : rowH;
+  if (rows.length === 0) contentH += rowH;
+  const cardH = Math.max(dateStr ? 16 : 0, headerH + padTop + contentH + padBot);
 
   let cardX = x;
   let cardW = w;
@@ -252,25 +254,39 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
     doc.text('Aucun technicien', cardX+padX+3, ry+rowH*0.55);
   } else {
     for (const row of rows) {
+      const hasSubtext = !!row.subtext;
+      const currentH = hasSubtext ? rowH * 1.8 : rowH;
+      
       const avSize = Math.min(rowH * 0.72, 3.5);
       const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
-      drawAvatar(doc, cardX+padX+1, ry+(rowH-avSize)/2, row.name, avColor, avSize);
+      drawAvatar(doc, cardX+padX+1, ry+(currentH-avSize)/2, row.name, avColor, avSize);
+      
       const nameX = cardX+padX+1+avSize+1.5;
       doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      
       const timeStr = row.time||'';
       const tw = doc.getTextWidth(timeStr)+4; const th = rowH*0.68;
-      const px = cardX+cardW-padX-tw; const py = ry+(rowH-th)/2;
+      const px = cardX+cardW-padX-tw; const py = ry+(currentH-th)/2;
+      
       const isOff = /^off$/i.test(timeStr);
       const pillColor: [number,number,number] = isOff ? [240, 240, 243] : [255, 240, 225];
       const pillText: [number,number,number] = isOff ? MUTED : AMBER;
       doc.setFillColor(...pillColor); doc.roundedRect(px, py, tw, th, th/2, th/2, 'F');
       doc.setFont('helvetica','bold');
       doc.setTextColor(...pillText); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
+      
       doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...INK);
       const maxW = px - nameX - 1.5;
       const nm = doc.splitTextToSize(row.name, maxW)[0] as string;
-      doc.text(nm, nameX, ry+rowH*0.65);
-      ry += rowH;
+      doc.text(nm, nameX, ry + currentH * (hasSubtext ? 0.45 : 0.65));
+      
+      if (row.subtext) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
+        const sub = doc.splitTextToSize(row.subtext, maxW)[0] as string;
+        doc.text(sub, nameX, ry + currentH * 0.85);
+      }
+      
+      ry += currentH;
     }
   }
   return cardH;
@@ -289,8 +305,10 @@ function simulatePages(
   const colYs = new Array(cols).fill(headerH);
   let pages = 1;
   for (const block of blocks) {
-    const nRows = Math.max(1, block.rows.length);
-    const cardH = C_HEADER + C_PAD_T + nRows * rowH + C_PAD_B;
+    let contentH = 0;
+    for (const r of block.rows as any[]) contentH += r.subtext ? rowH * 1.8 : rowH;
+    if (block.rows.length === 0) contentH += rowH;
+    const cardH = C_HEADER + C_PAD_T + contentH + C_PAD_B;
     let bestCol = 0; let minY = colYs[0];
     for (let i=1; i<cols; i++) if (colYs[i] < minY) { minY=colYs[i]; bestCol=i; }
     if (minY + cardH > bottom) {
@@ -350,11 +368,16 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
 }
 
 /* ─── generateAndSave (employee + scene exports) ─── */
-async function generateAndSave(opts:{
-  title: string; subtitle: string;
-  blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>, dateStr?: string}>;
+export async function generateAndSave(opts: {
+  title: string; subtitle: string; filename: string;
   itemCount: number; totalRows: number;
-  filename: string; maxCols: number;
+  maxCols?: number;
+  blocks: Array<{
+    header: string;
+    themeColorName: string;
+    rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>;
+    dateStr?: string;
+  }>;
 }): Promise<void> {
   const logo = await getLogoDataUrl();
   // Always landscape — better for columns
@@ -626,10 +649,12 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     }
   }
 
-  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>();
   for (const r of sceneRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
     let displayName = prettyName(r.employee);
+    let subtext = '';
+    
     if (isFOExport) {
       if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
         let detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
@@ -638,16 +663,15 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
       }
       const s = timeToScenes.get(r.time);
       if (s && s.size > 0) {
-        const assoc = Array.from(s).sort().join(', ');
-        displayName = `${displayName} (peut correspondre à ${assoc})`;
+        subtext = 'Possibilités : ' + Array.from(s).sort().join(', ');
       }
     }
-    dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
+    dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene), subtext});
   }
 
   const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
   
-  const blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>, dateStr?: string}> = [];
+  const blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean;subtext?:string}>, dateStr?: string}> = [];
   for (const d of allDates) {
     const sRows = dateMap.get(d) || [];
     if (sRows.length > 0) {
