@@ -1089,7 +1089,7 @@ function EmptyAllPanel() {
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
   const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
-  const [selectedScene, setSelectedScene] = useState<string>(() => scenes[0] ?? '');
+  const [selectedScene, setSelectedScene] = useState<string>('ALL');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -1105,7 +1105,15 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
       if (mode === 'day') {
         await exportDayPdf(date, records);
       } else if (mode === 'scene' && selectedScene) {
-        await exportScenePdf(selectedScene, records);
+        if (selectedScene === 'ALL') {
+          for (const s of scenes) {
+            await exportScenePdf(s, records);
+            // small delay to prevent browser from blocking multiple downloads
+            await new Promise(r => setTimeout(r, 500));
+          }
+        } else {
+          await exportScenePdf(selectedScene, records);
+        }
       } else if (mode === 'global') {
         await exportGlobalRecapPdf(records);
       }
@@ -1150,8 +1158,9 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             <select
               className="export-scene-select"
               value={selectedScene}
-              onChange={(e) => setSelectedScene(e.target.value)}
+              onChange={e => setSelectedScene(e.target.value)}
             >
+              <option value="ALL">Toutes les scènes (un fichier par scène)</option>
               {scenes.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           )}
