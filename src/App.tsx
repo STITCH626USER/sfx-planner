@@ -856,17 +856,21 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [records, date]);
 
   const byScene = useMemo(() => {
-    const empScenes = new Map<string, Set<string>>();
+    const timeToScenes = new Map<string, Set<string>>();
     for (const r of records) {
       if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
-        if (!empScenes.has(r.employee)) empScenes.set(r.employee, new Set());
-        empScenes.get(r.employee)!.add(r.scene);
+        let clean = r.scene.replace(/\bENT\b/gi, '').trim();
+        clean = clean.replace(/^[-_]+|[-_]+$/g, '').trim();
+        if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+          if (!timeToScenes.has(r.time)) timeToScenes.set(r.time, new Set());
+          timeToScenes.get(r.time)!.add(clean);
+        }
       }
     }
 
     const groups = new Map<string, Array<PlanningRecord & { assocScenes?: string[] }>>();
     for (const rec of present) {
-      let groupName = rec.scene;
+      let groupName = rec.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim() || rec.scene;
       let displayName = prettyName(rec.employee);
       
       let assocScenes: string[] | undefined;
@@ -874,11 +878,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       if (isTrainingScene(rec.scene)) {
         groupName = 'Formations';
         if (rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
-          const detail = rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+          let detail = rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+          detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
           if (detail) displayName = `${displayName} (${detail})`;
         }
-        const s = empScenes.get(rec.employee);
-        if (s && s.size > 0) assocScenes = Array.from(s);
+        const s = timeToScenes.get(rec.time);
+        if (s && s.size > 0) assocScenes = Array.from(s).sort();
       }
       
       if (!groups.has(groupName)) groups.set(groupName, []);

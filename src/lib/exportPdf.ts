@@ -614,11 +614,15 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     return r.scene === scene;
   });
 
-  const empScenes = new Map<string, Set<string>>();
+  const timeToScenes = new Map<string, Set<string>>();
   for (const r of records) {
     if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
-      if (!empScenes.has(r.employee)) empScenes.set(r.employee, new Set());
-      empScenes.get(r.employee)!.add(r.scene);
+      let clean = r.scene.replace(/\bENT\b/gi, '').trim();
+      clean = clean.replace(/^[-_]+|[-_]+$/g, '').trim();
+      if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+        if (!timeToScenes.has(r.time)) timeToScenes.set(r.time, new Set());
+        timeToScenes.get(r.time)!.add(clean);
+      }
     }
   }
 
@@ -628,12 +632,13 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     let displayName = prettyName(r.employee);
     if (isFOExport) {
       if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
-        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+        let detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
+        detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
         if (detail) displayName = `${displayName} (${detail})`;
       }
-      const s = empScenes.get(r.employee);
+      const s = timeToScenes.get(r.time);
       if (s && s.size > 0) {
-        const assoc = Array.from(s).join(', ');
+        const assoc = Array.from(s).sort().join(', ');
         displayName = `${displayName} · ${assoc}`;
       }
     }
