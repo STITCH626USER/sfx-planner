@@ -676,7 +676,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       doc.roundedRect(tx, ty, tw, th, th/2, th/2, 'F');
       doc.setTextColor(...pillText);
       doc.text(timeStr, tx + tw/2, ty + th*0.7, {align:'center'});
-      nmMaxW = tx - rx - 3;
+      nmMaxW = tx - rx - 5;
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
@@ -685,7 +685,10 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     
     let nm = cleanText(row.name);
     if (doc.getTextWidth(nm) > nmMaxW) {
-      nm = doc.splitTextToSize(nm, nmMaxW)[0] as string;
+      while (nm.length > 0 && doc.getTextWidth(nm + '...') > nmMaxW) {
+        nm = nm.slice(0, -1);
+      }
+      nm = nm.trim() + '...';
     }
     doc.text(nm, rx + 3.5, ry + (row.subtext ? 4.0 : 4.9));
     
