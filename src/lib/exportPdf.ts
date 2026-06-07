@@ -733,20 +733,34 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene), subtext});
   }
 
-  const allDates = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
-  
+  const dateMapKeys = Array.from(dateMap.keys()).filter(Boolean).sort();
+  const allDatesTotal = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
+  const pStart = allDatesTotal[0] ? fmtDate(allDatesTotal[0]) : '';
+  const pEnd   = allDatesTotal[allDatesTotal.length-1] ? fmtDate(allDatesTotal[allDatesTotal.length-1]) : '';
+  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
+
+  if (isFOExport) {
+    for (const d of dateMapKeys) {
+      dateMap.get(d)!.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+    }
+    await generateIndivPdf({
+      title: cleanText(scene),
+      subtitle: period ? `Période : ${period}` : 'Période',
+      dateMap,
+      allDates: dateMapKeys,
+      filename: `sfx-planning-${slug(scene)}.pdf`,
+    });
+    return;
+  }
+
   const blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean;subtext?:string}>, dateStr?: string}> = [];
-  for (const d of allDates) {
+  for (const d of dateMapKeys) {
     const sRows = dateMap.get(d) || [];
     if (sRows.length > 0) {
       sRows.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
       blocks.push({ header: fmtDateShort(d), themeColorName: scene, rows: sRows, dateStr: d });
     }
   }
-
-  const pStart = allDates[0] ? fmtDate(allDates[0]) : '';
-  const pEnd   = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
-  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
 
   await generateAndSave({
     title: cleanText(scene),
