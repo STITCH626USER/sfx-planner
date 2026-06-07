@@ -227,7 +227,7 @@ export default function App() {
             <div className="footer-warning-card">
               <span className="warning-text">
                 <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-                Contrôle obligatoire sur UKG personnel. Données traitées localement.
+                Contrôle obligatoire sur UKG personnel.
               </span>
             </div>
           </div>
@@ -365,7 +365,7 @@ export default function App() {
           <div className="footer-warning-card">
             <span className="warning-text">
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
-              Contrôle obligatoire sur UKG personnel. L'affectation des formations (FO) est donnée à titre indicatif et peut varier. Données traitées localement.
+              Contrôle obligatoire sur UKG personnel.
             </span>
           </div>
         </footer>
