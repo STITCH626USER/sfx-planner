@@ -1102,32 +1102,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 function DatePicker({ dates, date, records, onChange }: {
   dates: string[]; date: string; records: PlanningRecord[]; onChange: (date: string) => void;
 }) {
-  const handleDateJump = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const d = e.target.value;
-    if (!d) return;
-    let closest = dates[0];
-    let minDiff = Infinity;
-    const targetTime = new Date(d).getTime();
-    for (const dt of dates) {
-      const diff = Math.abs(new Date(dt).getTime() - targetTime);
-      if (diff < minDiff) { minDiff = diff; closest = dt; }
-    }
-    onChange(closest);
-    setTimeout(() => {
-      document.querySelector(`[data-testid="date-pill-${closest}"]`)?.scrollIntoView({ inline: 'center', behavior: 'smooth' });
-    }, 100);
-  };
-
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <label style={{ fontSize: 20, padding: '0 12px', cursor: 'pointer', opacity: 0.7, margin: 0 }} title="Aller à une date">
-        📅
-        <input 
-          type="date" 
-          onChange={handleDateJump}
-          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, border: 'none', padding: 0 }}
-        />
-      </label>
       <div className="date-row" role="tablist" data-testid="date-row">
       {dates.map(d => {
         const sel = d === date;
@@ -1162,6 +1138,7 @@ function EmptyAllPanel() {
 }
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
+  const [ukgConfirmed, setUkgConfirmed] = useState(false);
   const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
   const [selectedScene, setSelectedScene] = useState<string>('ALL');
@@ -1175,12 +1152,6 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
 
   const handleExport = async () => {
     if (busy) return;
-    
-    const confirmMsg = "ATTENTION : Le contrôle des horaires sur UKG est OBLIGATOIRE avant toute utilisation de ce document.\n\nL'affectation des formations (FO) est donnée à titre purement indicatif et les horaires de base de Chronos peuvent avoir changé.\n\nConfirmez-vous avoir pris connaissance de cette consigne ?";
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
     setBusy(true);
     try {
       if (mode === 'day') {
@@ -1205,6 +1176,32 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
       setBusy(false);
     }
   };
+
+  if (!ukgConfirmed) {
+    return (
+      <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
+        <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+          <div className="export-head">
+            <div className="export-title" style={{ color: 'var(--amber)' }}>⚠️ ATTENTION</div>
+            <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
+          </div>
+          <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--fg)' }}>
+            Contrôle obligatoire sur UKG personnel
+          </div>
+          <div className="export-foot" style={{ justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setUkgConfirmed(true)}
+              style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
+            >
+              Yes j'ai compris !
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
