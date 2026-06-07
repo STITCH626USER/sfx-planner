@@ -13,6 +13,7 @@
   /* Surface colors (Space-Midnight theme) */
   --bg-0:        #04060a;                           /* Page background */
   --bg-1:        rgba(13, 20, 35, 0.45);            /* Card frosted glass base */
+  --bg-modal:    rgba(13, 20, 35, 0.85);            /* Modal background */
   --bg-2:        rgba(22, 32, 56, 0.65);            /* Elevated menu / dialog */
   --bg-3:        rgba(35, 50, 85, 0.8);             /* Input / active elements */
   --bg-soft:     rgba(9, 13, 24, 0.6);
@@ -73,7 +74,8 @@
   color-scheme: light;
   --bg-0:        #f5f2ed;
   --bg-1:        rgba(255, 255, 255, 0.88);
-  --bg-2:        rgba(244, 240, 232, 0.92);
+  --bg-modal:    rgba(255, 255, 255, 0.95);
+  --bg-2:        rgba(240, 243, 248, 0.9);
   --bg-3:        rgba(232, 226, 214, 0.96);
   --bg-soft:     rgba(250, 247, 240, 0.8);
   --line:        rgba(40, 28, 16, 0.09);
@@ -1730,7 +1732,9 @@ input:focus, select:focus {
 }
 
 .export-modal {
-  background: var(--bg-1);
+  background: var(--bg-modal);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   color: var(--fg);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-xl);
