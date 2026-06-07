@@ -57,7 +57,7 @@ export default function App() {
   const [records, setRecords] = useState<PlanningRecord[]>([]);
   const [sources, setSources] = useState<SourceFile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fireworkTrigger, setFireworkTrigger] = useState(1); // 1 = load firework
+  const [fireworkTrigger, setFireworkTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [errorHint, setErrorHint] = useState<'safari' | null>(null);
   const [drag, setDrag] = useState(false);
@@ -122,9 +122,6 @@ export default function App() {
         });
       }
       setRecords(prev => {
-        if (prev.length > 0 && newRecs.length > 0) {
-          setFireworkTrigger(t => t + 1);
-        }
         return [...prev, ...newRecs];
       });
       setSources(prev => [...prev, ...newSrcs]);
