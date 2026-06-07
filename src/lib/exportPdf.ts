@@ -521,7 +521,11 @@ async function generateIndivPdf(opts: {
   
   const startY = drawPremiumHeader(doc, pageW, marginX, 10, opts.title, opts.subtitle, logo);
   
-  const cols = 6;
+  let cols = 6;
+  if (opts.allDates.length <= 7) cols = 3;
+  else if (opts.allDates.length <= 14) cols = 4;
+  else if (opts.allDates.length <= 21) cols = 5;
+  
   const gutter = 2;
   const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
   const maxAvailableH = pageH - 13 - (startY + 5);
@@ -599,11 +603,8 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   doc.text(dayName, px, py + 3, {align: 'center'});
   doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(20, 30, 40);
   doc.text(dayNum, px, py + 7.5, {align: 'center'});
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(4); doc.setTextColor(130, 140, 150);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(20, 30, 40);
-  doc.text(dayNum, px, py + 7, {align: 'center'});
   doc.setFont('helvetica', 'normal'); doc.setFontSize(3.5); doc.setTextColor(130, 140, 150);
-  doc.text(monthName, px, py + 9.5, {align: 'center'});
+  doc.text(monthName, px, py + 10, {align: 'center'});
   
   const rx = x + pad + pictoW + 1.5;
   const bubbleW = w - pad * 2 - pictoW - 1.5;
