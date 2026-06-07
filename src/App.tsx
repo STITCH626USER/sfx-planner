@@ -65,6 +65,7 @@ export default function App() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [captchaSlider, setCaptchaSlider] = useState(0);
   const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
 
 
@@ -258,7 +259,7 @@ export default function App() {
             <Logo />
           </button>
           <div style={{ minWidth: 0, display: 'flex', alignItems: 'baseline' }}>
-            <div className="app-title" onClick={() => { if (confirm('Tout effacer et revenir à l\'accueil ?')) resetAll(); }} style={{ cursor: 'pointer' }}>SFX Planner 3000</div>
+            <div className="app-title" onClick={() => setShowResetConfirm(true)} style={{ cursor: 'pointer' }}>SFX Planner 3000</div>
           </div>
         </header>
 
@@ -434,6 +435,40 @@ export default function App() {
                   className="iphone-slider"
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResetConfirm && (
+        <div className="export-overlay" data-testid="reset-confirm-overlay" onClick={() => setShowResetConfirm(false)}>
+          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '360px' }}>
+            <div className="export-head">
+              <div className="export-title" style={{ color: 'var(--amber)' }}>Réinitialiser ?</div>
+              <button className="icon-btn" onClick={() => setShowResetConfirm(false)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div className="export-body" style={{ textAlign: 'center', padding: '32px 24px' }}>
+              <p style={{ fontSize: '16px', color: 'var(--fg)', marginBottom: '8px' }}>
+                Veux-tu vraiment tout effacer ?
+              </p>
+              <p style={{ fontSize: '14px', color: 'var(--fg-muted)', margin: 0 }}>
+                Cela te ramènera à l'accueil et supprimera tous les plannings importés.
+              </p>
+            </div>
+            <div className="export-foot" style={{ justifyContent: 'center', gap: '16px' }}>
+              <button className="btn btn-secondary" onClick={() => setShowResetConfirm(false)}>Annuler</button>
+              <button 
+                className="btn" 
+                style={{ background: 'var(--amber)', color: '#fff', border: 'none' }} 
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  resetAll();
+                }}
+              >
+                Tout effacer
+              </button>
             </div>
           </div>
         </div>
