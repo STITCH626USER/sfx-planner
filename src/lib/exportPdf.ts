@@ -510,6 +510,7 @@ async function generateIndivPdf(opts: {
   dateMap: Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>;
   allDates: string[];
   filename: string;
+  themeColorName?: string;
 }): Promise<void> {
   const logo = await getLogoDataUrl();
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -555,7 +556,7 @@ async function generateIndivPdf(opts: {
     }
     
     const x = marginX + currentCol * (colW + gutter);
-    drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows);
+    drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
     
     currentY += blockH + gapBlock;
   }
@@ -564,7 +565,7 @@ async function generateIndivPdf(opts: {
   doc.save(opts.filename);
 }
 
-function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: number, dateStr: string, rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>) {
+function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: number, dateStr: string, rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>, themeColorName?: string) {
   const dateObj = new Date(dateStr);
   const days = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
   const months = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
@@ -638,7 +639,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       textColor = [130, 140, 150];
       accentColor = [210, 215, 220];
     } else {
-      const sc = getSceneColor(row.name);
+      const sc = getSceneColor(themeColorName || row.name);
       bgColor = sc.rgbBg;
       textColor = sc.rgbText;
       accentColor = isFO ? VIOLET : [
@@ -665,7 +666,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       const tw = doc.getTextWidth(timeStr) + 4;
       const th = 7.5 * 0.75;
       const tx = rx + bubbleW - 1.5 - tw;
-      const ty = ry + (currentBubbleH - th)/2;
+      const ty = ry + (7.5 - th)/2; // Top-align with the first line (name)
       
       const pillBg: [number,number,number] = isOff ? [235, 238, 242] : [255, 255, 255];
       const pillText: [number,number,number] = isOff ? [160, 170, 180] : AMBER;
@@ -759,6 +760,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     dateMap,
     allDates: dateMapKeys,
     filename: `sfx-planning-${slug(scene)}.pdf`,
+    themeColorName: scene, // Force scene color for all bubbles
   });
 }
 
