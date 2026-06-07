@@ -967,8 +967,8 @@ function DailyDateBar({ records, date, onDateChange }: {
 
 function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [openScenes, setOpenScenes] = useState<Set<string>>(new Set());
   const scrollPos = useRef(0);
-  const [openScene, setOpenScene] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
 
   const handleSelectEmployee = (emp: string) => {
@@ -984,7 +984,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   };
 
   useEffect(() => {
-    setOpenScene(null);
+    setOpenScenes(new Set());
   }, [date]);
 
   const present = useMemo(() => {
@@ -1119,23 +1119,43 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   className="daily-scene-group animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
-                  style={{ animationDelay: `${sIndex * 0.05}s` }}
+                  style={{ 
+                    animationDelay: `${sIndex * 0.05}s`,
+                    borderLeft: `4.5px solid ${getSceneColor(scene).accent}`,
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    marginBottom: '8px',
+                    background: 'var(--card-bg)',
+                    boxShadow: 'var(--shadow-sm)'
+                  }}
                 >
                   <button
                     type="button"
                     className="daily-group-head"
                     data-testid={`scene-card-${scene}`}
-                    onClick={() => setOpenScene(openScene === scene ? null : scene)}
+                    onClick={() => {
+                      setOpenScenes(prev => {
+                        const next = new Set(prev);
+                        if (next.has(scene)) next.delete(scene);
+                        else next.add(scene);
+                        return next;
+                      });
+                    }}
                     style={{ 
                       width: '100%', 
                       cursor: 'pointer', 
-                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}30, transparent)`,
-                      borderLeft: `4.5px solid ${getSceneColor(scene).accent}` 
+                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}15, transparent)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      border: 'none',
+                      textAlign: 'left'
                     }}
                   >
                     <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene">{scene}</div>
-                      {openScene === scene && (
+                      <div className="daily-group-scene" style={{ fontSize: '16px', fontWeight: 600 }}>{scene}</div>
+                      {openScenes.has(scene) && (
                         <div style={{ fontSize: '12.5px', color: 'var(--fg-muted)', marginTop: '4px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
                           {formatDateLong(date)} · {sceneRecords.length} technicien(s)
                         </div>
@@ -1143,7 +1163,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     </div>
                     <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
                   </button>
-                  <div className={`compact-list-wrapper ${openScene === scene ? 'expanded' : ''}`}>
+                  <div className={`compact-list-wrapper ${openScenes.has(scene) ? 'expanded' : ''}`}>
                     <div className="compact-list" data-testid={`scene-team-${scene}`}>
                     {sceneRecords.map(rec => {
                       const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };

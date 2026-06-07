@@ -1112,6 +1112,7 @@ input:focus, select:focus {
 .daily-groups {
   display: grid;
   gap: 14px;
+  align-items: start;
 }
 .daily-scene-group {
   background: var(--bg-1);
@@ -1640,6 +1641,7 @@ input:focus, select:focus {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
     gap: 20px !important;
+    align-items: start !important;
   }
 }
 
