@@ -1119,15 +1119,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   className="daily-scene-group animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
-                  style={{ 
-                    animationDelay: `${sIndex * 0.05}s`,
-                    borderLeft: `4.5px solid ${getSceneColor(scene).accent}`,
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    marginBottom: '8px',
-                    background: 'var(--card-bg)',
-                    boxShadow: 'var(--shadow-sm)'
-                  }}
+                  style={{ animationDelay: `${sIndex * 0.05}s` }}
                 >
                   <button
                     type="button"
@@ -1144,13 +1136,15 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     style={{ 
                       width: '100%', 
                       cursor: 'pointer', 
-                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}15, transparent)`,
+                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}30, transparent)`,
+                      borderLeft: `4.5px solid ${getSceneColor(scene).accent}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      border: 'none',
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      borderRight: 'none',
+                      borderTop: 'none',
+                      borderBottom: openScenes.has(scene) ? '1px solid var(--line)' : 'none'
                     }}
                   >
                     <div style={{ textAlign: 'left' }}>
