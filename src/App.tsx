@@ -1139,7 +1139,7 @@ function EmptyAllPanel() {
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
   const [exportStep, setExportStep] = useState<0|1|2>(0);
-  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaSlider, setCaptchaSlider] = useState(12);
   const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
   const [selectedScene, setSelectedScene] = useState<string>('ALL');
@@ -1205,6 +1205,7 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
   }
 
   if (exportStep === 1) {
+    const isSolved = Math.abs(captchaSlider - 50) < 3;
     return (
       <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
         <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -1213,29 +1214,37 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
           </div>
           <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--fg-muted)' }}>
-              Veuillez recopier la phrase ci-dessous avec les majuscules, sans aucune faute, pour prouver votre bonne foi :
+            <p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--fg-muted)' }}>
+              Reconstituez la tête de Mickey pour prouver que vous n'êtes pas un robot.
             </p>
-            <p style={{ fontWeight: 'bold', fontStyle: 'italic', marginBottom: '24px', userSelect: 'none', color: 'var(--fg)' }}>
-              "Je jure solennellement que j'ai vérifié UKG de mes propres yeux"
-            </p>
+            
+            <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 32px auto' }}>
+              <div style={{ 
+                position: 'absolute', top: 0, left: 0, fontSize: '80px', lineHeight: 1, 
+                clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' 
+              }}>🐭</div>
+              <div style={{ 
+                position: 'absolute', top: 0, left: 0, fontSize: '80px', lineHeight: 1, 
+                clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
+                transform: `translateX(${(captchaSlider - 50) * 1.5}px)`,
+                transition: 'transform 0.1s ease-out'
+              }}>🐭</div>
+            </div>
+
             <input
-              type="text"
-              value={captchaInput}
-              onChange={(e) => setCaptchaInput(e.target.value)}
-              placeholder="Tapez ici..."
-              style={{
-                width: '100%', padding: '14px', borderRadius: '12px',
-                border: '1px solid var(--line-strong)', background: 'var(--bg-3)', color: 'var(--fg)',
-                outline: 'none', textAlign: 'center', fontSize: '14px'
-              }}
+              type="range"
+              min="0"
+              max="100"
+              value={captchaSlider}
+              onChange={(e) => setCaptchaSlider(parseInt(e.target.value))}
+              style={{ width: '80%', cursor: 'pointer' }}
             />
           </div>
           <div className="export-foot" style={{ justifyContent: 'center' }}>
             <button
               type="button"
               className="btn"
-              disabled={captchaInput !== "Je jure solennellement que j'ai vérifié UKG de mes propres yeux"}
+              disabled={!isSolved}
               onClick={() => setExportStep(2)}
               style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
             >
