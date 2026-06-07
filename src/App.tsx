@@ -344,15 +344,7 @@ export default function App() {
           </div>
         )}
 
-        {records.length > 0 && tab === 'daily' && (
-          <div className="main-date-bar" style={{ marginBottom: 16 }}>
-            <DailyDateBar
-              records={records}
-              date={dailyDate}
-              onDateChange={setDailyDate}
-            />
-          </div>
-        )}
+
 
         <div className="main-content-panel">
           {records.length === 0 ? (
@@ -958,7 +950,15 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }
 
   return (
-    <div data-testid="panel-daily">
+    <>
+      <div className="main-date-bar" style={{ marginBottom: 16 }}>
+        <DailyDateBar
+          records={records}
+          date={date}
+          onDateChange={_onDateChange}
+        />
+      </div>
+      <div data-testid="panel-daily">
       {openScene ? (
         <SceneDetail
           scene={openScene}
@@ -1080,6 +1080,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         </>
       )}
     </div>
+    </>
   );
 }
 
