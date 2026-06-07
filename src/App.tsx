@@ -63,6 +63,8 @@ export default function App() {
   const [drag, setDrag] = useState(false);
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pendingFiles, setPendingFiles] = useState<FileList | File[] | null>(null);
+  const [captchaSlider, setCaptchaSlider] = useState(12);
 
 
 
@@ -157,9 +159,9 @@ export default function App() {
     e.preventDefault();
     setDrag(false);
     if (e.dataTransfer?.files?.length) {
-      handleFiles(e.dataTransfer.files);
+      setPendingFiles(e.dataTransfer.files);
     }
-  }, [handleFiles]);
+  }, []);
 
   const removeSource = useCallback((name: string) => {
     setRecords(prev => prev.filter(r => r.sourceFile !== name));
@@ -214,7 +216,12 @@ export default function App() {
             multiple
             style={{ display: 'none' }}
             data-testid="input-file"
-            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length) {
+                setPendingFiles(e.target.files);
+              }
+              e.target.value = '';
+            }}
           />
 
           {error && (
@@ -232,6 +239,74 @@ export default function App() {
             </div>
           </div>
         </div>
+        
+        {pendingFiles && (
+          <div className="export-overlay" data-testid="captcha-overlay">
+            <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+              <div className="export-head">
+                <div className="export-title" style={{ color: 'var(--blue)' }}>Vérification 🤖</div>
+                <button type="button" className="export-close" aria-label="Fermer" onClick={() => { setPendingFiles(null); setCaptchaSlider(12); }}>×</button>
+              </div>
+              <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center' }}>
+                <p style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 600, color: 'var(--amber)' }}>
+                  ⚠️ Contrôle obligatoire sur UKG personnel
+                </p>
+                <p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--fg-muted)' }}>
+                  Déplacez le curseur pour reconstituer la tête de Mickey.
+                </p>
+                
+                <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 32px auto' }}>
+                  <div style={{ 
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' 
+                  }}>
+                    <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
+                      <circle cx="20" cy="25" r="20" />
+                      <circle cx="80" cy="25" r="20" />
+                      <circle cx="50" cy="65" r="35" />
+                    </svg>
+                  </div>
+                  <div style={{ 
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
+                    transform: `translateX(${(captchaSlider - 50) * 1.5}px)`,
+                    transition: 'transform 0.1s ease-out'
+                  }}>
+                    <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
+                      <circle cx="20" cy="25" r="20" />
+                      <circle cx="80" cy="25" r="20" />
+                      <circle cx="50" cy="65" r="35" />
+                    </svg>
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={captchaSlider}
+                  onChange={(e) => setCaptchaSlider(parseInt(e.target.value))}
+                  style={{ width: '80%', cursor: 'pointer' }}
+                />
+              </div>
+              <div className="export-foot" style={{ justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={Math.abs(captchaSlider - 50) >= 3}
+                  onClick={() => {
+                    handleFiles(pendingFiles);
+                    setPendingFiles(null);
+                    setCaptchaSlider(12);
+                  }}
+                  style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
+                >
+                  Continuer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1138,8 +1213,6 @@ function EmptyAllPanel() {
 }
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [exportStep, setExportStep] = useState<0|1|2>(0);
-  const [captchaSlider, setCaptchaSlider] = useState(12);
   const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
   const [selectedScene, setSelectedScene] = useState<string>('ALL');
@@ -1178,83 +1251,7 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     }
   };
 
-  if (exportStep === 0) {
-    return (
-      <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
-        <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-          <div className="export-head">
-            <div className="export-title" style={{ color: 'var(--amber)' }}>⚠️</div>
-            <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
-          </div>
-          <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--fg)' }}>
-            Contrôle obligatoire sur UKG personnel
-          </div>
-          <div className="export-foot" style={{ justifyContent: 'center' }}>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setExportStep(1)}
-              style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
-            >
-              Yes j'ai compris !
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  if (exportStep === 1) {
-    const isSolved = Math.abs(captchaSlider - 50) < 3;
-    return (
-      <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
-        <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-          <div className="export-head">
-            <div className="export-title" style={{ color: 'var(--blue)' }}>Sécurité Anti-Robot 🤖</div>
-            <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
-          </div>
-          <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--fg-muted)' }}>
-              Reconstituez la tête de Mickey pour prouver que vous n'êtes pas un robot.
-            </p>
-            
-            <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 32px auto' }}>
-              <div style={{ 
-                position: 'absolute', top: 0, left: 0, fontSize: '80px', lineHeight: 1, 
-                clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' 
-              }}>🐭</div>
-              <div style={{ 
-                position: 'absolute', top: 0, left: 0, fontSize: '80px', lineHeight: 1, 
-                clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
-                transform: `translateX(${(captchaSlider - 50) * 1.5}px)`,
-                transition: 'transform 0.1s ease-out'
-              }}>🐭</div>
-            </div>
-
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={captchaSlider}
-              onChange={(e) => setCaptchaSlider(parseInt(e.target.value))}
-              style={{ width: '80%', cursor: 'pointer' }}
-            />
-          </div>
-          <div className="export-foot" style={{ justifyContent: 'center' }}>
-            <button
-              type="button"
-              className="btn"
-              disabled={!isSolved}
-              onClick={() => setExportStep(2)}
-              style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
-            >
-              Vérifier
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
