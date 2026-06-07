@@ -680,10 +680,16 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
-    doc.setFontSize(7);
+    let fontSize = 7;
+    doc.setFontSize(fontSize);
     doc.setTextColor(...textColor);
     
     let nm = cleanText(row.name);
+    while (doc.getTextWidth(nm) > nmMaxW && fontSize > 4.5) {
+      fontSize -= 0.25;
+      doc.setFontSize(fontSize);
+    }
+    
     if (doc.getTextWidth(nm) > nmMaxW) {
       while (nm.length > 0 && doc.getTextWidth(nm + '...') > nmMaxW) {
         nm = nm.slice(0, -1);
