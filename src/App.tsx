@@ -1049,11 +1049,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [present]);
 
 
-  const sceneTeam = useMemo(() => {
-    if (!openScene) return [];
-    const group = byScene.find(g => g[0] === openScene);
-    return group ? group[1] : [];
-  }, [openScene, byScene]);
+
 
   if (selectedEmployee) {
     return (
@@ -1076,15 +1072,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         />
       </div>
       <div data-testid="panel-daily">
-      {openScene ? (
-        <SceneDetail
-          scene={openScene}
-          date={date}
-          team={sceneTeam}
-          onBack={() => setOpenScene(null)}
-          onViewEmployee={(emp) => handleSelectEmployee(emp)}
-        />
-      ) : (
         <>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 16px', marginBottom: 16 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
@@ -1138,7 +1125,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     type="button"
                     className="daily-group-head"
                     data-testid={`scene-card-${scene}`}
-                    onClick={() => setOpenScene(scene)}
+                    onClick={() => setOpenScene(openScene === scene ? null : scene)}
                     style={{ 
                       width: '100%', 
                       cursor: 'pointer', 
@@ -1146,10 +1133,18 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       borderLeft: `4.5px solid ${getSceneColor(scene).accent}` 
                     }}
                   >
-                    <div className="daily-group-scene">{scene}</div>
+                    <div style={{ textAlign: 'left' }}>
+                      <div className="daily-group-scene">{scene}</div>
+                      {openScene === scene && (
+                        <div style={{ fontSize: '12.5px', color: 'var(--fg-muted)', marginTop: '4px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
+                          {formatDateLong(date)} · {sceneRecords.length} technicien(s)
+                        </div>
+                      )}
+                    </div>
                     <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
                   </button>
-                  <div className="compact-list" data-testid={`scene-team-${scene}`}>
+                  <div className={`compact-list-wrapper ${openScene === scene ? 'expanded' : ''}`}>
+                    <div className="compact-list" data-testid={`scene-team-${scene}`}>
                     {sceneRecords.map(rec => {
                       const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
                       const isFOVirtual = extRec.isFOVirtual;
@@ -1190,13 +1185,13 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       );
                     })}
                   </div>
+                  </div>
                 </section>
               ))}
             </div>
           )}
         </>
-      )}
-    </div>
+      </div>
     </>
   );
 }

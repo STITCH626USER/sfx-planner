@@ -1154,7 +1154,17 @@ input:focus, select:focus {
   background: var(--teal);
   box-shadow: 0 2px 8px rgba(0, 229, 198, 0.25);
 }
+.compact-list-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.compact-list-wrapper.expanded {
+  grid-template-rows: 1fr;
+}
 .compact-list {
+  min-height: 0;
   display: grid;
   gap: 0;
   background: transparent;
