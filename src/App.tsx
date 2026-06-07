@@ -63,8 +63,8 @@ export default function App() {
   const [drag, setDrag] = useState(false);
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
-  const [pendingFiles, setPendingFiles] = useState<FileList | File[] | null>(null);
   const [captchaSlider, setCaptchaSlider] = useState(12);
+  const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(false);
 
 
 
@@ -159,9 +159,9 @@ export default function App() {
     e.preventDefault();
     setDrag(false);
     if (e.dataTransfer?.files?.length) {
-      setPendingFiles(e.dataTransfer.files);
+      handleFiles(e.dataTransfer.files);
     }
-  }, []);
+  }, [handleFiles]);
 
   const removeSource = useCallback((name: string) => {
     setRecords(prev => prev.filter(r => r.sourceFile !== name));
@@ -216,12 +216,7 @@ export default function App() {
             multiple
             style={{ display: 'none' }}
             data-testid="input-file"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length) {
-                setPendingFiles(e.target.files);
-              }
-              e.target.value = '';
-            }}
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
           />
 
           {error && (
@@ -239,87 +234,19 @@ export default function App() {
             </div>
           </div>
         </div>
-        
-        {pendingFiles && (
-          <div className="export-overlay" data-testid="captcha-overlay">
-            <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-              <div className="export-head">
-                <div className="export-title" style={{ color: 'var(--blue)' }}>Vérification 🤖</div>
-                <button type="button" className="export-close" aria-label="Fermer" onClick={() => { setPendingFiles(null); setCaptchaSlider(12); }}>×</button>
-              </div>
-              <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center' }}>
-                <p style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 600, color: 'var(--amber)' }}>
-                  ⚠️ Contrôle obligatoire sur UKG personnel
-                </p>
-                <p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--fg-muted)' }}>
-                  Déplacez le curseur pour reconstituer la tête de Mickey.
-                </p>
-                
-                <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 32px auto' }}>
-                  <div style={{ 
-                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' 
-                  }}>
-                    <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
-                      <circle cx="20" cy="25" r="20" />
-                      <circle cx="80" cy="25" r="20" />
-                      <circle cx="50" cy="65" r="35" />
-                    </svg>
-                  </div>
-                  <div style={{ 
-                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
-                    transform: `translateX(${(captchaSlider - 50) * 1.5}px)`,
-                    transition: 'transform 0.1s ease-out'
-                  }}>
-                    <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
-                      <circle cx="20" cy="25" r="20" />
-                      <circle cx="80" cy="25" r="20" />
-                      <circle cx="50" cy="65" r="35" />
-                    </svg>
-                  </div>
-                </div>
-
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={captchaSlider}
-                  onChange={(e) => setCaptchaSlider(parseInt(e.target.value))}
-                  style={{ width: '80%', cursor: 'pointer' }}
-                />
-              </div>
-              <div className="export-foot" style={{ justifyContent: 'center' }}>
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={Math.abs(captchaSlider - 50) >= 3}
-                  onClick={() => {
-                    handleFiles(pendingFiles);
-                    setPendingFiles(null);
-                    setCaptchaSlider(12);
-                  }}
-                  style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
-                >
-                  Continuer
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
 
   return (
     <div className="app-shell" data-testid="app-root">
-      <div className="smoke-bg" aria-hidden="true">
+      <div className="smoke-bg" aria-hidden="true" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none' }}>
         <div className="smoke-cloud smoke-cloud-1" />
         <div className="smoke-cloud smoke-cloud-2" />
         <div className="smoke-cloud smoke-cloud-3" />
       </div>
       <FireworksCanvas triggerCount={fireworkTrigger} />
-      <aside className="app-sidebar">
+      <aside className="app-sidebar" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none', pointerEvents: !globalCaptchaSolved ? 'none' : 'auto' }}>
         <header className="app-header">
           <button
             type="button"
@@ -400,7 +327,7 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="app-main">
+      <main className="app-main" data-testid="main-content" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none', pointerEvents: !globalCaptchaSolved ? 'none' : 'auto' }}>
         {error && (
           <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginBottom: 16 }}>
             <div>{error}</div>
@@ -419,8 +346,6 @@ export default function App() {
             )}
           </div>
         )}
-
-
 
         <div className="main-content-panel">
           {records.length === 0 ? (
@@ -446,6 +371,69 @@ export default function App() {
         </footer>
         <ScrollToTop />
       </main>
+
+      {!globalCaptchaSolved && (
+        <div className="export-overlay" data-testid="global-captcha-overlay">
+          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="export-head">
+              <div className="export-title" style={{ color: 'var(--blue)' }}>Vérification 🤖</div>
+            </div>
+            <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center' }}>
+              <p style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 600, color: 'var(--amber)' }}>
+                ⚠️ Contrôle obligatoire sur UKG personnel
+              </p>
+              <p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--fg-muted)' }}>
+                Déplacez le curseur pour reconstituer la tête de Mickey.
+              </p>
+              
+              <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 32px auto' }}>
+                <div style={{ 
+                  position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                  clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' 
+                }}>
+                  <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
+                    <circle cx="20" cy="25" r="20" />
+                    <circle cx="80" cy="25" r="20" />
+                    <circle cx="50" cy="65" r="35" />
+                  </svg>
+                </div>
+                <div style={{ 
+                  position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                  clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
+                  transform: `translateX(${(captchaSlider - 50) * 1.5}px)`,
+                  transition: 'transform 0.1s ease-out'
+                }}>
+                  <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
+                    <circle cx="20" cy="25" r="20" />
+                    <circle cx="80" cy="25" r="20" />
+                    <circle cx="50" cy="65" r="35" />
+                  </svg>
+                </div>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={captchaSlider}
+                onChange={(e) => setCaptchaSlider(parseInt(e.target.value))}
+                style={{ width: '80%', cursor: 'pointer' }}
+              />
+            </div>
+            <div className="export-foot" style={{ justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn"
+                disabled={Math.abs(captchaSlider - 50) >= 3}
+                onClick={() => setGlobalCaptchaSolved(true)}
+                style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
+              >
+                Déverrouiller
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
