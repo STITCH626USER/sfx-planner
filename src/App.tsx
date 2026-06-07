@@ -1185,18 +1185,7 @@ function DatePicker({ dates, date, records, onChange }: {
             aria-selected={sel}
             className="date-pill"
             data-testid={`date-pill-${d}`}
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              for (let i = 0; i < 6; i++) {
-                const sp = document.createElement('div');
-                sp.className = 'sparkle-effect';
-                sp.style.left = `${rect.left + rect.width / 2 + (Math.random() - 0.5) * 30}px`;
-                sp.style.top = `${rect.top + rect.height / 2 + (Math.random() - 0.5) * 30}px`;
-                document.body.appendChild(sp);
-                setTimeout(() => sp.remove(), 600);
-              }
-              onChange(d);
-            }}
+            onClick={() => onChange(d)}
           >
             <span className="dpd">{DAY_FR_SHORT[day] ?? ''}</span>
             <span className="dpn">{dn}</span>
