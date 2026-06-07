@@ -228,7 +228,7 @@ export default function App() {
           <div className="landing-warning-notice">
             <div className="footer-warning-card">
               <span className="warning-text">
-                <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ :</strong>
+                <strong style={{ color: 'var(--amber)' }}>⚠️ :</strong>
                 Contrôle obligatoire sur UKG personnel.
               </span>
             </div>
