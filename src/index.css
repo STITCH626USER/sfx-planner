@@ -2656,9 +2656,9 @@ nav.seg button[aria-selected="true"] {
 }
 
 .app-footer-notice .warning-text {
-  font-size: 11px !important;
-  color: rgba(255, 255, 255, 0.8) !important;
-  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
   letter-spacing: 0.02em !important;
 }
 

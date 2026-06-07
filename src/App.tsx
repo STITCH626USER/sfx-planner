@@ -1175,6 +1175,12 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
 
   const handleExport = async () => {
     if (busy) return;
+    
+    const confirmMsg = "ATTENTION : Le contrôle des horaires sur UKG est OBLIGATOIRE avant toute utilisation de ce document.\n\nL'affectation des formations (FO) est donnée à titre purement indicatif et les horaires de base de Chronos peuvent avoir changé.\n\nConfirmez-vous avoir pris connaissance de cette consigne ?";
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
     setBusy(true);
     try {
       if (mode === 'day') {
