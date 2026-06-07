@@ -121,11 +121,13 @@ export default function App() {
           weekLabels: r.weekLabels,
         });
       }
-      setRecords(prev => [...prev, ...newRecs]);
+      setRecords(prev => {
+        if (prev.length > 0 && newRecs.length > 0) {
+          setFireworkTrigger(t => t + 1);
+        }
+        return [...prev, ...newRecs];
+      });
       setSources(prev => [...prev, ...newSrcs]);
-      if (newRecs.length > 0) {
-        setFireworkTrigger(prev => prev + 1);
-      }
       if (ignored > 0) {
         setError(`${ignored} fichier(s) non-PDF ignoré(s).`);
       }
@@ -374,22 +376,19 @@ export default function App() {
 
       {!globalCaptchaSolved && (
         <div className="export-overlay" data-testid="global-captcha-overlay">
-          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', paddingBottom: '32px' }}>
             <div className="export-head" style={{ borderBottom: 'none', paddingBottom: 0 }}>
               <div className="export-title" style={{ color: 'var(--blue)', fontSize: '18px' }}>Vérification 🤖</div>
             </div>
-            <div className="export-body" style={{ padding: '24px 16px 40px 16px', textAlign: 'center' }}>
-              <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(255, 176, 58, 0.1)', borderRadius: '12px', border: '1px solid rgba(255, 176, 58, 0.3)' }}>
-                <p style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <div className="export-body" style={{ padding: '24px 24px 0 24px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '32px', padding: '16px', background: 'rgba(255, 176, 58, 0.1)', borderRadius: '12px', border: '1px solid rgba(255, 176, 58, 0.3)' }}>
+                <p style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '24px' }}>⚠️</span>
-                  Contrôle obligatoire sur UKG personnel.
+                  <span>Contrôle obligatoire sur UKG personnel.</span>
                 </p>
               </div>
-              <p style={{ marginBottom: '32px', fontSize: '15px', color: 'var(--fg-muted)' }}>
-                Faites glisser le curseur pour reconstituer la tête de Mickey.
-              </p>
               
-              <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 48px auto' }}>
+              <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 40px auto' }}>
                 <div style={{ 
                   position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
                   clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
@@ -416,25 +415,28 @@ export default function App() {
                 </div>
               </div>
 
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={captchaSlider}
-                onChange={(e) => setCaptchaSlider(parseInt(e.target.value))}
-                style={{ width: '90%', cursor: 'pointer', height: '6px', accentColor: 'var(--blue)' }}
-              />
-            </div>
-            <div className="export-foot" style={{ justifyContent: 'center', background: 'transparent', paddingTop: 0 }}>
-              <button
-                type="button"
-                className="btn"
-                disabled={captchaSlider < 97}
-                onClick={() => setGlobalCaptchaSolved(true)}
-                style={{ width: '100%', maxWidth: '240px', display: 'flex', justifyContent: 'center', fontSize: '16px', padding: '12px' }}
-              >
-                Déverrouiller
-              </button>
+              <div style={{ position: 'relative', margin: '0 auto', maxWidth: '320px', width: '100%' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '15px', fontWeight: 600, paddingLeft: '20px' }}>
+                  Faites glisser pour déverrouiller
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={captchaSlider}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setCaptchaSlider(val);
+                    if (val >= 97) {
+                      setTimeout(() => {
+                        setGlobalCaptchaSolved(true);
+                        setFireworkTrigger(t => t + 1);
+                      }, 100);
+                    }
+                  }}
+                  className="iphone-slider"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1186,7 +1188,18 @@ function DatePicker({ dates, date, records, onChange }: {
             aria-selected={sel}
             className="date-pill"
             data-testid={`date-pill-${d}`}
-            onClick={() => onChange(d)}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              for (let i = 0; i < 6; i++) {
+                const sp = document.createElement('div');
+                sp.className = 'sparkle-effect';
+                sp.style.left = `${rect.left + rect.width / 2 + (Math.random() - 0.5) * 30}px`;
+                sp.style.top = `${rect.top + rect.height / 2 + (Math.random() - 0.5) * 30}px`;
+                document.body.appendChild(sp);
+                setTimeout(() => sp.remove(), 600);
+              }
+              onChange(d);
+            }}
           >
             <span className="dpd">{DAY_FR_SHORT[day] ?? ''}</span>
             <span className="dpn">{dn}</span>
