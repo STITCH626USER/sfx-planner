@@ -676,11 +676,11 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       doc.roundedRect(tx, ty, tw, th, th/2, th/2, 'F');
       doc.setTextColor(...pillText);
       doc.text(timeStr, tx + tw/2, ty + th*0.7, {align:'center'});
-      nmMaxW = tx - rx - 5;
+      nmMaxW = tx - rx - 2.5;
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(6.0);
     doc.setTextColor(...textColor);
     
     let nm = cleanText(row.name);
