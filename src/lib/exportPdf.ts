@@ -484,6 +484,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
           }
         }
       }
+      scenesOfDay.add('Formation autre');
       if (scenesOfDay.size > 0) subtext = 'Possibilités : ' + Array.from(scenesOfDay).sort().join(', ');
     }
     dateMap.get(r.date)!.push(r.time==='OFF' ? {name:'Repos / Congé',time:'OFF'} : {name,time:r.time,isFO,subtext});
@@ -737,6 +738,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
       for (const sc of scenesOfDate) {
         if (timesMatch(sc.time, r.time, 5)) matched.add(sc.clean);
       }
+      matched.add('Formation autre');
       if (matched.size > 0) {
         subtext = 'Possibilités : ' + Array.from(matched).sort().join(', ');
       }

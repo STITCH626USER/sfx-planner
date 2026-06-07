@@ -709,6 +709,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
                   }
                 }
               }
+              scenesOfDay.add('Formation autre');
               if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
             }
             return (
@@ -917,6 +918,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         for (const sc of scenesOfDate) {
           if (timesMatch(sc.time, rec.time, 5)) matched.add(sc.clean);
         }
+        matched.add('Formation autre');
         if (matched.size > 0) assocScenes = Array.from(matched).sort();
       }
       
