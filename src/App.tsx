@@ -226,7 +226,7 @@ export default function App() {
           <div className="landing-warning-notice">
             <div className="footer-warning-card">
               <span className="warning-text">
-                <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
+                <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ :</strong>
                 Contrôle obligatoire sur UKG personnel.
               </span>
             </div>
@@ -364,7 +364,7 @@ export default function App() {
           </div>
           <div className="footer-warning-card">
             <span className="warning-text">
-              <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ ATTENTION :</strong>
+              <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ :</strong>
               Contrôle obligatoire sur UKG personnel.
             </span>
           </div>
@@ -1182,7 +1182,7 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
       <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
         <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
           <div className="export-head">
-            <div className="export-title" style={{ color: 'var(--amber)' }}>⚠️ ATTENTION</div>
+            <div className="export-title" style={{ color: 'var(--amber)' }}>⚠️</div>
             <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
           </div>
           <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--fg)' }}>
