@@ -1138,7 +1138,8 @@ function EmptyAllPanel() {
 }
 
 function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [ukgConfirmed, setUkgConfirmed] = useState(false);
+  const [exportStep, setExportStep] = useState<0|1|2>(0);
+  const [captchaInput, setCaptchaInput] = useState("");
   const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
   const scenes = useMemo(() => listScenes(records), [records]);
   const [selectedScene, setSelectedScene] = useState<string>('ALL');
@@ -1177,7 +1178,7 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
     }
   };
 
-  if (!ukgConfirmed) {
+  if (exportStep === 0) {
     return (
       <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
         <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -1192,10 +1193,53 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
             <button
               type="button"
               className="btn"
-              onClick={() => setUkgConfirmed(true)}
+              onClick={() => setExportStep(1)}
               style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
             >
               Yes j'ai compris !
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (exportStep === 1) {
+    return (
+      <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
+        <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+          <div className="export-head">
+            <div className="export-title" style={{ color: 'var(--blue)' }}>Sécurité Anti-Robot 🤖</div>
+            <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
+          </div>
+          <div className="export-body" style={{ padding: '32px 16px', textAlign: 'center' }}>
+            <p style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--fg-muted)' }}>
+              Veuillez recopier la phrase ci-dessous avec les majuscules, sans aucune faute, pour prouver votre bonne foi :
+            </p>
+            <p style={{ fontWeight: 'bold', fontStyle: 'italic', marginBottom: '24px', userSelect: 'none', color: 'var(--fg)' }}>
+              "Je jure solennellement que j'ai vérifié UKG de mes propres yeux"
+            </p>
+            <input
+              type="text"
+              value={captchaInput}
+              onChange={(e) => setCaptchaInput(e.target.value)}
+              placeholder="Tapez ici..."
+              style={{
+                width: '100%', padding: '14px', borderRadius: '12px',
+                border: '1px solid var(--line-strong)', background: 'var(--bg-3)', color: 'var(--fg)',
+                outline: 'none', textAlign: 'center', fontSize: '14px'
+              }}
+            />
+          </div>
+          <div className="export-foot" style={{ justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn"
+              disabled={captchaInput !== "Je jure solennellement que j'ai vérifié UKG de mes propres yeux"}
+              onClick={() => setExportStep(2)}
+              style={{ width: '100%', maxWidth: '200px', display: 'flex', justifyContent: 'center' }}
+            >
+              Vérifier
             </button>
           </div>
         </div>
