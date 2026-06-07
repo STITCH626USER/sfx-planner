@@ -538,7 +538,8 @@ async function generateIndivPdf(opts: {
       if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2.5;
       totalBubblesH += bH + (j < rows.length - 1 ? 1.5 : 0);
     }
-    const blockH = Math.max(pictoH, totalBubblesH);
+    const pad = 2;
+    const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
     const gapBlock = 3;
     
     if (currentY + blockH > startY + 5 + maxAvailableH) {
@@ -575,23 +576,32 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   const pictoW = 16;
   const pictoH = 16;
   
+  const pad = 2;
+  
+  // Entire Block Frame
+  doc.setFillColor(252, 252, 254);
+  doc.setDrawColor(228, 230, 235);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(x, y, w, h, 2.5, 2.5, 'FD');
+
   // Picto Background
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(220, 220, 225);
   doc.setLineWidth(0.2);
-  doc.roundedRect(x, y + (h - pictoH)/2, pictoW, pictoH, 2.5, 2.5, 'FD');
+  doc.roundedRect(x + pad, y + (h - pictoH)/2, pictoW, pictoH, 2.5, 2.5, 'FD');
   
   // Picto Text
   const py = y + (h - pictoH)/2;
+  const px = x + pad + pictoW/2;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
-  doc.text(dayName, x + pictoW/2, py + 4.5, {align: 'center'});
+  doc.text(dayName, px, py + 4.5, {align: 'center'});
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 30, 40);
-  doc.text(dayNum, x + pictoW/2, py + 10.5, {align: 'center'});
+  doc.text(dayNum, px, py + 10.5, {align: 'center'});
   doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
-  doc.text(monthName, x + pictoW/2, py + 14.5, {align: 'center'});
+  doc.text(monthName, px, py + 14.5, {align: 'center'});
   
-  const rx = x + pictoW + 4;
-  const bubbleW = w - pictoW - 4;
+  const rx = x + pad + pictoW + 3;
+  const bubbleW = w - pad * 2 - pictoW - 3;
   const gapBubble = 1.5;
   let totalBubblesH = 0;
   for (let j = 0; j < rows.length; j++) {
