@@ -611,7 +611,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     if (rows[j].subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(4.5);
       const subLines = doc.splitTextToSize(rows[j].subtext!, bubbleW - 4);
-      bH += subLines.length * 2.5;
+      bH += 1.5 + subLines.length * 2.5;
     }
     totalBubblesH += bH + (j < rows.length - 1 ? 1.5 : 0);
   }
@@ -628,7 +628,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     if (row.subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(4.5);
       subLines = doc.splitTextToSize(row.subtext, bubbleW - 4);
-      currentBubbleH += subLines.length * 2.5;
+      currentBubbleH += 1.5 + subLines.length * 2.5;
     }
     
     let bgColor: [number,number,number];
@@ -691,7 +691,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     
     if (row.subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(4.5); doc.setTextColor(130, 140, 150);
-      doc.text(subLines, rx + 3.5, ry + 7.5);
+      doc.text(subLines, rx + 3.5, ry + 9.0);
     }
     
     ry += currentBubbleH + gapBubble;
