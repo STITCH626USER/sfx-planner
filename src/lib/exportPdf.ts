@@ -521,10 +521,18 @@ async function generateIndivPdf(opts: {
   
   const startY = drawPremiumHeader(doc, pageW, marginX, 10, opts.title, opts.subtitle, logo);
   
+  const isIndiv = opts.filename.includes('indiv');
+  const numWeeks = Math.ceil(opts.allDates.length / 7);
+  
   let cols = 6;
-  if (opts.allDates.length <= 7) cols = 3;
-  else if (opts.allDates.length <= 14) cols = 4;
-  else if (opts.allDates.length <= 21) cols = 5;
+  if (isIndiv) {
+    cols = Math.max(2, Math.min(5, numWeeks)); // At least 2 columns so it's not comically wide
+  } else {
+    if (opts.allDates.length <= 7) cols = 3;
+    else if (opts.allDates.length <= 14) cols = 4;
+    else if (opts.allDates.length <= 21) cols = 5;
+    else cols = 6;
+  }
   
   const gutter = 2;
   const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
@@ -548,7 +556,9 @@ async function generateIndivPdf(opts: {
     const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
     const gapBlock = 1.5;
     
-    if (currentY + blockH > startY + 5 + maxAvailableH) {
+    const forceBreak = isIndiv && i > 0 && i % 7 === 0;
+    
+    if (currentY + blockH > startY + 5 + maxAvailableH || forceBreak) {
       currentCol++;
       currentY = startY + 5;
       
