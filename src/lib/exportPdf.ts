@@ -680,15 +680,10 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
-    let fontSize = 7;
-    doc.setFontSize(fontSize);
+    doc.setFontSize(7);
     doc.setTextColor(...textColor);
     
     let nm = cleanText(row.name);
-    while (doc.getTextWidth(nm) > nmMaxW && fontSize > 4.5) {
-      fontSize -= 0.25;
-      doc.setFontSize(fontSize);
-    }
     
     if (doc.getTextWidth(nm) > nmMaxW) {
       while (nm.length > 0 && doc.getTextWidth(nm + '...') > nmMaxW) {
@@ -737,11 +732,6 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     let subtext = '';
     
     if (isFOExport) {
-      if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
-        let detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
-        detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
-        if (detail) displayName = `${displayName} (${detail})`;
-      }
       const scenesOfDate = dateToScenes.get(r.date) || [];
       const matched = new Set<string>();
       for (const sc of scenesOfDate) {
