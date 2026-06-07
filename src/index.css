@@ -1749,6 +1749,22 @@ input:focus, select:focus {
   to { transform: scale(1); opacity: 1; }
 }
 
+.daily-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-radius: var(--r-md);
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: sticky;
+  top: 16px;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .export-head {
   display: flex;
   align-items: center;

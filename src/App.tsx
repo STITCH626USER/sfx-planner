@@ -4,6 +4,7 @@ import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch } from './lib/utils';
 
+
 type Tab = 'recherche' | 'daily';
 type Theme = 'dark' | 'light';
 
@@ -368,6 +369,7 @@ export default function App() {
             </span>
           </div>
         </footer>
+        <ScrollToTop />
       </main>
     </div>
   );
@@ -863,8 +865,21 @@ function DailyDateBar({ records, date, onDateChange }: {
 
 function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const scrollPos = useRef(0);
   const [openScene, setOpenScene] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
+
+  const handleSelectEmployee = (emp: string) => {
+    scrollPos.current = window.scrollY;
+    setSelectedEmployee(emp);
+  };
+
+  const handleBackFromEmployee = () => {
+    setSelectedEmployee(null);
+    setTimeout(() => {
+      window.scrollTo({ top: scrollPos.current, behavior: 'instant' });
+    }, 0);
+  };
 
   useEffect(() => {
     setOpenScene(null);
@@ -944,7 +959,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         name={selectedEmployee}
         records={records.filter(r => r.employee === selectedEmployee)}
         allRecords={records}
-        onBack={() => setSelectedEmployee(null)}
+        onBack={handleBackFromEmployee}
       />
     );
   }
@@ -965,7 +980,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           date={date}
           team={sceneTeam}
           onBack={() => setOpenScene(null)}
-          onViewEmployee={(emp) => setSelectedEmployee(emp)}
+          onViewEmployee={(emp) => handleSelectEmployee(emp)}
         />
       ) : (
         <>
@@ -1065,7 +1080,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             type="button"
                             className="btn-eye compact-eye"
                             data-testid={`btn-view-tech-${rec.employee}`}
-                            onClick={() => setSelectedEmployee(extRec.originalEmployeeName || rec.employee)}
+                            onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
                           >
                             <IconEye />
                           </button>
@@ -1087,8 +1102,33 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 function DatePicker({ dates, date, records, onChange }: {
   dates: string[]; date: string; records: PlanningRecord[]; onChange: (date: string) => void;
 }) {
+  const handleDateJump = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const d = e.target.value;
+    if (!d) return;
+    let closest = dates[0];
+    let minDiff = Infinity;
+    const targetTime = new Date(d).getTime();
+    for (const dt of dates) {
+      const diff = Math.abs(new Date(dt).getTime() - targetTime);
+      if (diff < minDiff) { minDiff = diff; closest = dt; }
+    }
+    onChange(closest);
+    setTimeout(() => {
+      document.querySelector(`[data-testid="date-pill-${closest}"]`)?.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
-    <div className="date-row" role="tablist" data-testid="date-row">
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <label style={{ fontSize: 20, padding: '0 12px', cursor: 'pointer', opacity: 0.7, margin: 0 }} title="Aller à une date">
+        📅
+        <input 
+          type="date" 
+          onChange={handleDateJump}
+          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, border: 'none', padding: 0 }}
+        />
+      </label>
+      <div className="date-row" role="tablist" data-testid="date-row">
       {dates.map(d => {
         const sel = d === date;
         const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -1110,6 +1150,7 @@ function DatePicker({ dates, date, records, onChange }: {
           </button>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -1269,6 +1310,45 @@ function IconEye() {
     </svg>
   );
 }
+
+function ScrollToTop() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  
+  if (!visible) return null;
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      style={{
+        position: 'fixed',
+        bottom: 24,
+        right: 24,
+        width: 48,
+        height: 48,
+        borderRadius: '50%',
+        background: 'var(--accent)',
+        color: 'white',
+        border: 'none',
+        boxShadow: '0 4px 12px var(--shadow)',
+        fontSize: 24,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+        opacity: 0.9
+      }}
+      aria-label="Remonter en haut"
+    >
+      ↑
+    </button>
+  );
+}
+
 function Logo() {
   const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
   return (
