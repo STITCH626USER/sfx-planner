@@ -1049,6 +1049,14 @@ input:focus, select:focus {
   -webkit-backdrop-filter: blur(12px);
   transition: var(--spring-transition);
 }
+.group-block {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+.employee-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 150px;
+}
 .team-row + .team-row {
   margin-top: 10px;
 }
@@ -2838,4 +2846,13 @@ nav.seg button[aria-selected="true"] {
 .footer-warning-card {
   padding: 6px 14px !important;
   gap: 8px !important;
+}
+
+.day-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
+.employee-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 150px;
 }
