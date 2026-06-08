@@ -983,9 +983,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     }, 0);
   };
 
-  useEffect(() => {
-    setOpenScenes(new Set());
-  }, [date]);
+
 
   const present = useMemo(() => {
     return records.filter(r => r.date === date && r.time !== 'OFF').sort((a, b) => {
