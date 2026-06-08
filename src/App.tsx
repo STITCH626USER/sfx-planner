@@ -375,10 +375,7 @@ export default function App() {
       {!globalCaptchaSolved && (
         <div className="export-overlay" data-testid="global-captcha-overlay">
           <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', paddingBottom: '32px' }}>
-            <div className="export-head" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-              <div className="export-title" style={{ color: 'var(--blue)', fontSize: '18px' }}>Vérification 🤖</div>
-            </div>
-            <div className="export-body" style={{ padding: '24px 24px 0 24px', textAlign: 'center' }}>
+            <div className="export-body" style={{ padding: '32px 24px 0 24px', textAlign: 'center' }}>
               <div style={{ marginBottom: '32px', padding: '16px', background: 'rgba(255, 176, 58, 0.1)', borderRadius: '12px', border: '1px solid rgba(255, 176, 58, 0.3)' }}>
                 <p style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '24px' }}>⚠️</span>
@@ -414,7 +411,7 @@ export default function App() {
               </div>
 
               <div style={{ position: 'relative', margin: '0 auto', maxWidth: '320px', width: '100%' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '15px', fontWeight: 600, paddingLeft: '20px' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: 'var(--fg-muted)', fontSize: '15px', fontWeight: 600, paddingLeft: '20px', opacity: 0.8 }}>
                   Faites glisser pour déverrouiller
                 </div>
                 <input
