@@ -718,19 +718,15 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     
     if (timeStr) {
       doc.setFont('helvetica','bold'); doc.setFontSize(5.0);
-      const tw = doc.getTextWidth(timeStr) + 2;
-      const th = 5.5 * 0.75;
-      const tx = rx + bubbleW - 1 - tw;
-      const ty = ry + (5.5 - th)/2;
+      const timeW = doc.getTextWidth(timeStr);
+      const tx = rx + bubbleW - 1.5;
+      const ty = ry + 3.9;
       
-      const pillBg: [number,number,number] = isOff ? [235, 238, 242] : [255, 255, 255];
-      const pillText: [number,number,number] = isOff ? [160, 170, 180] : AMBER;
+      const timeColor: [number,number,number] = isOff ? [150, 160, 170] : textColor;
       
-      doc.setFillColor(...pillBg);
-      doc.roundedRect(tx, ty, tw, th, th/2, th/2, 'F');
-      doc.setTextColor(...pillText);
-      doc.text(timeStr, tx + tw/2, ty + th*0.7, {align:'center'});
-      nmMaxW = tx - rx - 2.0;
+      doc.setTextColor(...timeColor);
+      doc.text(timeStr, tx, ty, {align:'right'});
+      nmMaxW = bubbleW - timeW - 3.5;
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
