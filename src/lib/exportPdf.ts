@@ -639,6 +639,18 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   doc.setDrawColor(228, 230, 235);
   doc.setLineWidth(0.2);
   doc.roundedRect(x, y, w, h, 2.5, 2.5, 'FD');
+  
+  if (themeColorName) {
+    const sc = getSceneColor(themeColorName);
+    const ac: [number,number,number] = [
+      Math.max(0, Math.round(sc.rgbText[0]*0.8 - 20)),
+      Math.max(0, Math.round(sc.rgbText[1]*0.8 - 20)),
+      Math.max(0, Math.round(sc.rgbText[2]*0.8 - 20))
+    ];
+    doc.setFillColor(...ac);
+    doc.roundedRect(x, y, 1.5, h, 2.5, 2.5, 'F');
+    doc.rect(x + 1.0, y, 0.5, h, 'F');
+  }
 
   // Picto Background
   doc.setFillColor(255, 255, 255);
@@ -685,36 +697,38 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       currentBubbleH += 1.5 + subLines.length * 2.2;
     }
     
-    let bgColor: [number,number,number];
-    let textColor: [number,number,number];
     let accentColor: [number,number,number];
     
     if (isOff) {
-      bgColor = [248, 249, 251];
-      textColor = [130, 140, 150];
-      accentColor = [210, 215, 220];
+      accentColor = [160, 170, 180];
     } else {
       const sc = getSceneColor(themeColorName || row.name);
-      bgColor = sc.rgbBg;
-      textColor = sc.rgbText;
       accentColor = isFO ? VIOLET : [
-        Math.max(0, Math.round(textColor[0]*0.8 - 20)),
-        Math.max(0, Math.round(textColor[1]*0.8 - 20)),
-        Math.max(0, Math.round(textColor[2]*0.8 - 20))
+        Math.max(0, Math.round(sc.rgbText[0]*0.8 - 20)),
+        Math.max(0, Math.round(sc.rgbText[1]*0.8 - 20)),
+        Math.max(0, Math.round(sc.rgbText[2]*0.8 - 20))
       ];
     }
     
-    doc.setFillColor(...bgColor);
-    doc.setDrawColor(...accentColor);
-    doc.setLineWidth(0.15);
-    doc.roundedRect(rx, ry, bubbleW, currentBubbleH, 1.0, 1.0, 'FD');
+    let initials = '??';
+    const cleanN = row.name.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '').trim();
+    const parts = cleanN.split(/[\s-]+/).filter(Boolean);
+    if (parts.length > 1) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (parts.length === 1) {
+      initials = parts[0].substring(0, 2).toUpperCase();
+    }
     
+    const cy = ry + currentBubbleH / 2;
     doc.setFillColor(...accentColor);
-    doc.roundedRect(rx, ry, 1.0, currentBubbleH, 1.0, 1.0, 'F');
-    doc.rect(rx+0.5, ry, 0.5, currentBubbleH, 'F');
+    doc.circle(rx + 3.0, cy, 2.0, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(3.2);
+    doc.text(initials, rx + 3.0, cy + 1.1, { align: 'center' });
     
-    let nmMaxW = bubbleW - 4;
     const timeStr = row.time || '';
+    let nmMaxW = bubbleW - 8.0;
     
     if (timeStr) {
       doc.setFont('helvetica','bold'); doc.setFontSize(5.0);
@@ -722,30 +736,36 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       const tx = rx + bubbleW - 1.5;
       const ty = ry + 3.9;
       
-      const timeColor: [number,number,number] = isOff ? [150, 160, 170] : textColor;
+      const timeColor: [number,number,number] = isOff ? [150, 160, 170] : [210, 120, 0];
       
       doc.setTextColor(...timeColor);
       doc.text(timeStr, tx, ty, {align:'right'});
-      nmMaxW = bubbleW - timeW - 3.5;
+      nmMaxW = bubbleW - timeW - 8.0;
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
-    doc.setFontSize(5.0);
-    doc.setTextColor(...textColor);
+    doc.setFontSize(4.5);
+    doc.setTextColor(30, 40, 50);
     
     let nm = cleanText(row.name);
-    
     if (doc.getTextWidth(nm) > nmMaxW) {
       while (nm.length > 0 && doc.getTextWidth(nm + '...') > nmMaxW) {
         nm = nm.slice(0, -1);
       }
       nm = nm.trim() + '...';
     }
-    doc.text(nm, rx + 2.0, ry + (row.subtext ? 3.0 : 3.8));
+    doc.text(nm, rx + 6.0, ry + (row.subtext ? 3.0 : 3.8));
     
     if (row.subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(3.5); doc.setTextColor(130, 140, 150);
-      doc.text(subLines, rx + 2.0, ry + 6.5);
+      doc.text(subLines, rx + 6.0, ry + 6.5);
+    }
+    
+    // Add subtle separator line if not the last row
+    if (ry + currentBubbleH + gapBubble < y + h - 1.5) {
+      doc.setDrawColor(240, 242, 245);
+      doc.setLineWidth(0.1);
+      doc.line(rx, ry + currentBubbleH + gapBubble/2, rx + bubbleW - 1, ry + currentBubbleH + gapBubble/2);
     }
     
     ry += currentBubbleH + gapBubble;
