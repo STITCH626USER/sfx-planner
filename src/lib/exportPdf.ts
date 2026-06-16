@@ -144,7 +144,7 @@ function drawAvatar(doc: jsPDF, x: number, y: number, name: string, color: [numb
   doc.setFillColor(...color); doc.circle(cx, cy, size/2, 'F');
   // Dark overlay for text contrast
   doc.setTextColor(...WHITE); doc.setFont('helvetica','bold'); doc.setFontSize(size*1.4);
-  doc.text(initials(name), cx, cy+size*0.22, {align:'center'});
+  doc.text(initials(name), cx, cy, {align:'center', baseline:'middle'});
 }
 
 /* ─── Scene Card ─── */
@@ -723,7 +723,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(3.5);
-    doc.text(initials, rx + 3.0, cy + 1.2, { align: 'center' });
+    doc.text(initials, rx + 3.0, cy, { align: 'center', baseline: 'middle' });
     
     const timeStr = row.time || '';
     let nmMaxW = bubbleW - 9.0;
