@@ -542,9 +542,9 @@ async function generateIndivPdf(opts: {
       const pictoH = 11;
       let totalBubblesH = 0;
       for (let j = 0; j < rows.length; j++) {
-        let bH = 6.5;
+        let bH = 5.5;
         if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2;
-        totalBubblesH += bH + (j < rows.length - 1 ? 1.2 : 0);
+        totalBubblesH += bH + (j < rows.length - 1 ? 0.6 : 0);
       }
       const pad = 1;
       const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
@@ -588,9 +588,9 @@ async function generateIndivPdf(opts: {
     const pictoH = 11;
     let totalBubblesH = 0;
     for (let j = 0; j < rows.length; j++) {
-      let bH = 6.5;
+      let bH = 5.5;
       if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2;
-      totalBubblesH += bH + (j < rows.length - 1 ? 1.2 : 0);
+      totalBubblesH += bH + (j < rows.length - 1 ? 0.6 : 0);
     }
     const pad = 1;
     const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
@@ -637,7 +637,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   // Entire Block Frame
   doc.setFillColor(247, 248, 250);
   doc.setDrawColor(215, 220, 225);
-  doc.setLineWidth(0.3);
+  doc.setLineWidth(0.2);
   
   if (themeColorName) {
     const sc = getSceneColor(themeColorName);
@@ -649,18 +649,6 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   }
   
   doc.roundedRect(x, y, w, h, 2.5, 2.5, 'FD');
-  
-  if (themeColorName) {
-    const sc = getSceneColor(themeColorName);
-    const ac: [number,number,number] = [
-      Math.max(0, Math.round(sc.rgbText[0]*0.8 - 20)),
-      Math.max(0, Math.round(sc.rgbText[1]*0.8 - 20)),
-      Math.max(0, Math.round(sc.rgbText[2]*0.8 - 20))
-    ];
-    doc.setFillColor(...ac);
-    doc.roundedRect(x, y, 1.5, h, 2.5, 2.5, 'F');
-    doc.rect(x + 1.0, y, 0.5, h, 'F');
-  }
 
   // Picto Background
   doc.setFillColor(255, 255, 255);
@@ -680,10 +668,10 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   
   const rx = x + pad + pictoW + 1.5;
   const bubbleW = w - pad * 2 - pictoW - 1.5;
-  const gapBubble = 1.2;
+  const gapBubble = 0.6;
   let totalBubblesH = 0;
   for (let j = 0; j < rows.length; j++) {
-    let bH = 6.5;
+    let bH = 5.5;
     if (rows[j].subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(3.5);
       const subLines = doc.splitTextToSize(rows[j].subtext!, bubbleW - 4);
@@ -700,7 +688,7 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     const isFO = row.isFO;
     
     let subLines: string[] = [];
-    let currentBubbleH = 6.5;
+    let currentBubbleH = 5.5;
     if (row.subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(3.5);
       subLines = doc.splitTextToSize(row.subtext, bubbleW - 4);
@@ -731,26 +719,26 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
     
     const cy = ry + currentBubbleH / 2;
     doc.setFillColor(...accentColor);
-    doc.circle(rx + 3.0, cy, 2.2, 'F');
+    doc.circle(rx + 3.0, cy, 2.0, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(3.8);
-    doc.text(initials, rx + 3.0, cy + 1.3, { align: 'center' });
+    doc.setFontSize(3.5);
+    doc.text(initials, rx + 3.0, cy + 1.2, { align: 'center' });
     
     const timeStr = row.time || '';
-    let nmMaxW = bubbleW - 8.0;
+    let nmMaxW = bubbleW - 9.0;
     
     if (timeStr) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(5.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(5.0);
       const timeW = doc.getTextWidth(timeStr);
       const tx = rx + bubbleW - 1.5;
-      const ty = ry + 4.3;
+      const ty = ry + 3.9;
       
-      const timeColor: [number,number,number] = isOff ? [150, 160, 170] : [210, 120, 0];
+      const timeColor: [number,number,number] = isOff ? [150, 160, 170] : [220, 130, 0];
       
       doc.setTextColor(...timeColor);
       doc.text(timeStr, tx, ty, {align:'right'});
-      nmMaxW = bubbleW - timeW - 8.0;
+      nmMaxW = bubbleW - timeW - 9.0;
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
@@ -764,18 +752,11 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       }
       nm = nm.trim() + '...';
     }
-    doc.text(nm, rx + 6.5, ry + (row.subtext ? 3.5 : 4.3));
+    doc.text(nm, rx + 6.0, ry + (row.subtext ? 3.0 : 3.8));
     
     if (row.subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(3.5); doc.setTextColor(130, 140, 150);
-      doc.text(subLines, rx + 6.5, ry + 7.5);
-    }
-    
-    // Add subtle separator line if not the last row
-    if (ry + currentBubbleH + gapBubble < y + h - 1.5) {
-      doc.setDrawColor(220, 225, 230);
-      doc.setLineWidth(0.15);
-      doc.line(rx, ry + currentBubbleH + gapBubble/2, rx + bubbleW - 1, ry + currentBubbleH + gapBubble/2);
+      doc.text(subLines, rx + 6.0, ry + 6.5);
     }
     
     ry += currentBubbleH + gapBubble;
