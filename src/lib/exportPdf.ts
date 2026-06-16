@@ -524,19 +524,59 @@ async function generateIndivPdf(opts: {
   const isIndiv = opts.filename.includes('indiv');
   const numWeeks = Math.ceil(opts.allDates.length / 7);
   
+  const maxAvailableH = pageH - 13 - (startY + 5);
+
   let cols = 6;
   if (isIndiv) {
-    cols = Math.max(2, Math.min(5, numWeeks)); // At least 2 columns so it's not comically wide
+    if (numWeeks <= 6) {
+      cols = Math.max(3, numWeeks);
+    } else {
+      cols = Math.min(6, Math.ceil(numWeeks / 2));
+    }
   } else {
-    if (opts.allDates.length <= 7) cols = 3;
-    else if (opts.allDates.length <= 14) cols = 4;
-    else if (opts.allDates.length <= 21) cols = 5;
-    else cols = 6;
+    let totalCols = 1;
+    let simY = startY + 5;
+    for (let i = 0; i < opts.allDates.length; i++) {
+      const d = opts.allDates[i];
+      const rows = opts.dateMap.get(d) || [];
+      const pictoH = 11;
+      let totalBubblesH = 0;
+      for (let j = 0; j < rows.length; j++) {
+        let bH = 5.5;
+        if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2;
+        totalBubblesH += bH + (j < rows.length - 1 ? 1 : 0);
+      }
+      const pad = 1;
+      const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
+      const gapBlock = 1.5;
+      
+      if (simY + blockH > startY + 5 + maxAvailableH) {
+        totalCols++;
+        simY = startY + 5;
+      }
+      simY += blockH + gapBlock;
+    }
+
+    let bestCols = 6;
+    let bestPages = 999;
+    let bestFillRatio = 0;
+    
+    for (let c = 3; c <= 6; c++) {
+      const pages = Math.ceil(totalCols / c);
+      const lastPageCols = totalCols % c === 0 ? c : totalCols % c;
+      const fillRatio = lastPageCols / c;
+      
+      if (pages < bestPages || (pages === bestPages && fillRatio > bestFillRatio)) {
+        bestPages = pages;
+        bestCols = c;
+        bestFillRatio = fillRatio;
+      }
+    }
+    cols = bestPages > 2 ? 6 : bestCols;
   }
   
   const gutter = 2;
   const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
-  const maxAvailableH = pageH - 13 - (startY + 5);
   
   let currentY = startY + 5;
   let currentCol = 0;
