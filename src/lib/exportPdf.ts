@@ -610,7 +610,9 @@ async function generateIndivPdf(opts: {
       }
     }
     
-    const x = marginX + currentCol * (colW + gutter);
+    const usedWidth = activeColsLimit * colW + (activeColsLimit - 1) * gutter;
+    const startX = (pageW - usedWidth) / 2;
+    const x = startX + currentCol * (colW + gutter);
     drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
     
     currentY += blockH + gapBlock;
