@@ -557,22 +557,8 @@ async function generateIndivPdf(opts: {
       simY += blockH + gapBlock;
     }
 
-    let bestCols = 6;
-    let bestPages = 999;
-    let bestFillRatio = 0;
-    
-    for (let c = 3; c <= 6; c++) {
-      const pages = Math.ceil(totalCols / c);
-      const lastPageCols = totalCols % c === 0 ? c : totalCols % c;
-      const fillRatio = lastPageCols / c;
-      
-      if (pages < bestPages || (pages === bestPages && fillRatio > bestFillRatio)) {
-        bestPages = pages;
-        bestCols = c;
-        bestFillRatio = fillRatio;
-      }
-    }
-    cols = bestPages > 2 ? 6 : bestCols;
+    // Force a unified 4-column layout for Scene exports to prevent name truncation
+    cols = 4;
   }
   
   const gutter = 2;
