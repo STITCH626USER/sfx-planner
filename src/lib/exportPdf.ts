@@ -526,6 +526,8 @@ async function generateIndivPdf(opts: {
   
   const maxAvailableH = pageH - 13 - (startY + 5);
 
+  let colsPerPage: number[] = [];
+
   let cols = 6;
   if (isIndiv) {
     if (numWeeks <= 6) {
@@ -557,8 +559,16 @@ async function generateIndivPdf(opts: {
       simY += blockH + gapBlock;
     }
 
-    // Force a unified 4-column layout for Scene exports to prevent name truncation
     cols = 4;
+    
+    if (totalCols > 0) {
+      const numPages = Math.ceil(totalCols / cols);
+      colsPerPage = new Array(numPages).fill(Math.floor(totalCols / numPages));
+      const remainder = totalCols % numPages;
+      for (let i = 0; i < remainder; i++) {
+        colsPerPage[i]++;
+      }
+    }
   }
   
   const gutter = 2;
@@ -566,6 +576,8 @@ async function generateIndivPdf(opts: {
   
   let currentY = startY + 5;
   let currentCol = 0;
+  let currentPageIndex = 0;
+  let activeColsLimit = isIndiv ? cols : (colsPerPage[0] || cols);
   
   for (let i = 0; i < opts.allDates.length; i++) {
     const d = opts.allDates[i];
@@ -588,9 +600,11 @@ async function generateIndivPdf(opts: {
       currentCol++;
       currentY = startY + 5;
       
-      if (currentCol >= cols) {
+      if (currentCol >= activeColsLimit) {
         drawPremiumFooter(doc, pageW, pageH, marginX);
         doc.addPage();
+        currentPageIndex++;
+        activeColsLimit = isIndiv ? cols : (colsPerPage[currentPageIndex] || cols);
         currentY = drawPremiumHeader(doc, pageW, marginX, 10, opts.title, opts.subtitle + ' (suite)', logo) + 5;
         currentCol = 0;
       }
