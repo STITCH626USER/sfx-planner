@@ -71,6 +71,7 @@ export default function App() {
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
   const [showPwaBanner, setShowPwaBanner] = useState(false);
   const [isIOSDevice, setIsIOSDevice] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -108,7 +109,10 @@ export default function App() {
   }, []);
 
   const handleInstallClick = () => {
-    if (pwaPrompt) {
+    if (isIOSDevice) {
+      setShowIosGuide(true);
+      setShowPwaBanner(false);
+    } else if (pwaPrompt) {
       pwaPrompt.prompt();
       pwaPrompt.userChoice.then((choice: any) => {
         if (choice.outcome === 'accepted') {
@@ -304,9 +308,33 @@ export default function App() {
                   setShowPwaBanner(false);
                   sessionStorage.setItem(isIOSDevice ? 'sfx_pwa_ios_tip' : 'sfx_pwa_prompt', 'true');
                 }}>Plus tard</button>
-                {!isIOSDevice && (
-                  <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
-                )}
+                <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
+              </div>
+            </div>
+          )}
+
+          {showIosGuide && (
+            <div className="ios-guide-overlay" onClick={() => setShowIosGuide(false)}>
+              <div className="ios-guide-modal animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                <div className="ios-guide-header">
+                  <div className="ios-guide-title">Installation sur iPhone</div>
+                  <button className="ios-guide-close" onClick={() => setShowIosGuide(false)}>×</button>
+                </div>
+                <div className="ios-guide-body">
+                  <div className="ios-guide-step">
+                    <div className="ios-step-num">1</div>
+                    <div className="ios-step-text">
+                      Touchez le bouton de partage <strong>Partager</strong> <span className="ios-share-icon">⎋</span> (en bas sur Safari, en haut à droite sur Chrome).
+                    </div>
+                  </div>
+                  <div className="ios-guide-step">
+                    <div className="ios-step-num">2</div>
+                    <div className="ios-step-text">
+                      Faites défiler le menu et sélectionnez <strong>Sur l'écran d'accueil</strong> <span className="ios-add-icon">⊕</span>.
+                    </div>
+                  </div>
+                </div>
+                <button className="ios-guide-btn" onClick={() => setShowIosGuide(false)}>J'ai compris</button>
               </div>
             </div>
           )}
@@ -565,9 +593,33 @@ export default function App() {
               setShowPwaBanner(false);
               sessionStorage.setItem(isIOSDevice ? 'sfx_pwa_ios_tip' : 'sfx_pwa_prompt', 'true');
             }}>Plus tard</button>
-            {!isIOSDevice && (
-              <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
-            )}
+            <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
+          </div>
+        </div>
+      )}
+
+      {showIosGuide && (
+        <div className="ios-guide-overlay" onClick={() => setShowIosGuide(false)}>
+          <div className="ios-guide-modal animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="ios-guide-header">
+              <div className="ios-guide-title">Installation sur iPhone</div>
+              <button className="ios-guide-close" onClick={() => setShowIosGuide(false)}>×</button>
+            </div>
+            <div className="ios-guide-body">
+              <div className="ios-guide-step">
+                <div className="ios-step-num">1</div>
+                <div className="ios-step-text">
+                  Touchez le bouton de partage <strong>Partager</strong> <span className="ios-share-icon">⎋</span> (en bas sur Safari, en haut à droite sur Chrome).
+                </div>
+              </div>
+              <div className="ios-guide-step">
+                <div className="ios-step-num">2</div>
+                <div className="ios-step-text">
+                  Faites défiler le menu et sélectionnez <strong>Sur l'écran d'accueil</strong> <span className="ios-add-icon">⊕</span>.
+                </div>
+              </div>
+            </div>
+            <button className="ios-guide-btn" onClick={() => setShowIosGuide(false)}>J'ai compris</button>
           </div>
         </div>
       )}
