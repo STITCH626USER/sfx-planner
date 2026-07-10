@@ -296,6 +296,7 @@ export default function App() {
             </div>
           )}
         </div>
+        <MickeyTamagotchiModal isOpen={tamagotchiOpen} onClose={() => setTamagotchiOpen(false)} />
       </div>
     );
   }
