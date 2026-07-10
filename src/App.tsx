@@ -70,26 +70,11 @@ export default function App() {
   // PWA Installation state and hooks
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
   const [showPwaBanner, setShowPwaBanner] = useState(false);
-  const [isIOSDevice, setIsIOSDevice] = useState(false);
-  const [showIosGuide, setShowIosGuide] = useState(false);
 
   useEffect(() => {
-    const ua = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-    if (isIOS && !isStandalone) {
-      setIsIOSDevice(true);
-      const hasSeenTip = sessionStorage.getItem('sfx_pwa_ios_tip');
-      if (!hasSeenTip) {
-        setShowPwaBanner(true);
-        const timer = setTimeout(() => {
-          setShowPwaBanner(false);
-          sessionStorage.setItem('sfx_pwa_ios_tip', 'true');
-        }, 12000);
-        return () => clearTimeout(timer);
-      }
-    } else if (!isStandalone) {
+    if (!isStandalone) {
       const handleInstallPrompt = (e: any) => {
         e.preventDefault();
         setPwaPrompt(e);
@@ -109,10 +94,7 @@ export default function App() {
   }, []);
 
   const handleInstallClick = () => {
-    if (isIOSDevice) {
-      setShowIosGuide(true);
-      setShowPwaBanner(false);
-    } else if (pwaPrompt) {
+    if (pwaPrompt) {
       pwaPrompt.prompt();
       pwaPrompt.userChoice.then((choice: any) => {
         if (choice.outcome === 'accepted') {
@@ -297,44 +279,16 @@ export default function App() {
                 <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
                 <div className="pwa-banner-text">
                   <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                    {isIOSDevice 
-                      ? "Installer SFX Planner 3000 sur votre écran d'accueil ? (sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil')"
-                      : "Installer SFX Planner 3000 sur votre écran d'accueil ?"}
+                    Installer SFX Planner 3000 sur votre écran d'accueil ?
                   </div>
                 </div>
               </div>
               <div className="pwa-banner-actions">
                 <button className="pwa-btn-cancel" onClick={() => {
                   setShowPwaBanner(false);
-                  sessionStorage.setItem(isIOSDevice ? 'sfx_pwa_ios_tip' : 'sfx_pwa_prompt', 'true');
+                  sessionStorage.setItem('sfx_pwa_prompt', 'true');
                 }}>Plus tard</button>
                 <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
-              </div>
-            </div>
-          )}
-
-          {showIosGuide && (
-            <div className="ios-guide-overlay" onClick={() => setShowIosGuide(false)}>
-              <div className="ios-guide-modal animate-slide-up" onClick={(e) => e.stopPropagation()}>
-                <div className="ios-guide-header">
-                  <div className="ios-guide-title">Installation sur iPhone</div>
-                  <button className="ios-guide-close" onClick={() => setShowIosGuide(false)}>×</button>
-                </div>
-                <div className="ios-guide-body">
-                  <div className="ios-guide-step">
-                    <div className="ios-step-num">1</div>
-                    <div className="ios-step-text">
-                      Touchez le bouton de partage <strong>Partager</strong> <span className="ios-share-icon">⎋</span> (en bas sur Safari, en haut à droite sur Chrome).
-                    </div>
-                  </div>
-                  <div className="ios-guide-step">
-                    <div className="ios-step-num">2</div>
-                    <div className="ios-step-text">
-                      Faites défiler le menu et sélectionnez <strong>Sur l'écran d'accueil</strong> <span className="ios-add-icon">⊕</span>.
-                    </div>
-                  </div>
-                </div>
-                <button className="ios-guide-btn" onClick={() => setShowIosGuide(false)}>J'ai compris</button>
               </div>
             </div>
           )}
@@ -582,44 +536,16 @@ export default function App() {
             <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
             <div className="pwa-banner-text">
               <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                {isIOSDevice 
-                  ? "Installer SFX Planner 3000 sur votre écran d'accueil ? (sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil')"
-                  : "Installer SFX Planner 3000 sur votre écran d'accueil ?"}
+                Installer SFX Planner 3000 sur votre écran d'accueil ?
               </div>
             </div>
           </div>
           <div className="pwa-banner-actions">
             <button className="pwa-btn-cancel" onClick={() => {
               setShowPwaBanner(false);
-              sessionStorage.setItem(isIOSDevice ? 'sfx_pwa_ios_tip' : 'sfx_pwa_prompt', 'true');
+              sessionStorage.setItem('sfx_pwa_prompt', 'true');
             }}>Plus tard</button>
             <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
-          </div>
-        </div>
-      )}
-
-      {showIosGuide && (
-        <div className="ios-guide-overlay" onClick={() => setShowIosGuide(false)}>
-          <div className="ios-guide-modal animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            <div className="ios-guide-header">
-              <div className="ios-guide-title">Installation sur iPhone</div>
-              <button className="ios-guide-close" onClick={() => setShowIosGuide(false)}>×</button>
-            </div>
-            <div className="ios-guide-body">
-              <div className="ios-guide-step">
-                <div className="ios-step-num">1</div>
-                <div className="ios-step-text">
-                  Touchez le bouton de partage <strong>Partager</strong> <span className="ios-share-icon">⎋</span> (en bas sur Safari, en haut à droite sur Chrome).
-                </div>
-              </div>
-              <div className="ios-guide-step">
-                <div className="ios-step-num">2</div>
-                <div className="ios-step-text">
-                  Faites défiler le menu et sélectionnez <strong>Sur l'écran d'accueil</strong> <span className="ios-add-icon">⊕</span>.
-                </div>
-              </div>
-            </div>
-            <button className="ios-guide-btn" onClick={() => setShowIosGuide(false)}>J'ai compris</button>
           </div>
         </div>
       )}
