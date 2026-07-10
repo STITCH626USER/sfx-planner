@@ -2937,3 +2937,104 @@ nav.seg button[aria-selected="true"] {
   content-visibility: auto;
   contain-intrinsic-size: auto 150px;
 }
+
+/* 12. PWA Installation Banner Overlay */
+.pwa-install-banner {
+  position: fixed;
+  bottom: calc(52px + env(safe-area-inset-bottom)); /* Just above the footer notice */
+  left: 16px;
+  right: 16px;
+  max-width: 448px;
+  margin: 0 auto;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 176, 58, 0.25);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:root[data-theme="light"] .pwa-install-banner {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(214, 104, 10, 0.25);
+  box-shadow: 0 20px 25px -5px rgba(90, 75, 60, 0.15), 0 10px 10px -5px rgba(90, 75, 60, 0.1);
+}
+
+.pwa-banner-content {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.pwa-banner-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="light"] .pwa-banner-icon {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.pwa-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-banner-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+
+.pwa-banner-desc {
+  font-size: 11px;
+  color: var(--fg-muted);
+  line-height: 1.3;
+}
+
+.pwa-banner-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pwa-banner-actions button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.pwa-btn-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+}
+
+:root[data-theme="light"] .pwa-btn-cancel {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.pwa-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pwa-btn-install {
+  background: var(--amber);
+  color: #fff;
+}
+
+.pwa-btn-install:hover {
+  background: var(--amber-2);
+}

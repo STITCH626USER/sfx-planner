@@ -67,6 +67,59 @@ export default function App() {
   const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  // PWA Installation state and hooks
+  const [pwaPrompt, setPwaPrompt] = useState<any>(null);
+  const [showPwaBanner, setShowPwaBanner] = useState(false);
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isIOS && !isStandalone) {
+      setIsIOSDevice(true);
+      const hasSeenTip = sessionStorage.getItem('sfx_pwa_ios_tip');
+      if (!hasSeenTip) {
+        setShowPwaBanner(true);
+        const timer = setTimeout(() => {
+          setShowPwaBanner(false);
+          sessionStorage.setItem('sfx_pwa_ios_tip', 'true');
+        }, 12000);
+        return () => clearTimeout(timer);
+      }
+    } else if (!isStandalone) {
+      const handleInstallPrompt = (e: any) => {
+        e.preventDefault();
+        setPwaPrompt(e);
+        const hasSeenPrompt = sessionStorage.getItem('sfx_pwa_prompt');
+        if (!hasSeenPrompt) {
+          setShowPwaBanner(true);
+          const timer = setTimeout(() => {
+            setShowPwaBanner(false);
+            sessionStorage.setItem('sfx_pwa_prompt', 'true');
+          }, 12000);
+          return () => clearTimeout(timer);
+        }
+      };
+      window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+      return () => window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+    }
+  }, []);
+
+  const handleInstallClick = () => {
+    if (pwaPrompt) {
+      pwaPrompt.prompt();
+      pwaPrompt.userChoice.then((choice: any) => {
+        if (choice.outcome === 'accepted') {
+          console.log('PWA installation accepted');
+        }
+        setPwaPrompt(null);
+        setShowPwaBanner(false);
+      });
+    }
+  };
+
 
 
   useEffect(() => {
@@ -233,6 +286,31 @@ export default function App() {
               </span>
             </div>
           </div>
+
+          {showPwaBanner && (
+            <div className="pwa-install-banner animate-fade-in">
+              <div className="pwa-banner-content">
+                <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
+                <div className="pwa-banner-text">
+                  <div className="pwa-banner-title">Installer SFX Planner ?</div>
+                  <div className="pwa-banner-desc">
+                    {isIOSDevice 
+                      ? "Sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil'."
+                      : "Accédez à vos plannings instantanément et hors-ligne dans les zones."}
+                  </div>
+                </div>
+              </div>
+              <div className="pwa-banner-actions">
+                <button className="pwa-btn-cancel" onClick={() => {
+                  setShowPwaBanner(false);
+                  sessionStorage.setItem(isIOSDevice ? 'sfx_pwa_ios_tip' : 'sfx_pwa_prompt', 'true');
+                }}>Plus tard</button>
+                {!isIOSDevice && (
+                  <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -467,6 +545,31 @@ export default function App() {
                 Tout effacer
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showPwaBanner && (
+        <div className="pwa-install-banner animate-fade-in">
+          <div className="pwa-banner-content">
+            <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
+            <div className="pwa-banner-text">
+              <div className="pwa-banner-title">Installer SFX Planner ?</div>
+              <div className="pwa-banner-desc">
+                {isIOSDevice 
+                  ? "Sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil'."
+                  : "Accédez à vos plannings instantanément et hors-ligne dans les zones."}
+              </div>
+            </div>
+          </div>
+          <div className="pwa-banner-actions">
+            <button className="pwa-btn-cancel" onClick={() => {
+              setShowPwaBanner(false);
+              sessionStorage.setItem(isIOSDevice ? 'sfx_pwa_ios_tip' : 'sfx_pwa_prompt', 'true');
+            }}>Plus tard</button>
+            {!isIOSDevice && (
+              <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
+            )}
           </div>
         </div>
       )}
