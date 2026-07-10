@@ -328,9 +328,14 @@
     position: absolute;
     pointer-events: none;
     z-index: 12;
+    animation: batFly 3.5s infinite ease-in-out;
 }
 
-@keyframes batHover {
-    0% { transform: translateY(0) rotate(-5deg); }
-    100% { transform: translateY(-3px) rotate(5deg); }
+@keyframes batFly {
+    0% { transform: translate(0, 0) scaleX(1); }
+    45% { transform: translate(25px, 28px) scaleX(1); } /* swoop down near Mickey */
+    50% { transform: translate(28px, 32px) scaleX(-1) rotate(15deg); } /* collision bump! */
+    55% { transform: translate(22px, 25px) scaleX(-1); } /* bounce back */
+    85% { transform: translate(-8px, -5px) scaleX(-1); }
+    100% { transform: translate(0, 0) scaleX(1); }
 }

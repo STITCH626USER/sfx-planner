@@ -352,7 +352,7 @@ export function MickeyTamagotchiModal({ isOpen, onClose }: { isOpen: boolean; on
                 {isSleeping && (
                   <>
                     <div id="lcd-sleeping-indicator">Zzz...</div>
-                    <div className="sleeping-bat" style={{ left: '12px', top: '12px', fontSize: '18px', animation: 'batHover 2s infinite alternate ease-in-out' }}>🦇</div>
+                    <div className="sleeping-bat" style={{ left: '12px', top: '12px', fontSize: '18px' }}>🦇</div>
                   </>
                 )}
                 {isDead && (
