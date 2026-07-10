@@ -349,7 +349,12 @@ export function MickeyTamagotchiModal({ isOpen, onClose }: { isOpen: boolean; on
                 ))}
 
                 {/* Overlays */}
-                {isSleeping && <div id="lcd-sleeping-indicator">Zzz...</div>}
+                {isSleeping && (
+                  <>
+                    <div id="lcd-sleeping-indicator">Zzz...</div>
+                    <div className="sleeping-bat" style={{ left: '12px', top: '12px', fontSize: '18px', animation: 'batHover 2s infinite alternate ease-in-out' }}>🦇</div>
+                  </>
+                )}
                 {isDead && (
                   <div id="lcd-death" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 100 100" width="55" height="55" style={{ display: 'block', marginBottom: '2px' }}>

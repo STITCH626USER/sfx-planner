@@ -323,3 +323,14 @@
     letter-spacing: 0.5px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
+
+.sleeping-bat {
+    position: absolute;
+    pointer-events: none;
+    z-index: 12;
+}
+
+@keyframes batHover {
+    0% { transform: translateY(0) rotate(-5deg); }
+    100% { transform: translateY(-3px) rotate(5deg); }
+}
