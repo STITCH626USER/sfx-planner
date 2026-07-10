@@ -1,0 +1,22 @@
+{
+  "name": "SFX Planner 3000",
+  "short_name": "SFX Planner",
+  "description": "Visualisation et export des plannings de l'équipe SFX",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#04060a",
+  "theme_color": "#04060a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
