@@ -351,13 +351,27 @@ export function MickeyTamagotchiModal({ isOpen, onClose }: { isOpen: boolean; on
                 {/* Overlays */}
                 {isSleeping && <div id="lcd-sleeping-indicator">Zzz...</div>}
                 {isDead && (
-                  <div id="lcd-death">
-                    ☠️ RIP<br />Mickey (1928-2026)
+                  <div id="lcd-death" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 100 100" width="55" height="55" style={{ display: 'block', marginBottom: '2px' }}>
+                      {/* Left Ear */}
+                      <circle cx="32" cy="28" r="15" fill="#9ca3af" stroke="#111" strokeWidth="3.5" />
+                      {/* Right Ear */}
+                      <circle cx="68" cy="28" r="15" fill="#9ca3af" stroke="#111" strokeWidth="3.5" />
+                      {/* Tombstone Body */}
+                      <path d="M 25 85 L 25 45 C 25 28, 75 28, 75 45 L 75 85 Z" fill="#9ca3af" stroke="#111" strokeWidth="3.5" />
+                      {/* Base line */}
+                      <path d="M 15 85 L 85 85" stroke="#111" strokeWidth="4" strokeLinecap="round" />
+                      {/* RIP text */}
+                      <text x="50" y="55" fontFamily="monospace" fontSize="11" fontWeight="bold" textAnchor="middle" fill="#111">R.I.P</text>
+                      {/* Small Cross */}
+                      <path d="M 44 68 L 56 68 M 50 63 L 50 75" stroke="#111" strokeWidth="2" fill="none" />
+                    </svg>
+                    <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#111', lineHeight: '1.2' }}>Mickey (1928-2026)</span>
                     <button
                       onClick={handleRestart}
                       style={{
-                        marginTop: '8px',
-                        padding: '2px 8px',
+                        marginTop: '4px',
+                        padding: '1px 6px',
                         fontSize: '9px',
                         borderRadius: '4px',
                         border: '1px solid #111',
