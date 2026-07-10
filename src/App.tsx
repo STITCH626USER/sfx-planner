@@ -288,15 +288,14 @@ export default function App() {
           </div>
 
           {showPwaBanner && (
-            <div className="pwa-install-banner animate-fade-in">
+            <div className="pwa-install-banner animate-slide-up">
               <div className="pwa-banner-content">
                 <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
                 <div className="pwa-banner-text">
-                  <div className="pwa-banner-title">Installer SFX Planner ?</div>
-                  <div className="pwa-banner-desc">
+                  <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
                     {isIOSDevice 
-                      ? "Sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil'."
-                      : "Accédez à vos plannings instantanément et hors-ligne dans les zones."}
+                      ? "Installer SFX Planner 3000 sur votre écran d'accueil ? (sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil')"
+                      : "Installer SFX Planner 3000 sur votre écran d'accueil ?"}
                   </div>
                 </div>
               </div>
@@ -550,15 +549,14 @@ export default function App() {
       )}
 
       {showPwaBanner && (
-        <div className="pwa-install-banner animate-fade-in">
+        <div className="pwa-install-banner animate-slide-up">
           <div className="pwa-banner-content">
             <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
             <div className="pwa-banner-text">
-              <div className="pwa-banner-title">Installer SFX Planner ?</div>
-              <div className="pwa-banner-desc">
+              <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
                 {isIOSDevice 
-                  ? "Sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil'."
-                  : "Accédez à vos plannings instantanément et hors-ligne dans les zones."}
+                  ? "Installer SFX Planner 3000 sur votre écran d'accueil ? (sur iPhone : cliquez sur Partager ⎋ puis 'Sur l'écran d'accueil')"
+                  : "Installer SFX Planner 3000 sur votre écran d'accueil ?"}
               </div>
             </div>
           </div>

@@ -3038,3 +3038,19 @@ nav.seg button[aria-selected="true"] {
 .pwa-btn-install:hover {
   background: var(--amber-2);
 }
+
+/* 13. PWA slide-up animation from the bottom of the screen */
+@keyframes slideUpFromBottom {
+  from {
+    transform: translateY(150%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFromBottom 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
