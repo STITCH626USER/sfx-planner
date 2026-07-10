@@ -3,6 +3,7 @@ import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch } from './lib/utils';
+import { MickeyTamagotchiButton, MickeyTamagotchiModal } from './MickeyTamagotchi';
 
 
 type Tab = 'recherche' | 'daily';
@@ -66,6 +67,7 @@ export default function App() {
   const [captchaSlider, setCaptchaSlider] = useState(0);
   const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [tamagotchiOpen, setTamagotchiOpen] = useState(false);
 
   // PWA Installation state and hooks
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
@@ -236,7 +238,7 @@ export default function App() {
             <h1 className="landing-title">SFX Planner 3000</h1>
           </header>
           
-          <div className="landing-uploader-wrap">
+          <div className="landing-uploader-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Uploader
               loading={loading}
               drag={drag}
@@ -246,6 +248,7 @@ export default function App() {
               onDragLeave={() => setDrag(false)}
               onDrop={onDrop}
             />
+            <MickeyTamagotchiButton onClick={() => setTamagotchiOpen(true)} />
           </div>
 
           <input
@@ -322,15 +325,18 @@ export default function App() {
           </div>
         </header>
 
-        <Uploader
-          loading={loading}
-          drag={drag}
-          compact={records.length > 0}
-          onPick={() => fileRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={onDrop}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          <Uploader
+            loading={loading}
+            drag={drag}
+            compact={records.length > 0}
+            onPick={() => fileRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={onDrop}
+          />
+          <MickeyTamagotchiButton onClick={() => setTamagotchiOpen(true)} />
+        </div>
         <input
           ref={fileRef}
           type="file"
@@ -549,6 +555,7 @@ export default function App() {
           </div>
         </div>
       )}
+      <MickeyTamagotchiModal isOpen={tamagotchiOpen} onClose={() => setTamagotchiOpen(false)} />
     </div>
   );
 }

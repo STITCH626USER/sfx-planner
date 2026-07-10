@@ -1,0 +1,325 @@
+/* ==========================================
+   🎮 RETRO-TAMAGOTCHI 1928 EMULATOR STYLES
+   ========================================== */
+
+.tamagotchi-shell {
+    width: 250px;
+    height: 320px;
+    background: radial-gradient(circle at 30% 30%, #7c3aed, #4c1d95); /* Deep neon violet plastic */
+    border-radius: 125px 125px 145px 145px;
+    box-shadow: 
+        0 15px 30px rgba(0, 0, 0, 0.4),
+        inset -8px -8px 16px rgba(0, 0, 0, 0.5),
+        inset 8px 8px 16px rgba(255, 255, 255, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 30px 18px 20px 18px;
+    position: relative;
+    user-select: none;
+    border: 3px solid #2e1065;
+    box-sizing: border-box;
+}
+
+/* Subtle plastic seam line */
+.tamagotchi-shell::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 2%;
+    width: 96%;
+    height: 2px;
+    background-color: rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+}
+
+.tamagotchi-screen-bezel {
+    width: 100%;
+    height: 150px;
+    background-color: #1e1b4b; /* Dark charcoal/blue frame */
+    border-radius: 20px;
+    border: 4px solid #111827;
+    box-shadow: 
+        inset 2px 2px 5px rgba(0,0,0,0.8),
+        2px 2px 4px rgba(255,255,255,0.1);
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.screen-glass {
+    width: 100%;
+    height: 100%;
+    background-color: #8fa382; /* Retro LCD greenish gray */
+    border-radius: 8px;
+    border: 3px solid #0f172a;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    overflow: hidden;
+    position: relative;
+    font-family: monospace;
+    box-sizing: border-box;
+}
+
+/* LCD Scanline effect */
+.screen-glass::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0,0,0,0.06) 50%, rgba(255,255,255,0.06) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.lcd-header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-bottom: 2px solid #111827;
+    padding-bottom: 4px;
+    margin-bottom: 2px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lcd-gauge-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.lcd-gauge-icon {
+    font-size: 10px;
+}
+
+.lcd-gauge-bg {
+    width: 32px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.12);
+    border: 1px solid #111827;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.lcd-gauge-fill {
+    height: 100%;
+    background-color: #111827; /* solid retro dark LCD fill */
+    transition: width 0.3s ease;
+}
+
+.lcd-display {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-color: #8fa382;
+    transition: background-color 0.3s ease;
+}
+
+/* Lights out dark mode on LCD screen */
+.lcd-display.dark-mode {
+    background-color: #2b3a27;
+}
+
+/* Mickey Pet Rendering */
+.pet-wrapper {
+    position: absolute;
+    bottom: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.1s ease;
+    transform-origin: bottom center;
+}
+
+/* SVG colors */
+.mickey-black {
+    fill: #1e1e1e;
+}
+.mickey-skin {
+    fill: #ede6d5;
+}
+.mickey-eye {
+    fill: #1e1e1e;
+}
+
+/* Animations for Mickey */
+.pet-bounce {
+    animation: bounceEffect 0.8s infinite alternate ease-in-out;
+}
+
+.pet-eating {
+    animation: eatEffect 0.15s 4 alternate ease-in-out;
+}
+
+.pet-spin {
+    animation: spinEffect 0.6s 1 ease-in-out;
+}
+
+@keyframes bounceEffect {
+    from { transform: translateY(0) scaleY(1); }
+    to { transform: translateY(-8px) scaleY(0.95); }
+}
+
+@keyframes eatEffect {
+    from { transform: scale(1) translateY(0); }
+    to { transform: scale(1.15) translateY(2px); }
+}
+
+@keyframes spinEffect {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
+
+/* Floating status animations */
+.floating-text {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 900;
+    color: #111827;
+    animation: floatUp 0.8s forwards ease-out;
+    pointer-events: none;
+    z-index: 20;
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-30px); opacity: 0; }
+}
+
+/* Falling Dollars (LARGER BILLS AS REQUESTED) */
+.dollar-bill {
+    position: absolute;
+    font-size: 32px; /* Bigger dollars */
+    animation: fallDown 0.6s forwards linear;
+    z-index: 15;
+}
+
+@keyframes fallDown {
+    0% { transform: translateY(-40px) rotate(0deg); }
+    100% { transform: translateY(30px) rotate(15deg); }
+}
+
+/* Overlay notices inside screen */
+#lcd-sleeping-indicator {
+    position: absolute;
+    right: 8px;
+    top: 10px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #111827;
+    animation: pulse 1s infinite alternate;
+}
+
+#lcd-death {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #6b7280;
+    color: #111827;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    z-index: 30;
+}
+
+#lcd-alert {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    font-size: 8px;
+    font-weight: bold;
+    color: #991b1b;
+    background-color: rgba(254, 226, 226, 0.7);
+    padding: 1px 4px;
+    border-radius: 4px;
+    animation: blink 0.6s infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+}
+
+@keyframes blink {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Physical Buttons */
+.shell-buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 8px 0 8px;
+    margin-top: auto;
+    box-sizing: border-box;
+}
+
+.btn-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.physical-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid #1e293b;
+    cursor: pointer;
+    box-shadow: 
+        0 4px 0 #0f172a,
+        inset 1px 1px 2px rgba(255,255,255,0.4);
+    outline: none;
+    transition: all 0.05s ease;
+}
+
+.physical-btn:active {
+    transform: translateY(3px);
+    box-shadow: 
+        0 1px 0 #0f172a,
+        inset 2px 2px 4px rgba(0,0,0,0.6);
+}
+
+.btn-feed {
+    background: linear-gradient(135deg, #facc15, #ca8a04); /* Bright Yellow */
+}
+.btn-play {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* Vibrant Blue */
+}
+.btn-sleep {
+    background: linear-gradient(135deg, #ef4444, #b91c1c); /* Vibrant Red */
+}
+
+.btn-tag {
+    font-family: monospace;
+    font-size: 8px;
+    font-weight: 800;
+    color: #ede9fe;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
