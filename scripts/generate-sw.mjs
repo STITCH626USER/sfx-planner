@@ -48,29 +48,42 @@ const CACHE_NAME = `sfx-planner-${CACHE_VERSION}`;
 
 const precacheList = files.map((f) => `./${f}`);
 
-const sw = `// Service Worker Uninstaller to break cache deadlock loop and force client refresh
+const sw = `const CACHE_NAME = '${CACHE_NAME}';
+const PRECACHE = ${JSON.stringify(precacheList)};
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      return Promise.all(keys.map((key) => caches.delete(key)));
-    }).then(() => {
-      return self.clients.claim();
-    }).then(() => {
-      return self.clients.matchAll({ type: 'window' }).then((clients) => {
-        for (const client of clients) {
-          if (client.navigate) {
-            client.navigate(client.url);
-          }
-        }
-      });
+      return Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  event.respondWith(
+    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+      if (cached) return cached;
+      
+      if (event.request.mode === 'navigate') {
+        return caches.match('./index.html');
+      }
+      
+      return fetch(event.request);
     })
   );
 });
 `;
 
 writeFileSync(join(DIST, 'sw.js'), sw);
-console.log(`[generate-sw] wrote dist/sw.js — uninstaller script`);
+console.log(`[generate-sw] wrote dist/sw.js — offline service worker (${CACHE_NAME} with ${precacheList.length} files)`);
