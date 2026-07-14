@@ -1298,6 +1298,51 @@ function DatePicker({ dates, date, records, onChange }: {
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <div className="date-row" role="tablist" data-testid="date-row">
+        <button
+          className="date-pill"
+          onClick={() => {
+            const today = new Date().toISOString().split('T')[0];
+            let targetDate = dates.includes(today) ? today : null;
+            
+            if (!targetDate && dates.length > 0) {
+              // Find closest date
+              const todayTime = new Date(today).getTime();
+              targetDate = [...dates].sort((a, b) => 
+                Math.abs(new Date(a).getTime() - todayTime) - Math.abs(new Date(b).getTime() - todayTime)
+              )[0];
+            }
+            
+            if (targetDate) {
+              onChange(targetDate);
+              setTimeout(() => {
+                const pill = document.querySelector(`[data-testid="date-pill-${targetDate}"]`);
+                if (pill) {
+                  pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+              }, 50);
+            }
+          }}
+          title="Aller à aujourd'hui"
+          style={{
+            position: 'sticky',
+            left: 6,
+            zIndex: 10,
+            padding: '10px 12px',
+            minWidth: 'auto',
+            justifyContent: 'center',
+            marginRight: 4,
+            boxShadow: '4px 0 12px var(--shadow-color, rgba(0,0,0,0.15))'
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 4 }}>
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <path d="M9 16l2 2 4-4"></path>
+          </svg>
+          <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Auj.</span>
+        </button>
       {dates.map(d => {
         const sel = d === date;
         const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
