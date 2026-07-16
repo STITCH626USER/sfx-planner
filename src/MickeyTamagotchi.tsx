@@ -26,11 +26,10 @@ function playBeep(frequency = 800, duration = 80) {
   }
 }
 
-export function MickeyTamagotchiButton({ onClick }: { onClick: () => void }) {
+export function MickeyTamagotchiButton({ onClick: _ }: { onClick?: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      title="Ouvrir le Tamagotchi Mickey 1928 (Provisoire)"
+    <div
+      title="Logo SFX"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -38,7 +37,7 @@ export function MickeyTamagotchiButton({ onClick }: { onClick: () => void }) {
         background: 'transparent',
         border: 'none',
         color: 'var(--idfm-navy, #1e3a8a)',
-        cursor: 'pointer',
+        cursor: 'default',
         padding: '8px',
         marginTop: '10px',
         opacity: 0.7,
@@ -61,7 +60,7 @@ export function MickeyTamagotchiButton({ onClick }: { onClick: () => void }) {
         <circle cx="50" cy="80" r="3" fill="currentColor" />
         <circle cx="62" cy="78" r="3" fill="currentColor" />
       </svg>
-    </button>
+    </div>
   );
 }
 
