@@ -1295,6 +1295,25 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 function DatePicker({ dates, date, records, onChange }: {
   dates: string[]; date: string; records: PlanningRecord[]; onChange: (date: string) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        // Only prevent default if we can actually scroll horizontally
+        if ((e.deltaY > 0 && el.scrollLeft < maxScroll) || (e.deltaY < 0 && el.scrollLeft > 0)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
   return (
     <div className="date-picker-wrapper" style={{
       display: 'flex', alignItems: 'center',
@@ -1347,7 +1366,7 @@ function DatePicker({ dates, date, records, onChange }: {
         </svg>
         <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Auj.</span>
       </button>
-      <div className="date-row" role="tablist" data-testid="date-row" style={{
+      <div ref={scrollRef} className="date-row" role="tablist" data-testid="date-row" style={{
         position: 'static', margin: 0, padding: 0, background: 'none', flex: 1
       }}>
       {dates.map(d => {
