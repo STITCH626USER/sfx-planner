@@ -47,12 +47,26 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 
 function MaintenanceScreen({ onBypass }: { onBypass: () => void }) {
   const [clicks, setClicks] = useState(0);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [password, setPassword] = useState('');
 
   const handleLogoClick = () => {
+    if (showPrompt) return;
     const newClicks = clicks + 1;
     setClicks(newClicks);
-    if (newClicks >= 11) {
+    if (newClicks >= 5) {
+      setShowPrompt(true);
+    }
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === '3030') {
       onBypass();
+    } else {
+      setPassword('');
+      setShowPrompt(false);
+      setClicks(0);
     }
   };
 
@@ -86,9 +100,30 @@ function MaintenanceScreen({ onBypass }: { onBypass: () => void }) {
           textAlign: 'center',
           boxShadow: 'var(--shadow-lg)'
         }}>
-          <p style={{ color: 'var(--fg)', fontSize: '16px', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
-            Faute de prise en considération par la direction de cette solution proposée à titre gracieux, l'application est désormais désactivée.
-          </p>
+          {!showPrompt ? (
+            <p style={{ color: 'var(--fg)', fontSize: '16px', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
+              Faute de prise en considération par la direction de cette solution proposée à titre gracieux, l'application est désormais désactivée.
+            </p>
+          ) : (
+            <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                placeholder="Mot de passe..."
+                style={{ 
+                  padding: '8px 12px', 
+                  borderRadius: '8px', 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg)', 
+                  color: 'var(--fg)',
+                  textAlign: 'center' 
+                }} 
+              />
+              <button type="submit" className="btn btn-sm" style={{ padding: '6px 16px' }}>Valider</button>
+            </form>
+          )}
         </div>
       </div>
     </div>
