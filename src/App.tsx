@@ -45,44 +45,68 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
   return 'time-pill';
 }
 
-export default function App() {
-  const SITE_DESACTIVE = true;
+function MaintenanceScreen({ onBypass }: { onBypass: () => void }) {
+  const [clicks, setClicks] = useState(0);
 
-  if (SITE_DESACTIVE) {
-    return (
-      <div className="app-shell-empty-container">
-        <div className="smoke-bg" aria-hidden="true">
-          <div className="smoke-cloud smoke-cloud-1" />
-          <div className="smoke-cloud smoke-cloud-2" />
-          <div className="smoke-cloud smoke-cloud-3" />
-        </div>
-        
-        <div className="empty-landing-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
-          <header className="landing-header">
-            <div className="landing-logo-wrap" style={{ cursor: 'default' }}>
-              <Logo />
-            </div>
-            <h1 className="landing-title">SFX Planner 3000</h1>
-          </header>
-          
-          <div style={{ 
-            marginTop: '32px', 
-            padding: '32px 24px', 
-            background: 'var(--bg-elevated)', 
-            borderRadius: '16px', 
-            border: '1px solid var(--border)',
-            maxWidth: '500px',
-            textAlign: 'center',
-            boxShadow: 'var(--shadow-lg)'
-          }}>
-            <p style={{ color: 'var(--fg)', fontSize: '16px', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
-              Faute de prise en considération par la direction de cette solution proposée à titre gracieux, l'application est désormais désactivée.
-            </p>
+  const handleLogoClick = () => {
+    const newClicks = clicks + 1;
+    setClicks(newClicks);
+    if (newClicks >= 11) {
+      onBypass();
+    }
+  };
+
+  return (
+    <div className="app-shell-empty-container">
+      <div className="smoke-bg" aria-hidden="true">
+        <div className="smoke-cloud smoke-cloud-1" />
+        <div className="smoke-cloud smoke-cloud-2" />
+        <div className="smoke-cloud smoke-cloud-3" />
+      </div>
+      
+      <div className="empty-landing-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
+        <header className="landing-header">
+          <div 
+            className="landing-logo-wrap" 
+            style={{ cursor: 'pointer', userSelect: 'none' }}
+            onClick={handleLogoClick}
+          >
+            <Logo />
           </div>
+          <h1 className="landing-title">SFX Planner 3000</h1>
+        </header>
+        
+        <div style={{ 
+          marginTop: '32px', 
+          padding: '32px 24px', 
+          background: 'var(--bg-elevated)', 
+          borderRadius: '16px', 
+          border: '1px solid var(--border)',
+          maxWidth: '500px',
+          textAlign: 'center',
+          boxShadow: 'var(--shadow-lg)'
+        }}>
+          <p style={{ color: 'var(--fg)', fontSize: '16px', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
+            Faute de prise en considération par la direction de cette solution proposée à titre gracieux, l'application est désormais désactivée.
+          </p>
         </div>
       </div>
-    );
+    </div>
+  );
+}
+
+export default function App() {
+  const [bypass, setBypass] = useState(false);
+  const SITE_DESACTIVE = true;
+
+  if (SITE_DESACTIVE && !bypass) {
+    return <MaintenanceScreen onBypass={() => setBypass(true)} />;
   }
+
+  return <MainApp />;
+}
+
+function MainApp() {
 
   const [tab, setTab] = useState<Tab>('daily');
   
