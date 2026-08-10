@@ -46,6 +46,46 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
 }
 
 export default function App() {
+  const SITE_DESACTIVE = true;
+
+  if (SITE_DESACTIVE) {
+    return (
+      <div className="app-shell-empty-container">
+        <div className="smoke-bg" aria-hidden="true">
+          <div className="smoke-cloud smoke-cloud-1" />
+          <div className="smoke-cloud smoke-cloud-2" />
+          <div className="smoke-cloud smoke-cloud-3" />
+        </div>
+        
+        <div className="empty-landing-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
+          <header className="landing-header">
+            <div className="landing-logo-wrap" style={{ cursor: 'default' }}>
+              <Logo />
+            </div>
+            <h1 className="landing-title">SFX Planner 3000</h1>
+          </header>
+          
+          <div style={{ 
+            marginTop: '32px', 
+            padding: '32px 24px', 
+            background: 'var(--bg-elevated)', 
+            borderRadius: '16px', 
+            border: '1px solid var(--border)',
+            maxWidth: '500px',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow-lg)'
+          }}>
+            <p style={{ color: 'var(--fg)', fontSize: '16px', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
+              Cette app est désactivée suite à aucun remerciement ni réaction de la part de notre management. 
+              <br/><br/>
+              Désolé.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [tab, setTab] = useState<Tab>('daily');
   
   const [theme, setTheme] = useState<Theme>(() => {
