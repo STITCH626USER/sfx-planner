@@ -76,9 +76,9 @@ export default function App() {
             boxShadow: 'var(--shadow-lg)'
           }}>
             <p style={{ color: 'var(--fg)', fontSize: '16px', lineHeight: '1.6', margin: 0, fontWeight: 500 }}>
-              Cette app est désactivée suite à aucun remerciement ni réaction de la part de notre management. 
+              L'application est temporairement suspendue. 
               <br/><br/>
-              Désolé.
+              Veuillez vous rapprocher de l'équipe projet pour plus d'informations.
             </p>
           </div>
         </div>
