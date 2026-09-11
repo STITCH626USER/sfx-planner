@@ -3239,27 +3239,6 @@ nav.seg button[aria-selected="true"] {
   cursor: default;
 }
 
-.header-tamagotchi-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(148, 163, 184, 0.12);
-  border: 1px solid var(--border);
-  color: var(--fg-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.header-tamagotchi-btn:hover {
-  color: var(--amber);
-  background: rgba(217, 119, 6, 0.12);
-  border-color: rgba(217, 119, 6, 0.3);
-  transform: scale(1.06);
-}
-
 .drag-drop-hint {
   margin: 6px 12px 12px 12px;
   padding: 12px;

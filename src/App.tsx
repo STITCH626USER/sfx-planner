@@ -3,7 +3,6 @@ import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './lib/utils';
-import { MickeyTamagotchiModal } from './MickeyTamagotchi';
 
 
 type Tab = 'recherche' | 'daily';
@@ -96,10 +95,7 @@ export default function App() {
   const [drag, setDrag] = useState(false);
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
-  const [captchaSlider, setCaptchaSlider] = useState(0);
-  const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(true);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [tamagotchiOpen, setTamagotchiOpen] = useState(false);
 
   // PWA Installation state and hooks
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
@@ -199,6 +195,7 @@ export default function App() {
         return [...prev, ...newRecs];
       });
       setSources(prev => [...prev, ...newSrcs]);
+      if (newRecs.length > 0) setFireworkTrigger(t => t + 1);
       if (ignored > 0) {
         setError(`${ignored} fichier(s) non-PDF ignoré(s).`);
       }
@@ -279,18 +276,6 @@ export default function App() {
                 title="Basculer thème sombre / clair"
               >
                 {theme === 'dark' ? '☀️ Mode Clair' : '🌙 Mode Sombre'}
-              </button>
-              <button
-                type="button"
-                className="header-tamagotchi-btn"
-                onClick={() => setTamagotchiOpen(true)}
-                title="Mickey"
-              >
-                <svg viewBox="0 0 100 100" fill="currentColor" width="16" height="16">
-                  <circle cx="20" cy="25" r="20" />
-                  <circle cx="80" cy="25" r="20" />
-                  <circle cx="50" cy="65" r="35" />
-                </svg>
               </button>
             </div>
           </div>
@@ -405,8 +390,6 @@ export default function App() {
             </div>
           </div>
         )}
-
-        <MickeyTamagotchiModal isOpen={tamagotchiOpen} onClose={() => setTamagotchiOpen(false)} />
       </div>
     );
 
@@ -414,13 +397,13 @@ export default function App() {
 
   return (
     <div className="app-shell" data-testid="app-root">
-      <div className="smoke-bg" aria-hidden="true" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none' }}>
+      <div className="smoke-bg" aria-hidden="true">
         <div className="smoke-cloud smoke-cloud-1" />
         <div className="smoke-cloud smoke-cloud-2" />
         <div className="smoke-cloud smoke-cloud-3" />
       </div>
       <FireworksCanvas triggerCount={fireworkTrigger} />
-      <aside className="app-sidebar" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none', pointerEvents: !globalCaptchaSolved ? 'none' : 'auto' }}>
+      <aside className="app-sidebar">
         <header className="app-header">
           <div className="app-header-left">
             <button
@@ -455,20 +438,6 @@ export default function App() {
                 </svg>
               )}
               <span>{loading ? 'Lecture…' : 'Ajouter PDF'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="header-tamagotchi-btn"
-              onClick={() => setTamagotchiOpen(true)}
-              title="Mickey"
-              aria-label="Ouvrir Mickey"
-            >
-              <svg viewBox="0 0 100 100" fill="currentColor" width="16" height="16">
-                <circle cx="20" cy="25" r="20" />
-                <circle cx="80" cy="25" r="20" />
-                <circle cx="50" cy="65" r="35" />
-              </svg>
             </button>
           </div>
         </header>
@@ -534,7 +503,7 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="app-main" data-testid="main-content" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none', pointerEvents: !globalCaptchaSolved ? 'none' : 'auto' }}>
+      <main className="app-main" data-testid="main-content">
         {error && (
           <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginBottom: 16 }}>
             <div>{error}</div>
@@ -578,71 +547,6 @@ export default function App() {
         </footer>
         <ScrollToTop />
       </main>
-
-      {!globalCaptchaSolved && (
-        <div className="export-overlay" data-testid="global-captcha-overlay">
-          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', paddingBottom: '32px' }}>
-            <div className="export-body" style={{ padding: '32px 24px 0 24px', textAlign: 'center' }}>
-              <div style={{ marginBottom: '32px', padding: '16px', background: 'rgba(255, 176, 58, 0.1)', borderRadius: '12px', border: '1px solid rgba(255, 176, 58, 0.3)' }}>
-                <p style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', margin: 0, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '24px' }}>⚠️</span>
-                  <span>Contrôle obligatoire sur UKG personnel.</span>
-                </p>
-              </div>
-              
-              <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 40px auto' }}>
-                <div style={{ 
-                  position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                  clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)',
-                  transform: `translateX(-${(100 - captchaSlider)}px)`,
-                  transition: 'transform 0.1s ease-out'
-                }}>
-                  <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
-                    <circle cx="20" cy="25" r="20" />
-                    <circle cx="80" cy="25" r="20" />
-                    <circle cx="50" cy="65" r="35" />
-                  </svg>
-                </div>
-                <div style={{ 
-                  position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                  clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)',
-                  transform: `translateX(${(100 - captchaSlider)}px)`,
-                  transition: 'transform 0.1s ease-out'
-                }}>
-                  <svg viewBox="0 0 100 100" fill="var(--fg)" width="100" height="100">
-                    <circle cx="20" cy="25" r="20" />
-                    <circle cx="80" cy="25" r="20" />
-                    <circle cx="50" cy="65" r="35" />
-                  </svg>
-                </div>
-              </div>
-
-              <div style={{ position: 'relative', margin: '0 auto', maxWidth: '320px', width: '100%' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: 'var(--fg-muted)', fontSize: '15px', fontWeight: 600, paddingLeft: '20px', opacity: 0.8 }}>
-                  Faites glisser pour déverrouiller
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={captchaSlider}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    setCaptchaSlider(val);
-                    if (val >= 97) {
-                      setTimeout(() => {
-                        setGlobalCaptchaSolved(true);
-                        setFireworkTrigger(t => t + 1);
-                      }, 100);
-                    }
-                  }}
-                  className="iphone-slider"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showResetConfirm && (
         <div className="export-overlay" data-testid="reset-confirm-overlay" onClick={() => setShowResetConfirm(false)}>
@@ -697,7 +601,6 @@ export default function App() {
           </div>
         </div>
       )}
-      <MickeyTamagotchiModal isOpen={tamagotchiOpen} onClose={() => setTamagotchiOpen(false)} />
     </div>
   );
 }
