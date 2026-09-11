@@ -428,6 +428,10 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
       displayName = `${displayName} (${r.role})`;
     }
     
+    if (r.shiftTime && r.shiftTime !== r.time) {
+      displayName = `${displayName} [Vacation: ${r.shiftTime}]`;
+    }
+    
     if (!sceneMap.has(groupName)) sceneMap.set(groupName, []);
     sceneMap.get(groupName)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
   }
@@ -465,6 +469,9 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
     let name = r.scene||'-';
     if (r.role && !isTrainingScene(r.scene)) {
       name = `${name} (${r.role})`;
+    }
+    if (r.shiftTime && r.shiftTime !== r.time) {
+      name = `${name} [Vacation: ${r.shiftTime}]`;
     }
     let isFO=false; let subtext: string | undefined;
     if (isTrainingScene(r.scene)) {

@@ -72,6 +72,7 @@ const ROLE_KEYWORDS = [
   'tech sfx secuphare',
   'tech sfx secu phare',
   'entertainment',
+  'frontierlandtheater',
 ];
 
 const HR_CODES = new Set(['SM', 'SC', 'SH', 'HS', 'HF', 'HR', 'FO']);
@@ -84,8 +85,9 @@ export interface PlanningRecord {
   date: string;       // ISO YYYY-MM-DD
   day: DayName;
   time: string;       // "HH:MM-HH:MM" or "OFF"
+  shiftTime?: string; // Overall daily shift hours e.g. "09:00-18:03"
   scene: string;      // scene assignment text or "OFF"
-  role?: string;      // role/mention if any (e.g. AsstCoordinateur, Pupitreur SFX, etc.)
+  role?: string;      // role/mention if any (e.g. AsstCoordinateur, Pupitreur SFX, Tech Sfx, etc.)
   weekLabel: string;  // e.g. "Sem. 21 — 17/05 → 23/05"
   sourceFile: string;
 }
@@ -241,6 +243,7 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
           date,
           day: HEADER_DAYS[d],
           time: seg.time,
+          shiftTime: seg.shiftTime,
           scene: seg.scene,
           role: seg.role,
           weekLabel,
@@ -327,7 +330,7 @@ function extractSceneAndRole(lines: string[]): { scene: string; role?: string } 
   return { scene, role: role || undefined };
 }
 
-function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string; role?: string }> {
+function parseCell(tokens: TokenT[]): Array<{ time: string; shiftTime?: string; scene: string; role?: string }> {
   if (tokens.length === 0) return [{ time: 'OFF', scene: 'OFF' }];
 
   // Group into lines by Y proximity
@@ -366,13 +369,18 @@ function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string; role?
     return [{ time: 'OFF', scene: 'OFF' }];
   }
 
+  // First time entry in Chronos WFM is the overall shift time from the top header of the cell
+  const overallShift = timeEntries[0].time;
+
   // Determine segment slices
   let segmentStarts = timeEntries;
+  let isMultiShiftHeader = false;
   if (timeEntries.length >= 2 && timeEntries[1].lineIndex === timeEntries[0].lineIndex + 1) {
     segmentStarts = timeEntries.slice(1);
+    isMultiShiftHeader = true;
   }
 
-  const results: Array<{ time: string; scene: string; role?: string }> = [];
+  const results: Array<{ time: string; shiftTime?: string; scene: string; role?: string }> = [];
 
   for (let s = 0; s < segmentStarts.length; s++) {
     const cur = segmentStarts[s];
@@ -382,6 +390,7 @@ function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string; role?
     const { scene, role } = extractSceneAndRole(segLines);
     results.push({
       time: cur.time,
+      shiftTime: (isMultiShiftHeader || segmentStarts.length > 1 || overallShift !== cur.time) ? overallShift : undefined,
       scene,
       role
     });
@@ -389,16 +398,16 @@ function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string; role?
 
   // Deduplicate identical segments if any
   const seen = new Set<string>();
-  const unique: Array<{ time: string; scene: string; role?: string }> = [];
+  const unique: Array<{ time: string; shiftTime?: string; scene: string; role?: string }> = [];
   for (const r of results) {
-    const key = `${r.time}|${r.scene}|${r.role || ''}`;
+    const key = `${r.time}|${r.shiftTime || ''}|${r.scene}|${r.role || ''}`;
     if (!seen.has(key)) {
       seen.add(key);
       unique.push(r);
     }
   }
 
-  return unique.length > 0 ? unique : [{ time: timeEntries[0].time, scene: '—' }];
+  return unique.length > 0 ? unique : [{ time: timeEntries[0].time, shiftTime: overallShift, scene: '—' }];
 }
 
 export interface ParseResult {

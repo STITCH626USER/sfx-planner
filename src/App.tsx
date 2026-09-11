@@ -843,98 +843,243 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
               {new Set(weekRecs.filter(r => r.time !== 'OFF').map(r => r.date)).size}/7 jours
             </div>
           </div>
-          {weekRecs.map((rec, rIdx) => {
-            let assocScenes: string[] | undefined;
-            if (allRecords && isTrainingScene(rec.scene)) {
-              const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
-              const scenesOfDay = new Set<string>();
-              for (const dr of dayRecs) {
-                if (timesMatch(dr.time, rec.time, 5)) {
-                  let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
-                  if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-                    scenesOfDay.add(clean);
-                  }
-                }
-              }
-              scenesOfDay.add('Formation autre');
-              if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
+          {(() => {
+            const daysMap = new Map<string, PlanningRecord[]>();
+            for (const r of weekRecs) {
+              if (!daysMap.has(r.date)) daysMap.set(r.date, []);
+              daysMap.get(r.date)!.push(r);
             }
-            return (
+            const days = Array.from(daysMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+            return days.map(([dDate, dayRecs]) => (
               <DayCard
-                key={`${rec.date}-${rec.time}-${rec.scene}-${rIdx}`}
-                rec={rec}
-                assocScenes={assocScenes}
-                onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
+                key={dDate}
+                date={dDate}
+                records={dayRecs}
+                allRecords={allRecords}
+                onOpenScene={canOpenScene ? (sc) => setOpenScene({ date: dDate, scene: sc }) : undefined}
               />
-            );
-          })}
+            ));
+          })()}
         </div>
       ))}
     </div>
   );
 }
 
-function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assocScenes?: string[]; onOpenScene?: () => void }) {
-  const isOff = rec.time === 'OFF';
-  const dayPart = rec.date.split('-')[2];
-  const interactive = !isOff && !!onOpenScene && !!rec.scene;
-  const handleClick = () => { if (interactive) onOpenScene!(); };
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (!interactive) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onOpenScene!();
-    }
-  };
-  return (
-    <div
-      className="day-card"
-      data-off={isOff ? 'true' : 'false'}
-      data-interactive={interactive ? 'true' : 'false'}
-      data-testid={`day-${rec.date}`}
-      role={interactive ? 'button' : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      aria-label={interactive ? `Voir l'équipe de ${rec.scene} le ${formatDateLong(rec.date)}` : undefined}
-      onClick={interactive ? handleClick : undefined}
-      onKeyDown={interactive ? handleKey : undefined}
-      style={interactive ? { cursor: 'pointer' } : undefined}
-    >
-      <div className="day-tag">
-        <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
-        <span className="n">{dayPart}</span>
-        <div className="day-date">{rec.date.split('-').length === 3 ? `${rec.date.split('-')[2]}/${rec.date.split('-')[1]}` : rec.date}</div>
+function DayCard({
+  date,
+  records,
+  allRecords,
+  onOpenScene,
+}: {
+  date: string;
+  records: PlanningRecord[];
+  allRecords?: PlanningRecord[];
+  onOpenScene?: (scene: string) => void;
+}) {
+  const isOff = records.every(r => r.time === 'OFF');
+  const first = records[0];
+  const dayPart = date.split('-')[2] || date;
+  const dayName = first?.day || 'lundi';
+  const shiftTime = first?.shiftTime;
+  const isMulti = records.length > 1 || (!!shiftTime && shiftTime !== first.time);
+
+  if (isOff) {
+    return (
+      <div className="day-card" data-off="true" data-testid={`day-${date}`}>
+        <div className="day-tag">
+          <span className="d">{DAY_FR_SHORT[dayName] ?? dayName.slice(0, 3).toUpperCase()}</span>
+          <span className="n">{dayPart}</span>
+          <div className="day-date">{date.split('-').length === 3 ? `${date.split('-')[2]}/${date.split('-')[1]}` : date}</div>
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="day-scene off" data-testid={`scene-${date}`}>
+            Repos / congé
+          </div>
+          <div className="row-meta" style={{ marginTop: 2 }}>
+            {formatDateLong(date)}
+          </div>
+        </div>
+        <span className="time-pill off" data-testid={`time-${date}`}>
+          OFF
+        </span>
       </div>
-      <div style={{ minWidth: 0 }}>
-        <div
-          className={'day-scene' + (isOff ? ' off' : '')}
-          data-testid={`scene-${rec.date}`}
-          style={!isOff ? { borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' } : undefined}
-        >
-          <div>
-            {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
-            {rec.role && !isOff && (
-              <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
-                · {rec.role}
-              </span>
+    );
+  }
+
+  if (!isMulti) {
+    const rec = first;
+    const interactive = !!onOpenScene && !!rec.scene;
+    let assocScenes: string[] | undefined;
+    if (allRecords && isTrainingScene(rec.scene)) {
+      const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
+      const scenesOfDay = new Set<string>();
+      for (const dr of dayRecs) {
+        if (timesMatch(dr.time, rec.time, 5)) {
+          let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+          if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+            scenesOfDay.add(clean);
+          }
+        }
+      }
+      scenesOfDay.add('Formation autre');
+      if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
+    }
+
+    return (
+      <div
+        className="day-card"
+        data-off="false"
+        data-interactive={interactive ? 'true' : 'false'}
+        data-testid={`day-${rec.date}`}
+        role={interactive ? 'button' : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        aria-label={interactive ? `Voir l'équipe de ${rec.scene} le ${formatDateLong(rec.date)}` : undefined}
+        onClick={interactive ? () => onOpenScene!(rec.scene) : undefined}
+        style={interactive ? { cursor: 'pointer' } : undefined}
+      >
+        <div className="day-tag">
+          <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
+          <span className="n">{dayPart}</span>
+          <div className="day-date">{rec.date.split('-').length === 3 ? `${rec.date.split('-')[2]}/${rec.date.split('-')[1]}` : rec.date}</div>
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            className="day-scene"
+            data-testid={`scene-${rec.date}`}
+            style={{ borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' }}
+          >
+            <div>
+              {isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+              {rec.role && (
+                <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
+                  · {rec.role}
+                </span>
+              )}
+            </div>
+            {assocScenes && assocScenes.length > 0 && (
+              <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
+                Peut correspondre à {assocScenes.join(', ')}
+              </div>
             )}
           </div>
-          {assocScenes && assocScenes.length > 0 && (
-            <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
-              Peut correspondre à {assocScenes.join(', ')}
-            </div>
-          )}
+          <div className="row-meta" style={{ marginTop: 2 }}>
+            {formatDateLong(rec.date)}
+          </div>
         </div>
-        <div className="row-meta" style={{ marginTop: 2 }}>
-          {formatDateLong(rec.date)}
-        </div>
+        <span
+          className={timePillClass(rec.time, rec.scene, isTrainingScene(rec.scene))}
+          data-testid={`time-${rec.date}`}
+          aria-hidden={interactive ? 'true' : undefined}
+        >
+          {rec.time}
+        </span>
       </div>
-      <span
-        className={timePillClass(rec.time, rec.scene, isTrainingScene(rec.scene))}
-        data-testid={`time-${rec.date}`}
-        aria-hidden={interactive ? 'true' : undefined}
-      >
-        {isOff ? 'OFF' : rec.time}
-      </span>
+    );
+  }
+
+  // Multi-créneaux ou vacation globale distincte
+  return (
+    <div
+      className="day-card multi-day-card"
+      data-off="false"
+      data-testid={`day-${date}`}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 10, padding: '12px 14px' }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="day-tag" style={{ margin: 0 }}>
+            <span className="d">{DAY_FR_SHORT[dayName] ?? dayName.slice(0, 3).toUpperCase()}</span>
+            <span className="n">{dayPart}</span>
+            <div className="day-date">{date.split('-').length === 3 ? `${date.split('-')[2]}/${date.split('-')[1]}` : date}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', textTransform: 'capitalize' }}>
+              {formatDateLong(date)}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
+              {records.length} créneau{records.length > 1 ? 'x' : ''}
+            </div>
+          </div>
+        </div>
+        {shiftTime && (
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--border)',
+              padding: '4px 10px',
+              borderRadius: 8,
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: 'var(--fg)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <span style={{ color: 'var(--fg-muted)', fontWeight: 500 }}>Vacation :</span>
+            <span style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--accent)', fontWeight: 700 }}>{shiftTime}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {records.map((rec, idx) => {
+          const interactive = !!onOpenScene && !!rec.scene;
+          let assocScenes: string[] | undefined;
+          if (allRecords && isTrainingScene(rec.scene)) {
+            const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
+            const scenesOfDay = new Set<string>();
+            for (const dr of dayRecs) {
+              if (timesMatch(dr.time, rec.time, 5)) {
+                let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+                if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
+                  scenesOfDay.add(clean);
+                }
+              }
+            }
+            scenesOfDay.add('Formation autre');
+            if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
+          }
+
+          return (
+            <div
+              key={`${rec.time}-${rec.scene}-${idx}`}
+              onClick={interactive ? () => onOpenScene!(rec.scene) : undefined}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: 8,
+                borderLeft: `4px solid ${getSceneColor(rec.scene).accent}`,
+                cursor: interactive ? 'pointer' : 'default',
+                gap: 8
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--fg)' }}>
+                  {isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+                  {rec.role && (
+                    <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
+                      · {rec.role}
+                    </span>
+                  )}
+                </div>
+                {assocScenes && assocScenes.length > 0 && (
+                  <div style={{ fontSize: '0.82em', color: 'var(--muted)', marginTop: 2 }}>
+                    Peut correspondre à {assocScenes.join(', ')}
+                  </div>
+                )}
+              </div>
+              <span className={timePillClass(rec.time, rec.scene, isTrainingScene(rec.scene))} style={{ margin: 0, flexShrink: 0 }}>
+                {rec.time}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -974,6 +1119,11 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                   <div className="team-meta">
                     {rec.weekLabel}
                     {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
+                    {rec.shiftTime && rec.shiftTime !== rec.time && (
+                      <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
+                        · Vacation {rec.shiftTime}
+                      </span>
+                    )}
                     {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
                       <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
                         (peut correspondre à {assocScenes.join(', ')})
@@ -1236,6 +1386,11 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             <div className="team-meta compact-meta">
                               {rec.weekLabel}
                               {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
+                              {rec.shiftTime && rec.shiftTime !== rec.time && (
+                                <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
+                                  · Vacation {rec.shiftTime}
+                                </span>
+                              )}
                               {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
                                 <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
                                   (peut correspondre à {assocScenes.join(', ')})
