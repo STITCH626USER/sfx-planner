@@ -48,42 +48,31 @@ const CACHE_NAME = `sfx-planner-${CACHE_VERSION}`;
 
 const precacheList = files.map((f) => `./${f}`);
 
-const sw = `const CACHE_NAME = '${CACHE_NAME}';
-const PRECACHE = ${JSON.stringify(precacheList)};
-
+const sw = `// Self-clearing and unregistering service worker to force fresh UI updates
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
-  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+      .then(() => self.registration.unregister())
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then((clients) => {
+        for (const client of clients) {
+          client.navigate(client.url);
+        }
+      })
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
-      if (cached) return cached;
-      
-      if (event.request.mode === 'navigate') {
-        return caches.match('./index.html');
-      }
-      
-      return fetch(event.request);
-    })
-  );
+  // Always fetch directly from network
+  return;
 });
 `;
 
 writeFileSync(join(DIST, 'sw.js'), sw);
-console.log(`[generate-sw] wrote dist/sw.js — offline service worker (${CACHE_NAME} with ${precacheList.length} files)`);
+console.log(`[generate-sw] wrote self-clearing dist/sw.js`);
+
