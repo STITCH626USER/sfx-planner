@@ -424,6 +424,8 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
         const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
         if (detail) displayName = `${displayName} (${detail})`;
       }
+    } else if (r.role) {
+      displayName = `${displayName} (${r.role})`;
     }
     
     if (!sceneMap.has(groupName)) sceneMap.set(groupName, []);
@@ -460,7 +462,11 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    const name = r.scene||'-'; let isFO=false; let subtext: string | undefined;
+    let name = r.scene||'-';
+    if (r.role && !isTrainingScene(r.scene)) {
+      name = `${name} (${r.role})`;
+    }
+    let isFO=false; let subtext: string | undefined;
     if (isTrainingScene(r.scene)) {
       isFO=true;
       const dayRecs = records.filter(dr => dr.date === r.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));

@@ -85,6 +85,7 @@ export interface PlanningRecord {
   day: DayName;
   time: string;       // "HH:MM-HH:MM" or "OFF"
   scene: string;      // scene assignment text or "OFF"
+  role?: string;      // role/mention if any (e.g. AsstCoordinateur, Pupitreur SFX, etc.)
   weekLabel: string;  // e.g. "Sem. 21 — 17/05 → 23/05"
   sourceFile: string;
 }
@@ -241,6 +242,7 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
           day: HEADER_DAYS[d],
           time: seg.time,
           scene: seg.scene,
+          role: seg.role,
           weekLabel,
           sourceFile,
         });
@@ -250,44 +252,82 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
   return records;
 }
 
-function extractScene(lines: string[]): string {
-  // 1. Look for known scene prefixes or indicators (ENT ..., DLP ..., Formation)
-  for (const l of lines) {
-    const trimmed = l.trim();
-    if (/^(ENT|DLP)\b/i.test(trimmed)) {
-      return trimmed;
-    }
-    if (/^formation\b/i.test(trimmed) || /^fo\b/i.test(trimmed)) {
-      return trimmed;
-    }
+function cleanRole(raw: string): string {
+  let r = (raw || '').trim();
+  if (!r) return '';
+  // Fix truncation: "AsstCoordinateur S" -> "AsstCoordinateur"
+  if (/^asst\s*coordinateur\s*s$/i.test(r) || /^asstcoordinateur\s*s$/i.test(r)) {
+    return 'AsstCoordinateur';
   }
-
-  // 2. Filter out roles, HR codes, times, empty
-  const filtered = lines
-    .map(l => l.trim())
-    .filter(l => {
-      if (!l) return false;
-      if (TIME_RE.test(l)) return false;
-      if (HR_CODES.has(l.toUpperCase())) return false;
-      if (ROLE_KEYWORDS.includes(l.toLowerCase())) return false;
-      return true;
-    });
-
-  if (filtered.length > 0) {
-    return filtered.join(' - ');
+  if (/^asstcoordinateur$/i.test(r) || /^asst\s*coordinateur$/i.test(r)) {
+    return 'AsstCoordinateur';
   }
-
-  // 3. Fallback to any non-time non-HR line
-  for (const l of lines) {
-    const trimmed = l.trim();
-    if (!trimmed || TIME_RE.test(trimmed) || HR_CODES.has(trimmed.toUpperCase())) continue;
-    return trimmed;
+  if (/^asstcoordinateur\s*sfx$/i.test(r) || /^asst\s*coordinateur\s*sfx$/i.test(r)) {
+    return 'AsstCoordinateur';
   }
-
-  return '—';
+  if (/^regiesf$/i.test(r) || /^regie\s*sf$/i.test(r)) {
+    return 'RegieSFX';
+  }
+  // Strip orphan trailing single letter (e.g. cut off by cell border)
+  r = r.replace(/\s+[A-Za-z]$/, '').trim();
+  return r;
 }
 
-function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string }> {
+function extractSceneAndRole(lines: string[]): { scene: string; role?: string } {
+  let scene = '';
+  let role = '';
+
+  // 1. Look for known scene line (starting with ENT or DLP or is Formation)
+  let sceneLineIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/^(ENT|DLP)\b/i.test(trimmed) || /^formation\b/i.test(trimmed) || /^fo\b/i.test(trimmed)) {
+      scene = trimmed;
+      sceneLineIdx = i;
+      break;
+    }
+  }
+
+  // 2. Look for role line among the other lines
+  for (let i = 0; i < lines.length; i++) {
+    if (i === sceneLineIdx) continue;
+    const trimmed = lines[i].trim();
+    if (!trimmed || TIME_RE.test(trimmed) || HR_CODES.has(trimmed.toUpperCase())) continue;
+    
+    // Check if it's a known role or candidate
+    const cleaned = cleanRole(trimmed);
+    if (ROLE_KEYWORDS.some(kw => trimmed.toLowerCase().includes(kw)) || cleaned) {
+      role = cleaned;
+      break;
+    }
+  }
+
+  // Fallback if no scene was explicitly identified
+  if (!scene) {
+    const nonRole = lines.filter(l => {
+      const t = l.trim();
+      if (!t || TIME_RE.test(t) || HR_CODES.has(t.toUpperCase())) return false;
+      if (ROLE_KEYWORDS.includes(t.toLowerCase())) return false;
+      return true;
+    });
+    if (nonRole.length > 0) {
+      scene = nonRole.join(' - ');
+    } else {
+      for (const l of lines) {
+        const t = l.trim();
+        if (!t || TIME_RE.test(t) || HR_CODES.has(t.toUpperCase())) continue;
+        scene = t;
+        break;
+      }
+    }
+  }
+
+  if (!scene) scene = '—';
+
+  return { scene, role: role || undefined };
+}
+
+function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string; role?: string }> {
   if (tokens.length === 0) return [{ time: 'OFF', scene: 'OFF' }];
 
   // Group into lines by Y proximity
@@ -327,32 +367,31 @@ function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string }> {
   }
 
   // Determine segment slices
-  // In Chronos WFM, if there are 2 or more time entries, and timeEntries[1] is on the line right after timeEntries[0],
-  // timeEntries[0] is the badgeage total for the day, and timeEntries[1..n] are the actual activity segments.
   let segmentStarts = timeEntries;
   if (timeEntries.length >= 2 && timeEntries[1].lineIndex === timeEntries[0].lineIndex + 1) {
     segmentStarts = timeEntries.slice(1);
   }
 
-  const results: Array<{ time: string; scene: string }> = [];
+  const results: Array<{ time: string; scene: string; role?: string }> = [];
 
   for (let s = 0; s < segmentStarts.length; s++) {
     const cur = segmentStarts[s];
     const nextLineIdx = (s + 1 < segmentStarts.length) ? segmentStarts[s + 1].lineIndex : lineTexts.length;
     const segLines = lineTexts.slice(cur.lineIndex + 1, nextLineIdx);
 
-    const scene = extractScene(segLines);
+    const { scene, role } = extractSceneAndRole(segLines);
     results.push({
       time: cur.time,
-      scene
+      scene,
+      role
     });
   }
 
   // Deduplicate identical segments if any
   const seen = new Set<string>();
-  const unique: Array<{ time: string; scene: string }> = [];
+  const unique: Array<{ time: string; scene: string; role?: string }> = [];
   for (const r of results) {
-    const key = `${r.time}|${r.scene}`;
+    const key = `${r.time}|${r.scene}|${r.role || ''}`;
     if (!seen.has(key)) {
       seen.add(key);
       unique.push(r);

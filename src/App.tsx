@@ -910,7 +910,14 @@ function DayCard({ rec, assocScenes, onOpenScene }: { rec: PlanningRecord; assoc
           data-testid={`scene-${rec.date}`}
           style={!isOff ? { borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' } : undefined}
         >
-          {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+          <div>
+            {isOff ? 'Repos / congé' : isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+            {rec.role && !isOff && (
+              <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
+                · {rec.role}
+              </span>
+            )}
+          </div>
           {assocScenes && assocScenes.length > 0 && (
             <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
               Peut correspondre à {assocScenes.join(', ')}
@@ -966,6 +973,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                   </div>
                   <div className="team-meta">
                     {rec.weekLabel}
+                    {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
                     {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
                       <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
                         (peut correspondre à {assocScenes.join(', ')})
@@ -1227,6 +1235,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             </div>
                             <div className="team-meta compact-meta">
                               {rec.weekLabel}
+                              {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
                               {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
                                 <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
                                   (peut correspondre à {assocScenes.join(', ')})
