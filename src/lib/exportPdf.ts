@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './utils';
 
@@ -45,6 +45,67 @@ function initials(name: string): string {
 }
 function slug(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'scene';
+}
+
+/* ─── Universal PDF Download / Share (iOS, Safari, Android & Desktop) ─── */
+export async function downloadOrSharePdf(doc: jsPDF, filename: string): Promise<void> {
+  if (typeof window === 'undefined') {
+    doc.save(filename);
+    return;
+  }
+
+  const blob = doc.output('blob');
+
+  // Check for iOS devices (iPhone / iPad / iPod)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // 1. Native Apple Share Sheet on iPhone / iPad / Mac Safari
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: filename,
+        });
+        return;
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return; // User canceled share sheet
+      console.warn('Web Share skipped/failed, falling back', err);
+    }
+  }
+
+  // 2. Blob URL
+  const blobUrl = URL.createObjectURL(blob);
+
+  // On iOS Safari / WebKit standalone PWA, <a download> is ignored; opening the blob URL in a new tab opens the native PDF viewer
+  if (isIOS) {
+    const win = window.open(blobUrl, '_blank');
+    if (!win) {
+      window.location.href = blobUrl;
+    }
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    return;
+  }
+
+  // 3. Desktop / Android standard anchor download
+  try {
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 2000);
+  } catch {
+    doc.save(filename);
+  }
 }
 
 /* ─── Logo cache ─── */
@@ -419,7 +480,7 @@ export async function generateAndSave(opts: {
   const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo);
   layoutCards(doc, opts.blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, opts.title, opts.subtitle);
   drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
-  doc.save(opts.filename);
+  await downloadOrSharePdf(doc, opts.filename);
 }
 
 /* ═══════════════════════════════════════════════
@@ -581,7 +642,7 @@ async function generateIndivPdf(opts: {
     }
 
     drawPremiumFooter(doc, pageW, pageH, marginX);
-    doc.save(opts.filename);
+    await downloadOrSharePdf(doc, opts.filename);
     return;
   }
 
@@ -664,7 +725,7 @@ async function generateIndivPdf(opts: {
   }
 
   drawPremiumFooter(doc, pageW, pageH, marginX);
-  doc.save(opts.filename);
+  await downloadOrSharePdf(doc, opts.filename);
 }
 
 function drawIndivDayBlock(
@@ -677,14 +738,34 @@ function drawIndivDayBlock(
   rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>,
   themeColorName?: string
 ) {
-  const dateObj = new Date(dateStr);
-  const days = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
-  const months = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
-  
-  const dayName = days[dateObj.getDay()].replace('.', '').toUpperCase();
-  const dayNum = dateObj.getDate().toString().padStart(2, '0');
-  const monthName = months[dateObj.getMonth()];
-  
+  let dayName = 'LUN';
+  let dayNum = '01';
+  let monthName = 'sept.';
+
+  if (dateStr) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const yr = parseInt(parts[0], 10);
+      const mo = parseInt(parts[1], 10) - 1;
+      const da = parseInt(parts[2], 10);
+      const dateObj = new Date(yr, mo, da);
+      const days = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+      const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+      dayName = (days[dateObj.getDay()] || 'lun').toUpperCase();
+      dayNum = da.toString().padStart(2, '0');
+      monthName = months[mo] || 'sept.';
+    } else {
+      const dateObj = new Date(dateStr);
+      if (!isNaN(dateObj.getTime())) {
+        const days = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+        const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+        dayName = (days[dateObj.getDay()] || 'lun').toUpperCase();
+        dayNum = dateObj.getDate().toString().padStart(2, '0');
+        monthName = months[dateObj.getMonth()] || '';
+      }
+    }
+  }
+
   const isOff = rows.length === 0 || rows.every(r => /^off$/i.test(r.time));
   
   // Date Picto badge dimensions
@@ -1053,7 +1134,7 @@ async function generateGridGlobalPdf(opts: {
     // Top border of the table is drawn by header.
   }
 
-  if (pageCount > 0) doc.save(opts.filename);
+  if (pageCount > 0) await downloadOrSharePdf(doc, opts.filename);
 }
 
 export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {

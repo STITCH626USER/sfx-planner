@@ -97,7 +97,7 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [captchaSlider, setCaptchaSlider] = useState(0);
-  const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(false);
+  const [globalCaptchaSolved, setGlobalCaptchaSolved] = useState(true);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [tamagotchiOpen, setTamagotchiOpen] = useState(false);
 
@@ -871,6 +871,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
       await exportEmployeePdf(name, allRecords ?? records);
     } catch (e) {
       console.error('PDF export failed', e);
+      alert('Une erreur est survenue lors de la génération du PDF. Veuillez vérifier les autorisations de téléchargement de votre navigateur.');
     } finally {
       setExporting(false);
     }
@@ -1697,6 +1698,7 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
       onClose();
     } catch (e) {
       console.error('PDF export failed', e);
+      alert('Une erreur est survenue lors de l’export PDF. Veuillez vérifier les autorisations de votre navigateur.');
     } finally {
       setBusy(false);
     }
