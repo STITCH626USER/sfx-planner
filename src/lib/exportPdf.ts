@@ -55,12 +55,35 @@ export async function downloadOrSharePdf(doc: jsPDF, filename: string): Promise<
   }
 
   const blob = doc.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
 
-  // Check for iOS devices (iPhone / iPad / iPod)
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // Detect mobile devices (iPhone, iPad, iPod, Android)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 2);
 
-  // 1. Native Apple Share Sheet on iPhone / iPad / Mac Safari
+  // 1. DESKTOP (Mac, Windows, Linux, Chrome, Safari, Edge):
+  // Direct file download straight into the user's "Téléchargements" (Downloads) folder!
+  if (!isMobile) {
+    try {
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.rel = 'noopener';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 3000);
+      return;
+    } catch {
+      doc.save(filename);
+      return;
+    }
+  }
+
+  // 2. MOBILE ONLY (iPhone / iPad / Android touch devices):
   if (navigator.share && navigator.canShare) {
     try {
       const file = new File([blob], filename, { type: 'application/pdf' });
@@ -72,40 +95,17 @@ export async function downloadOrSharePdf(doc: jsPDF, filename: string): Promise<
         return;
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') return; // User canceled share sheet
+      if (err instanceof Error && err.name === 'AbortError') return; // User closed share sheet
       console.warn('Web Share skipped/failed, falling back', err);
     }
   }
 
-  // 2. Blob URL
-  const blobUrl = URL.createObjectURL(blob);
-
-  // On iOS Safari / WebKit standalone PWA, <a download> is ignored; opening the blob URL in a new tab opens the native PDF viewer
-  if (isIOS) {
-    const win = window.open(blobUrl, '_blank');
-    if (!win) {
-      window.location.href = blobUrl;
-    }
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    return;
+  // Fallback on mobile: open in new tab
+  const win = window.open(blobUrl, '_blank');
+  if (!win) {
+    window.location.href = blobUrl;
   }
-
-  // 3. Desktop / Android standard anchor download
-  try {
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    a.rel = 'noopener';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    }, 2000);
-  } catch {
-    doc.save(filename);
-  }
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 }
 
 /* ─── Logo cache ─── */
