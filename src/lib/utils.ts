@@ -28,6 +28,15 @@ export function isTrainingScene(scene: string): boolean {
   return s.includes('formation') || s.includes('fomation') || s.startsWith('fo ') || s === 'fo';
 }
 
+export function cleanSceneName(scene: string): string {
+  if (!scene) return '';
+  let s = scene.trim();
+  s = s.replace(/^ENT\s+/i, '');
+  s = s.replace(/^ENT(?=[A-Z])/i, '');
+  s = s.replace(/^[-_\s]+|[-_\s]+$/g, '').trim();
+  return s || scene;
+}
+
 const KNOWN_FIRST_NAMES = new Set([
   'alexandre', 'anne sophie', 'anne-sophie', 'antoine', 'armand', 'arnaud',
   'arthur', 'aurelien', 'aurélien', 'balthazar', 'cedric', 'cédric', 'cedrick',

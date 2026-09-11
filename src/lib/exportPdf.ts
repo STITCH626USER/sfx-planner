@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials } from './utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
 const NAVY:    [number,number,number] = [13,  20,  35];
@@ -22,7 +22,7 @@ const DAY_FR_FULL  = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','
 const DAY_FR_SHORT = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
 
 function cleanText(t: string): string {
-  return (t||'').replace(/[Ø<ß"«»®©]/g,'').replace(/ENT\s+/i, '').replace(/PoolTechnicienSfx/i, 'Pool SFX').replace(/\s+/g,' ').trim();
+  return (t||'').replace(/[Ø<ß"«»®©]/g,'').replace(/^ENT\s+/i, '').replace(/\bENT\b\s*/gi, '').replace(/\s+/g,' ').trim();
 }
 function weekdayFromIso(iso: string): number|null {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -429,7 +429,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
     }
     
     if (r.shiftTime && r.shiftTime !== r.time) {
-      displayName = `${displayName} [Vacation: ${r.shiftTime}]`;
+      displayName = `${displayName} [Journée: ${r.shiftTime}]`;
     }
     
     if (!sceneMap.has(groupName)) sceneMap.set(groupName, []);
@@ -444,7 +444,7 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
       if (!aFO && bFO) return -1;
       return a[0].localeCompare(b[0], 'fr');
     })
-    .map(([scene,rows]) => ({header:cleanText(scene), themeColorName:scene, rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
+    .map(([scene,rows]) => ({header:cleanText(cleanSceneName(scene)), themeColorName:scene, rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
 
   await generateAndSave({
     title: 'Vue globale du jour',
@@ -466,12 +466,12 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
 
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    let name = r.scene||'-';
+    let name = cleanSceneName(r.scene) || '-';
     if (r.role && !isTrainingScene(r.scene)) {
       name = `${name} (${r.role})`;
     }
     if (r.shiftTime && r.shiftTime !== r.time) {
-      name = `${name} [Vacation: ${r.shiftTime}]`;
+      name = `${name} [Journée: ${r.shiftTime}]`;
     }
     let isFO=false; let subtext: string | undefined;
     if (isTrainingScene(r.scene)) {
@@ -686,11 +686,9 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
   let ry = y + (h - totalBubblesH) / 2;
   
   if (rows.length === 0) return;
-  
   for (const row of rows) {
     const isOff = /^off$/i.test(row.time);
-    const isFO = row.isFO;
-    
+
     let subLines: string[] = [];
     let currentBubbleH = 5.5;
     if (row.subtext) {
@@ -699,38 +697,8 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       currentBubbleH += 1.5 + subLines.length * 2.2;
     }
     
-    let accentColor: [number,number,number];
-    
-    if (isOff) {
-      accentColor = [160, 170, 180];
-    } else {
-      const sc = getSceneColor(themeColorName || row.name);
-      accentColor = isFO ? VIOLET : [
-        Math.max(0, Math.round(sc.rgbText[0]*0.8 - 20)),
-        Math.max(0, Math.round(sc.rgbText[1]*0.8 - 20)),
-        Math.max(0, Math.round(sc.rgbText[2]*0.8 - 20))
-      ];
-    }
-    
-    let initials = '??';
-    const cleanN = row.name.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '').trim();
-    const parts = cleanN.split(/[\s-]+/).filter(Boolean);
-    if (parts.length > 1) {
-      initials = (parts[0][0] + parts[1][0]).toUpperCase();
-    } else if (parts.length === 1) {
-      initials = parts[0].substring(0, 2).toUpperCase();
-    }
-    
-    const cy = ry + currentBubbleH / 2;
-    doc.setFillColor(...accentColor);
-    doc.circle(rx + 3.0, cy, 2.0, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(3.5);
-    doc.text(initials, rx + 3.0, cy, { align: 'center', baseline: 'middle' });
-    
     const timeStr = row.time || '';
-    let nmMaxW = bubbleW - 9.0;
+    let nmMaxW = bubbleW - 3.0;
     
     if (timeStr) {
       doc.setFont('helvetica','bold'); doc.setFontSize(5.0);
@@ -742,25 +710,25 @@ function drawIndivDayBlock(doc: jsPDF, x: number, y: number, w: number, h: numbe
       
       doc.setTextColor(...timeColor);
       doc.text(timeStr, tx, ty, {align:'right'});
-      nmMaxW = bubbleW - timeW - 9.0;
+      nmMaxW = bubbleW - timeW - 4.0;
     }
     
     doc.setFont('helvetica', isOff ? 'normal' : 'bold');
     doc.setFontSize(5.0);
     doc.setTextColor(30, 40, 50);
     
-    let nm = cleanText(row.name);
+    let nm = cleanText(cleanSceneName(row.name));
     if (doc.getTextWidth(nm) > nmMaxW) {
       while (nm.length > 0 && doc.getTextWidth(nm + '...') > nmMaxW) {
         nm = nm.slice(0, -1);
       }
       nm = nm.trim() + '...';
     }
-    doc.text(nm, rx + 6.0, ry + (row.subtext ? 3.0 : 3.8));
+    doc.text(nm, rx + 1.5, ry + (row.subtext ? 3.0 : 3.8));
     
     if (row.subtext) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(3.5); doc.setTextColor(130, 140, 150);
-      doc.text(subLines, rx + 6.0, ry + 6.5);
+      doc.text(subLines, rx + 1.5, ry + 6.5);
     }
     
     ry += currentBubbleH + gapBubble;

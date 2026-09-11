@@ -18,7 +18,7 @@
 // @ts-ignore — v3 ships only .js, not .mjs, and no .d.ts at this path.
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url';
 import { isInAppBrowser } from './polyfills';
-import { formatEmployeeName } from './utils';
+import { formatEmployeeName, cleanSceneName } from './utils';
 
 type PdfJsModule = any;
 let pdfjsPromise: Promise<PdfJsModule> | null = null;
@@ -326,6 +326,7 @@ function extractSceneAndRole(lines: string[]): { scene: string; role?: string } 
   }
 
   if (!scene) scene = '—';
+  else scene = cleanSceneName(scene);
 
   return { scene, role: role || undefined };
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './lib/utils';
 import { MickeyTamagotchiButton, MickeyTamagotchiModal } from './MickeyTamagotchi';
 
 
@@ -20,15 +20,23 @@ const DAY_FR_SHORT: Record<string, string> = {
   dimanche: 'DIM', lundi: 'LUN', mardi: 'MAR', mercredi: 'MER',
   jeudi: 'JEU', vendredi: 'VEN', samedi: 'SAM',
 };
+const DAY_FR_FULL_MAP = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const MONTH_FR: Record<string, string> = {
   '01': 'janv.', '02': 'févr.', '03': 'mars', '04': 'avril', '05': 'mai',
   '06': 'juin', '07': 'juil.', '08': 'août', '09': 'sept.', '10': 'oct.', '11': 'nov.', '12': 'déc.',
+};
+const MONTH_FR_FULL: Record<string, string> = {
+  '01': 'janvier', '02': 'février', '03': 'mars', '04': 'avril', '05': 'mai',
+  '06': 'juin', '07': 'juillet', '08': 'août', '09': 'septembre', '10': 'octobre', '11': 'novembre', '12': 'décembre',
 };
 
 function formatDateLong(iso: string): string {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return iso;
-  return `${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
+  const dObj = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+  const dayName = DAY_FR_FULL_MAP[dObj.getDay()] || '';
+  const monthName = MONTH_FR_FULL[m[2]] || MONTH_FR[m[2]] || m[2];
+  return `${dayName} ${parseInt(m[3], 10)} ${monthName} ${m[1]}`;
 }
 
 
@@ -947,10 +955,10 @@ function DayCard({
           <div
             className="day-scene"
             data-testid={`scene-${rec.date}`}
-            style={{ borderLeft: `3.5px solid ${getSceneColor(rec.scene).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' }}
+            style={{ borderLeft: `3.5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' }}
           >
             <div>
-              {isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+              {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
               {rec.role && (
                 <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
                   · {rec.role}
@@ -1017,7 +1025,7 @@ function DayCard({
               gap: 6
             }}
           >
-            <span style={{ color: 'var(--fg-muted)', fontWeight: 500 }}>Vacation :</span>
+            <span style={{ color: 'var(--fg-muted)', fontWeight: 500 }}>Journée :</span>
             <span style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--accent)', fontWeight: 700 }}>{shiftTime}</span>
           </div>
         )}
@@ -1032,7 +1040,7 @@ function DayCard({
             const scenesOfDay = new Set<string>();
             for (const dr of dayRecs) {
               if (timesMatch(dr.time, rec.time, 5)) {
-                let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+                let clean = cleanSceneName(dr.scene);
                 if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
                   scenesOfDay.add(clean);
                 }
@@ -1053,14 +1061,14 @@ function DayCard({
                 padding: '8px 10px',
                 background: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: 8,
-                borderLeft: `4px solid ${getSceneColor(rec.scene).accent}`,
+                borderLeft: `4px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`,
                 cursor: interactive ? 'pointer' : 'default',
                 gap: 8
               }}
             >
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--fg)' }}>
-                  {isTrainingScene(rec.scene) ? `🎓 ${rec.scene}` : rec.scene}
+                  {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
                   {rec.role && (
                     <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
                       · {rec.role}
@@ -1087,16 +1095,34 @@ function DayCard({
 function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
   scene: string; date: string; team: PlanningRecord[]; onBack: () => void; onViewEmployee: (employee: string) => void;
 }) {
+  const cleanName = cleanSceneName(scene);
   return (
     <div data-testid="panel-scene-detail">
       <button className="btn-back" onClick={onBack} data-testid="btn-back-scenes"><IconArrowLeft /> Retour</button>
-      <div className="card" style={{ marginTop: 8, marginBottom: 16 }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 17, overflowWrap: 'anywhere' }}
+      <div className="card scene-detail-card" style={{ marginTop: 8, marginBottom: 16, padding: '16px 20px', borderLeft: `5px solid ${getSceneColor(cleanName).accent}` }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, color: 'var(--fg)', letterSpacing: '-0.01em', overflowWrap: 'anywhere' }}
              data-testid="text-scene-name">
-          {scene}
+          {cleanName}
         </div>
-        <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', marginTop: 2 }}>
-          {formatDateLong(date)} · {team.length} technicien(s)
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
+          <span style={{
+            background: 'var(--on-bg)',
+            color: 'var(--on-fg)',
+            border: '1px solid var(--on-line)',
+            padding: '5px 12px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 700,
+            letterSpacing: '0.01em',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}>
+            📅 {formatDateLong(date)}
+          </span>
+          <span style={{ fontSize: 13.5, color: 'var(--fg-muted)', fontWeight: 600 }}>
+            · {team.length} technicien{team.length > 1 ? 's' : ''}
+          </span>
         </div>
       </div>
 
@@ -1121,7 +1147,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
                     {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
                     {rec.shiftTime && rec.shiftTime !== rec.time && (
                       <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
-                        · Vacation {rec.shiftTime}
+                        · Journée {rec.shiftTime}
                       </span>
                     )}
                     {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
@@ -1206,8 +1232,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
     for (const r of records) {
       if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
-        let clean = r.scene.replace(/\bENT\b/gi, '').trim();
-        clean = clean.replace(/^[-_]+|[-_]+$/g, '').trim();
+        let clean = cleanSceneName(r.scene);
         if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
           if (!dateToScenes.has(r.date)) dateToScenes.set(r.date, []);
           dateToScenes.get(r.date)!.push({time: r.time, clean});
@@ -1217,7 +1242,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
     const groups = new Map<string, Array<PlanningRecord & { assocScenes?: string[] }>>();
     for (const rec of present) {
-      let groupName = rec.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim() || rec.scene;
+      let groupName = cleanSceneName(rec.scene);
       let displayName = prettyName(rec.employee);
       
       let assocScenes: string[] | undefined;
@@ -1226,7 +1251,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         groupName = 'Formations';
         if (rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
           let detail = rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
-          detail = detail.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+          detail = cleanSceneName(detail);
           if (detail) displayName = `${displayName} (${detail})`;
         }
         const scenesOfDate = dateToScenes.get(rec.date) || [];
@@ -1343,8 +1368,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     style={{ 
                       width: '100%', 
                       cursor: 'pointer', 
-                      background: `linear-gradient(90deg, ${getSceneColor(scene).accent}30, transparent)`,
-                      borderLeft: `4.5px solid ${getSceneColor(scene).accent}`,
+                      background: `linear-gradient(90deg, ${getSceneColor(cleanSceneName(scene)).accent}30, transparent)`,
+                      borderLeft: `4.5px solid ${getSceneColor(cleanSceneName(scene)).accent}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -1355,7 +1380,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     }}
                   >
                     <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene" style={{ fontSize: '16px', fontWeight: 600 }}>{scene}</div>
+                      <div className="daily-group-scene" style={{ fontSize: '16px', fontWeight: 600 }}>{cleanSceneName(scene)}</div>
                       {openScenes.has(scene) && (
                         <div style={{ fontSize: '12.5px', color: 'var(--fg-muted)', marginTop: '4px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
                           {formatDateLong(date)} · {sceneRecords.length} technicien(s)
@@ -1388,7 +1413,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                               {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
                               {rec.shiftTime && rec.shiftTime !== rec.time && (
                                 <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
-                                  · Vacation {rec.shiftTime}
+                                  · Journée {rec.shiftTime}
                                 </span>
                               )}
                               {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
