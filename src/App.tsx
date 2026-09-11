@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, timesMatch } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials } from './lib/utils';
 import { MickeyTamagotchiButton, MickeyTamagotchiModal } from './MickeyTamagotchi';
 
 
@@ -30,12 +30,7 @@ function formatDateLong(iso: string): string {
   if (!m) return iso;
   return `${parseInt(m[3], 10)} ${MONTH_FR[m[2]] ?? m[2]} ${m[1]}`;
 }
-function dayInitials(name: string): string {
-  const parts = name.replace(/[(*)]/g, '').split(/[, ]+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+
 
 function timePillClass(time: string, scene: string, isFO?: boolean): string {
   if (time === 'OFF') return 'time-pill off';
@@ -717,39 +712,10 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   );
 }
 
-function titleCaseWord(w: string): string {
-  if (!w) return w;
-  return w
-    .split(/([-'])/)
-    .map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join('');
-}
-
-function titleCasePart(s: string): string {
-  return s.trim().split(/\s+/).map(titleCaseWord).join(' ');
-}
-
-function prettyName(s: string): string {
-  const idx = s.indexOf(',');
-  if (idx === -1) {
-    return s.trim().toUpperCase();
-  }
-  const last = s.slice(0, idx).trim().toUpperCase();
-  const first = titleCasePart(s.slice(idx + 1));
-  if (!first) return last;
-  if (!last) return first;
-  return `${last} ${first}`;
-}
-
 function searchHaystack(s: string): string {
   const pretty = prettyName(s);
-  const idx = s.indexOf(',');
-  let reversed = '';
-  if (idx !== -1) {
-    const last = s.slice(0, idx).trim();
-    const first = s.slice(idx + 1).trim();
-    reversed = `${first} ${last}`;
-  }
+  const parts = pretty.split(/\s+/);
+  const reversed = parts.slice().reverse().join(' ');
   return `${s} ${pretty} ${reversed}`.toLowerCase();
 }
 
@@ -759,9 +725,9 @@ function countWeeks(records: PlanningRecord[], name: string): number {
   return set.size;
 }
 function countActiveDays(records: PlanningRecord[], name: string): number {
-  let n = 0;
-  for (const r of records) if (r.employee === name && r.time !== 'OFF') n++;
-  return n;
+  const dates = new Set<string>();
+  for (const r of records) if (r.employee === name && r.time !== 'OFF' && r.date) dates.add(r.date);
+  return dates.size;
 }
 
 function EmployeeDetail({ name, records, allRecords, onBack }: {
@@ -779,12 +745,12 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
       if (!m.has(r.weekLabel)) m.set(r.weekLabel, []);
       m.get(r.weekLabel)!.push(r);
     }
-    for (const [, arr] of m) arr.sort((a, b) => a.date.localeCompare(b.date));
+    for (const [, arr] of m) arr.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
     return Array.from(m.entries()).sort((a, b) => a[1][0].date.localeCompare(b[1][0].date));
   }, [records]);
 
-  const active = records.filter(r => r.time !== 'OFF').length;
-  const total = records.length;
+  const active = new Set(records.filter(r => r.time !== 'OFF').map(r => r.date)).size;
+  const total = new Set(records.map(r => r.date)).size;
 
   const [openScene, setOpenScene] = useState<{ date: string; scene: string } | null>(null);
   const [openEmployee, setOpenEmployee] = useState<string | null>(null);
@@ -874,10 +840,10 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
           <div className="week-head">
             <div className="week-name">{weekLabel}</div>
             <div className="week-range">
-              {weekRecs.filter(r => r.time !== 'OFF').length}/7 jours
+              {new Set(weekRecs.filter(r => r.time !== 'OFF').map(r => r.date)).size}/7 jours
             </div>
           </div>
-          {weekRecs.map(rec => {
+          {weekRecs.map((rec, rIdx) => {
             let assocScenes: string[] | undefined;
             if (allRecords && isTrainingScene(rec.scene)) {
               const dayRecs = allRecords.filter(dr => dr.date === rec.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
@@ -895,7 +861,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
             }
             return (
               <DayCard
-                key={rec.date}
+                key={`${rec.date}-${rec.time}-${rec.scene}-${rIdx}`}
                 rec={rec}
                 assocScenes={assocScenes}
                 onOpenScene={canOpenScene ? () => setOpenScene({ date: rec.date, scene: rec.scene }) : undefined}
@@ -992,7 +958,7 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
             const originalScene = (rec as any).originalScene;
             const isFO = isTrainingScene(rec.scene) || isFOVirtual;
             return (
-              <div className="team-row" key={rec.employee} data-testid={`team-${rec.employee}`}>
+              <div className="team-row" key={`${rec.employee}-${rec.time}-${rec.scene}`} data-testid={`team-${rec.employee}`}>
                 <div className="avatar" aria-hidden>{dayInitials(rec.employee)}</div>
                 <div style={{ minWidth: 0 }}>
                   <div className="team-name">
@@ -1251,7 +1217,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       return (
                         <div
                           className="compact-team-row"
-                          key={`${rec.employee}-${rec.date}`}
+                          key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}
                           data-testid={`scene-tech-${scene}-${rec.employee}`}
                         >
                           <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>

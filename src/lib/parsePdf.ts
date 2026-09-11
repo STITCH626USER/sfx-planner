@@ -18,6 +18,7 @@
 // @ts-ignore — v3 ships only .js, not .mjs, and no .d.ts at this path.
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url';
 import { isInAppBrowser } from './polyfills';
+import { formatEmployeeName } from './utils';
 
 type PdfJsModule = any;
 let pdfjsPromise: Promise<PdfJsModule> | null = null;
@@ -48,7 +49,9 @@ const ROLE_KEYWORDS = [
   'tech atelier',
   'asstcoordinateur',
   'asstcoordinateur s',
+  'asstcoordinateur sfx',
   'asst coordinateur',
+  'asst coordinateur sfx',
   'magasinier bunker',
   'parkwide',
   'park wide',
@@ -61,12 +64,20 @@ const ROLE_KEYWORDS = [
   "chef d'équipe",
   'chef d equipe',
   'senior',
+  'pupitreur sfx',
+  'pupitreur',
+  'conducteur ng25',
+  'conducteur',
+  'tech sfx ponton',
+  'tech sfx secuphare',
+  'tech sfx secu phare',
+  'entertainment',
 ];
 
-const HR_CODES = new Set(['SM', 'SC', 'SH', 'HS', 'HF', 'HR']);
+const HR_CODES = new Set(['SM', 'SC', 'SH', 'HS', 'HF', 'HR', 'FO']);
 
 const TIME_RE = /(\d{1,2}[:h]\d{2}\s*-\s*\d{1,2}[:h]\d{2})/i;
-const PURE_OFF_RE = /^(Repos|CX|C4)\s*$/;
+const PURE_OFF_RE = /^(Repos|CX|C4|XJ|CT)\s*$/i;
 
 export interface PlanningRecord {
   employee: string;
@@ -198,9 +209,9 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
         .replace(/\s*,\s*/, ', ')
         .trim();
       name = name.replace(/\s*\(\*\)\s*$/, '').trim();
-      return { y: Number(y), name };
+      return { y: Number(y), name: formatEmployeeName(name) };
     })
-    .filter(e => e.name.includes(','))
+    .filter(e => e.name.length > 0)
     .sort((a, b) => a.y - b.y);
 
   if (!employees.length) return [];
@@ -221,24 +232,63 @@ function parsePage(items: any[], sourceFile: string, ctx: { lastWeekLabel: strin
         .filter(t => t.x >= xStart - 3 && t.x < xEnd + 3 && t.y >= emp.yStart && t.y < emp.yEnd)
         .sort((a, b) => a.y - b.y || a.x - b.x);
 
-      const { time, scene } = parseCell(cellTokens);
+      const segments = parseCell(cellTokens);
       const date = dayISODates[d] || '';
-      records.push({
-        employee: emp.name,
-        date,
-        day: HEADER_DAYS[d],
-        time,
-        scene,
-        weekLabel,
-        sourceFile,
-      });
+      for (const seg of segments) {
+        records.push({
+          employee: emp.name,
+          date,
+          day: HEADER_DAYS[d],
+          time: seg.time,
+          scene: seg.scene,
+          weekLabel,
+          sourceFile,
+        });
+      }
     }
   }
   return records;
 }
 
-function parseCell(tokens: TokenT[]): { time: string; scene: string } {
-  if (tokens.length === 0) return { time: 'OFF', scene: 'OFF' };
+function extractScene(lines: string[]): string {
+  // 1. Look for known scene prefixes or indicators (ENT ..., DLP ..., Formation)
+  for (const l of lines) {
+    const trimmed = l.trim();
+    if (/^(ENT|DLP)\b/i.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^formation\b/i.test(trimmed) || /^fo\b/i.test(trimmed)) {
+      return trimmed;
+    }
+  }
+
+  // 2. Filter out roles, HR codes, times, empty
+  const filtered = lines
+    .map(l => l.trim())
+    .filter(l => {
+      if (!l) return false;
+      if (TIME_RE.test(l)) return false;
+      if (HR_CODES.has(l.toUpperCase())) return false;
+      if (ROLE_KEYWORDS.includes(l.toLowerCase())) return false;
+      return true;
+    });
+
+  if (filtered.length > 0) {
+    return filtered.join(' - ');
+  }
+
+  // 3. Fallback to any non-time non-HR line
+  for (const l of lines) {
+    const trimmed = l.trim();
+    if (!trimmed || TIME_RE.test(trimmed) || HR_CODES.has(trimmed.toUpperCase())) continue;
+    return trimmed;
+  }
+
+  return '—';
+}
+
+function parseCell(tokens: TokenT[]): Array<{ time: string; scene: string }> {
+  if (tokens.length === 0) return [{ time: 'OFF', scene: 'OFF' }];
 
   // Group into lines by Y proximity
   const lines: TokenT[][] = [];
@@ -251,60 +301,65 @@ function parseCell(tokens: TokenT[]): { time: string; scene: string } {
   }
   for (const line of lines) line.sort((a, b) => a.x - b.x);
   lines.sort((a, b) => a[0].y - b[0].y);
-  const lineTexts = lines.map(line => line.map(t => t.text).join(' ').trim());
+  const lineTexts = lines.map(line => line.map(t => t.text).join(' ').trim()).filter(Boolean);
 
   // OFF detection
+  if (lineTexts.length === 0) return [{ time: 'OFF', scene: 'OFF' }];
   const joinedTop = lineTexts.slice(0, 2).join(' ').trim();
-  if (PURE_OFF_RE.test(joinedTop)) return { time: 'OFF', scene: 'OFF' };
-  if (lineTexts.length >= 1 && /^(Repos|CX|C4)$/.test(lineTexts[0].trim())) {
-    return { time: 'OFF', scene: 'OFF' };
+  if (PURE_OFF_RE.test(joinedTop) || PURE_OFF_RE.test(lineTexts[0])) {
+    return [{ time: 'OFF', scene: 'OFF' }];
   }
 
-  // First time range
-  let timeIdx = -1;
-  let timeMatch: string | null = null;
+  // Find all time ranges
+  const timeEntries: Array<{ lineIndex: number; time: string }> = [];
   for (let i = 0; i < lineTexts.length; i++) {
     const m = lineTexts[i].match(TIME_RE);
     if (m) {
-      timeIdx = i;
-      timeMatch = m[1].replace(/h/i, ':').replace(/\s+/g, '');
-      break;
+      timeEntries.push({
+        lineIndex: i,
+        time: m[1].replace(/h/i, ':').replace(/\s+/g, '')
+      });
     }
-  }
-  if (!timeMatch) return { time: 'OFF', scene: 'OFF' };
-
-  // Scene candidates: lines that aren't time/duplicates/role/HR codes
-  const scenes: string[] = [];
-  for (let i = 0; i < lineTexts.length; i++) {
-    if (i === timeIdx) continue;
-    const txt = lineTexts[i].trim();
-    if (!txt) continue;
-    if (TIME_RE.test(txt)) continue;
-    if (HR_CODES.has(txt)) continue;
-    if (ROLE_KEYWORDS.includes(txt.toLowerCase())) continue;
-    scenes.push(txt);
   }
 
-  let scene = '';
-  if (scenes.length > 0) {
-    const firstLower = scenes[0].toLowerCase();
-    if (firstLower.includes('formation') || firstLower.includes('fomation') || firstLower.startsWith('fo ') || firstLower === 'fo') {
-      scene = scenes.join(' - ');
-    } else {
-      scene = scenes[0];
+  if (timeEntries.length === 0) {
+    return [{ time: 'OFF', scene: 'OFF' }];
+  }
+
+  // Determine segment slices
+  // In Chronos WFM, if there are 2 or more time entries, and timeEntries[1] is on the line right after timeEntries[0],
+  // timeEntries[0] is the badgeage total for the day, and timeEntries[1..n] are the actual activity segments.
+  let segmentStarts = timeEntries;
+  if (timeEntries.length >= 2 && timeEntries[1].lineIndex === timeEntries[0].lineIndex + 1) {
+    segmentStarts = timeEntries.slice(1);
+  }
+
+  const results: Array<{ time: string; scene: string }> = [];
+
+  for (let s = 0; s < segmentStarts.length; s++) {
+    const cur = segmentStarts[s];
+    const nextLineIdx = (s + 1 < segmentStarts.length) ? segmentStarts[s + 1].lineIndex : lineTexts.length;
+    const segLines = lineTexts.slice(cur.lineIndex + 1, nextLineIdx);
+
+    const scene = extractScene(segLines);
+    results.push({
+      time: cur.time,
+      scene
+    });
+  }
+
+  // Deduplicate identical segments if any
+  const seen = new Set<string>();
+  const unique: Array<{ time: string; scene: string }> = [];
+  for (const r of results) {
+    const key = `${r.time}|${r.scene}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(r);
     }
   }
-  // Fallback: if no non-role line found, accept the first non-time non-HR line (could be a role-only cell)
-  if (!scene) {
-    for (let i = 0; i < lineTexts.length; i++) {
-      if (i === timeIdx) continue;
-      const txt = lineTexts[i].trim();
-      if (!txt || TIME_RE.test(txt) || HR_CODES.has(txt)) continue;
-      scene = txt; break;
-    }
-  }
-  if (!scene) scene = '—';
-  return { time: timeMatch, scene };
+
+  return unique.length > 0 ? unique : [{ time: timeEntries[0].time, scene: '—' }];
 }
 
 export interface ParseResult {
@@ -343,8 +398,32 @@ export async function parsePdfFile(file: File): Promise<ParseResult> {
       all.push(r);
     }
   }
+
+  // Deduplicate records across pages (e.g. main schedule pages vs appendix modification pages)
+  const seenRecords = new Map<string, PlanningRecord>();
+  for (const r of all) {
+    const key = `${r.employee}__${r.date}__${r.time}__${r.scene}`;
+    if (!seenRecords.has(key)) {
+      seenRecords.set(key, r);
+    }
+  }
+
+  // If an employee has working records on a given date, discard empty/redundant OFF records for that same date
+  const workingEmpsDates = new Set<string>();
+  for (const r of seenRecords.values()) {
+    if (r.time !== 'OFF') {
+      workingEmpsDates.add(`${r.employee}__${r.date}`);
+    }
+  }
+  const filteredRecords = Array.from(seenRecords.values()).filter(r => {
+    if (r.time === 'OFF' && workingEmpsDates.has(`${r.employee}__${r.date}`)) {
+      return false;
+    }
+    return true;
+  });
+
   return {
-    records: all,
+    records: filteredRecords,
     sourceFile: file.name,
     pageCount: doc.numPages,
     weekLabels: Array.from(seenLabels),

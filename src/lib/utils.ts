@@ -28,6 +28,82 @@ export function isTrainingScene(scene: string): boolean {
   return s.includes('formation') || s.includes('fomation') || s.startsWith('fo ') || s === 'fo';
 }
 
+const KNOWN_FIRST_NAMES = new Set([
+  'alexandre', 'anne sophie', 'anne-sophie', 'antoine', 'armand', 'arnaud',
+  'arthur', 'aurelien', 'aurélien', 'balthazar', 'cedric', 'cédric', 'cedrick',
+  'cédrick', 'christian', 'christophe', 'clement', 'clément', 'corentin',
+  'damien', 'didier', 'dorian', 'erwan', 'florian', 'gabriel', 'gregory',
+  'grégory', 'hugo', 'jean marc', 'jean-marc', 'jeremy', 'jérémy', 'joevin',
+  'joévin', 'jonathan', 'jordan', 'julie', 'kevin', 'kévin', 'klervie',
+  'laura', 'lena shaines', 'léna shaines', 'lena-shaines', 'lola', 'louis',
+  'lucas', 'lucas remy georges', 'marion', 'mathieu', 'matthieu', 'maxence',
+  'maxime', 'maximilien', 'mikael', 'mikaël', 'mohamed', 'mohamed amine',
+  'morgane', 'nadia', 'naym', 'noemi', 'noémi', 'paul', 'pauline', 'robin',
+  'sebastien', 'sébastien', 'simon', 'thibault', 'thomas', 'tom', 'viktor',
+  'vivien', 'yann'
+]);
+
+export function titleCaseWord(w: string): string {
+  if (!w) return w;
+  return w
+    .split(/([-'])/)
+    .map(part => /^[-']$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join('');
+}
+
+export function titleCasePart(s: string): string {
+  return s.trim().split(/\s+/).map(titleCaseWord).join(' ');
+}
+
+export function formatEmployeeName(raw: string): string {
+  const s = (raw || '').replace(/\s*\(\*\)\s*$/, '').trim();
+  const idx = s.indexOf(',');
+  if (idx === -1) {
+    return s;
+  }
+  const p0 = s.slice(0, idx).trim();
+  const p1 = s.slice(idx + 1).trim();
+  if (!p0 && !p1) return s;
+  if (!p0) return p1.toUpperCase();
+  if (!p1) return p0.toUpperCase();
+
+  const p0Lower = p0.toLowerCase();
+  const p1Lower = p1.toLowerCase();
+
+  let nom = '';
+  let prenom = '';
+
+  // If p1 is a known first name (like in "AIRIAU, CEDRICK" on appendix pages)
+  if (KNOWN_FIRST_NAMES.has(p1Lower) || Array.from(KNOWN_FIRST_NAMES).some(fn => p1Lower.startsWith(fn + ' '))) {
+    nom = p0;
+    prenom = p1;
+  } else if (KNOWN_FIRST_NAMES.has(p0Lower) || Array.from(KNOWN_FIRST_NAMES).some(fn => p0Lower.startsWith(fn + ' '))) {
+    prenom = p0;
+    nom = p1;
+  } else {
+    // Default for new WFM Chronos: "PRENOM, NOM" (e.g. "ALEXANDRE, CALMETTE", "ANTOINE, LE SOMMER")
+    prenom = p0;
+    nom = p1;
+  }
+
+  const nomUpper = nom.toUpperCase();
+  const prenomTitle = titleCasePart(prenom);
+  return `${nomUpper} ${prenomTitle}`;
+}
+
+export function prettyName(s: string): string {
+  if (!s) return '';
+  return formatEmployeeName(s);
+}
+
+export function dayInitials(name: string): string {
+  const pretty = prettyName(name);
+  const parts = pretty.replace(/[(*)]/g, '').split(/[, ]+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 
 
 export interface SceneColor {

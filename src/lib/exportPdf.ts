@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { isTrainingScene, getSceneColor, timesMatch } from './utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
 const NAVY:    [number,number,number] = [13,  20,  35];
@@ -40,19 +40,8 @@ function fmtDateShort(iso: string): string {
   const wd = weekdayFromIso(iso); const pf = wd !== null ? `${DAY_FR_SHORT[wd]} ` : '';
   return `${pf}${m[3]}/${m[2]}`;
 }
-function prettyName(s: string): string {
-  const tc = (w: string) => w.split(/([-'])/).map(p => /^[-']$/.test(p)?p:p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('');
-  const tcp = (str: string) => str.trim().split(/\s+/).map(tc).join(' ');
-  const idx = s.indexOf(',');
-  if (idx === -1) return cleanText(s).toUpperCase();
-  const last = s.slice(0,idx).trim().toUpperCase(); const first = tcp(s.slice(idx+1));
-  if (!first) return cleanText(last); if (!last) return cleanText(first);
-  return cleanText(`${last} ${first}`);
-}
 function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0]+(parts[1][0]||'')).toUpperCase();
-  return name.slice(0,2).toUpperCase();
+  return dayInitials(name);
 }
 function slug(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'scene';
