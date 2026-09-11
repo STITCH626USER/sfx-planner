@@ -3,7 +3,7 @@ import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './lib/utils';
-import { MickeyTamagotchiButton, MickeyTamagotchiModal } from './MickeyTamagotchi';
+import { MickeyTamagotchiModal } from './MickeyTamagotchi';
 
 
 type Tab = 'recherche' | 'daily';
@@ -59,8 +59,36 @@ export default function App() {
     return 'dark';
   });
 
-  const [records, setRecords] = useState<PlanningRecord[]>([]);
-  const [sources, setSources] = useState<SourceFile[]>([]);
+  const [records, setRecords] = useState<PlanningRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('sfx_records');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [sources, setSources] = useState<SourceFile[]>(() => {
+    try {
+      const saved = localStorage.getItem('sfx_sources');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    try {
+      if (records.length > 0) {
+        localStorage.setItem('sfx_records', JSON.stringify(records));
+      } else {
+        localStorage.removeItem('sfx_records');
+      }
+      if (sources.length > 0) {
+        localStorage.setItem('sfx_sources', JSON.stringify(sources));
+      } else {
+        localStorage.removeItem('sfx_sources');
+      }
+    } catch (e) {
+      console.warn('LocalStorage save failed', e);
+    }
+  }, [records, sources]);
+
   const [loading, setLoading] = useState(false);
   const [fireworkTrigger, setFireworkTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -220,89 +248,168 @@ export default function App() {
 
   if (records.length === 0) {
     return (
-      <div className="app-shell-empty-container" data-testid="app-root">
-        <div className="smoke-bg" aria-hidden="true">
-          <div className="smoke-cloud smoke-cloud-1" />
-          <div className="smoke-cloud smoke-cloud-2" />
-          <div className="smoke-cloud smoke-cloud-3" />
-        </div>
+      <div className="apple-landing-wrapper" data-testid="app-root">
         <FireworksCanvas triggerCount={fireworkTrigger} />
-        <div className="empty-landing-card">
-          <header className="landing-header">
+        
+        {/* Navigation Bar Apple */}
+        <header className="apple-navbar">
+          <div className="apple-navbar-content">
+            <div className="apple-brand">
+              <button
+                type="button"
+                className="apple-logo-btn"
+                aria-label="Changer le mode d'affichage"
+                title="Changer le mode d'affichage"
+                data-testid="btn-theme-toggle"
+                onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+              >
+                <Logo />
+              </button>
+              <div className="apple-brand-text">
+                <span className="apple-brand-title">SFX Planner</span>
+                <span className="apple-brand-badge">STUDIO</span>
+              </div>
+            </div>
+
+            <div className="apple-nav-actions">
+              <button
+                type="button"
+                className="apple-theme-btn"
+                onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+                title="Basculer thème sombre / clair"
+              >
+                {theme === 'dark' ? '☀️ Mode Clair' : '🌙 Mode Sombre'}
+              </button>
+              <button
+                type="button"
+                className="header-tamagotchi-btn"
+                onClick={() => setTamagotchiOpen(true)}
+                title="Mickey"
+              >
+                <svg viewBox="0 0 100 100" fill="currentColor" width="16" height="16">
+                  <circle cx="20" cy="25" r="20" />
+                  <circle cx="80" cy="25" r="20" />
+                  <circle cx="50" cy="65" r="35" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Section Apple */}
+        <main className="apple-hero-container">
+          <div className="apple-hero-eyebrow">
+            <span>✨ DÉPARTEMENT EFFETS SPÉCIAUX</span>
+          </div>
+
+          <h1 className="apple-hero-h1">
+            Vos plannings d'équipe, <br />
+            <span className="apple-gradient-text">visuellement réinventés.</span>
+          </h1>
+
+          <p className="apple-hero-p">
+            Importez vos exports Chronos en un clin d'œil. Visualisez les présences par show,
+            retrouvez les plannings individuels et exportez des feuilles de service A4 parfaites.
+          </p>
+
+          {/* Large Apple Glass Dropzone */}
+          <div
+            className={`apple-dropzone-card ${drag ? 'is-dragover' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={onDrop}
+            onClick={() => fileRef.current?.click()}
+          >
+            <div className="apple-dropzone-icon-wrap">
+              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="15" y2="15" />
+              </svg>
+            </div>
+
+            <div className="apple-dropzone-title">
+              {loading ? 'Analyse des plannings…' : 'Glissez vos fichiers PDF Chronos ici'}
+            </div>
+            <div className="apple-dropzone-subtitle">
+              ou cliquez pour parcourir vos dossiers
+            </div>
+
             <button
-              type="button"
-              className="landing-logo-wrap"
-              aria-label="Changer le mode d'affichage"
-              title="Changer le mode d'affichage"
-              data-testid="btn-theme-toggle"
-              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+              className="apple-primary-cta"
+              disabled={loading}
+              onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
             >
-              <Logo />
+              {loading && <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />}
+              <span>{loading ? 'Chargement en cours…' : 'Sélectionner des PDF Chronos'}</span>
             </button>
-            <h1 className="landing-title">SFX Planner 3000</h1>
-          </header>
-          
-          <div className="landing-uploader-wrap" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Uploader
-              loading={loading}
-              drag={drag}
-              compact={false}
-              onPick={() => fileRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-              onDragLeave={() => setDrag(false)}
-              onDrop={onDrop}
-            />
-            <MickeyTamagotchiButton onClick={() => setTamagotchiOpen(true)} />
           </div>
 
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".pdf,application/pdf"
-            multiple
-            style={{ display: 'none' }}
-            data-testid="input-file"
-            onChange={(e) => e.target.files && handleFiles(e.target.files)}
-          />
-
-          {error && (
-            <div className="banner-error" role="alert" data-testid="error-banner" style={{ marginTop: 16, marginBottom: 16 }}>
-              <div>{error}</div>
+          {/* Feature Pillars */}
+          <div className="apple-features-row">
+            <div className="apple-feat-card">
+              <div className="apple-feat-icon">⚡</div>
+              <div className="apple-feat-name">100% Local & Privé</div>
+              <div className="apple-feat-desc">Vos PDF sont analysés directement dans votre navigateur. Aucune donnée ne quitte votre appareil.</div>
             </div>
-          )}
-
-          <div className="landing-warning-notice">
-            <div className="footer-warning-card">
-              <span className="warning-text">
-                <strong style={{ color: 'var(--amber)' }}>⚠️</strong>
-                Contrôle obligatoire sur UKG personnel.
-              </span>
+            <div className="apple-feat-card">
+              <div className="apple-feat-icon">👥</div>
+              <div className="apple-feat-name">Vision Double</div>
+              <div className="apple-feat-desc">Basculez instantanément entre le planning individuel de chaque technicien et la vue globale du jour.</div>
+            </div>
+            <div className="apple-feat-card">
+              <div className="apple-feat-icon">📄</div>
+              <div className="apple-feat-name">Feuilles de Service A4</div>
+              <div className="apple-feat-desc">Générez des exports PDF équilibrés sur toute la page, optimisés pour mobile et impression studio.</div>
             </div>
           </div>
 
-          {showPwaBanner && (
-            <div className="pwa-install-banner animate-slide-up">
-              <div className="pwa-banner-content">
-                <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
-                <div className="pwa-banner-text">
-                  <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                    Installer SFX Planner 3000 sur votre écran d'accueil ?
-                  </div>
+          <div className="apple-legal-notice">
+            <span>⚠️ Contrôle obligatoire sur UKG personnel.</span>
+          </div>
+        </main>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,application/pdf"
+          multiple
+          style={{ display: 'none' }}
+          data-testid="input-file"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        />
+
+        {error && (
+          <div className="banner-error" role="alert" data-testid="error-banner" style={{ margin: '16px auto', maxWidth: 600 }}>
+            <div>{error}</div>
+          </div>
+        )}
+
+        {showPwaBanner && (
+          <div className="pwa-install-banner animate-slide-up">
+            <div className="pwa-banner-content">
+              <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
+              <div className="pwa-banner-text">
+                <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                  Installer SFX Planner sur votre écran d'accueil ?
                 </div>
               </div>
-              <div className="pwa-banner-actions">
-                <button className="pwa-btn-cancel" onClick={() => {
-                  setShowPwaBanner(false);
-                  sessionStorage.setItem('sfx_pwa_prompt', 'true');
-                }}>Plus tard</button>
-                <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
-              </div>
             </div>
-          )}
-        </div>
+            <div className="pwa-banner-actions">
+              <button className="pwa-btn-cancel" onClick={() => {
+                setShowPwaBanner(false);
+                sessionStorage.setItem('sfx_pwa_prompt', 'true');
+              }}>Plus tard</button>
+              <button className="pwa-btn-install" onClick={handleInstallClick}>Installer</button>
+            </div>
+          </div>
+        )}
+
         <MickeyTamagotchiModal isOpen={tamagotchiOpen} onClose={() => setTamagotchiOpen(false)} />
       </div>
     );
+
   }
 
   return (
@@ -604,45 +711,6 @@ function shortName(n: string): string {
   name = name.replace(/[\s\-_]+/g, ' ').trim();
   name = name.replace(/s\s*(\d+)/i, 'S$1');
   return name || n;
-}
-
-function Uploader({
-  loading, drag, compact, onPick, onDragOver, onDragLeave, onDrop,
-}: {
-  loading: boolean; drag: boolean; compact: boolean;
-  onPick: () => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent) => void;
-}) {
-  const cta = loading
-    ? 'Lecture...'
-    : compact
-      ? 'Ajouter PDF Chronos'
-      : 'Importer PDF Chronos';
-
-  return (
-    <div
-      className="uploader"
-      data-drag={drag ? 'true' : 'false'}
-      data-testid="uploader"
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: compact ? '12px' : '24px 16px' }}
-    >
-      <button
-        className={'btn' + (compact ? ' btn-sm' : '')}
-        onClick={onPick}
-        disabled={loading}
-        data-testid="btn-pick"
-        style={{ width: '100%', maxWidth: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
-      >
-        {loading && <span className="spinner" style={{ borderColor: 'rgba(0,0,0,0.1)', borderTopColor: 'currentColor' }} />}
-        {cta}
-      </button>
-    </div>
-  );
 }
 
 function RecherchePanel({ records }: { records: PlanningRecord[] }) {
