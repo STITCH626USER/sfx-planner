@@ -315,33 +315,63 @@ export default function App() {
       <FireworksCanvas triggerCount={fireworkTrigger} />
       <aside className="app-sidebar" style={{ filter: !globalCaptchaSolved ? 'blur(12px)' : 'none', pointerEvents: !globalCaptchaSolved ? 'none' : 'auto' }}>
         <header className="app-header">
-          <button
-            type="button"
-            className="app-logo"
-            aria-label="Changer le mode d'affichage"
-            title="Changer le mode d'affichage"
-            data-testid="btn-theme-toggle"
-            onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
-          >
-            <Logo />
-          </button>
-          <div style={{ minWidth: 0, display: 'flex', alignItems: 'baseline' }}>
-            <div className="app-title" onClick={() => setShowResetConfirm(true)} style={{ cursor: 'pointer' }}>SFX Planner 3000</div>
+          <div className="app-header-left">
+            <button
+              type="button"
+              className="app-logo"
+              aria-label="Changer le mode d'affichage"
+              title="Changer le mode d'affichage"
+              data-testid="btn-theme-toggle"
+              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+            >
+              <Logo />
+            </button>
+            <div className="app-title-wrap" onClick={() => setShowResetConfirm(true)} style={{ cursor: 'pointer' }}>
+              <div className="app-title">SFX Planner 3000</div>
+            </div>
+          </div>
+
+          <div className="app-header-actions">
+            <button
+              type="button"
+              className="btn-header-add"
+              onClick={() => fileRef.current?.click()}
+              disabled={loading}
+              title="Ajouter d'autres plannings PDF"
+              data-testid="btn-header-add"
+            >
+              {loading ? (
+                <span className="spinner" style={{ width: 12, height: 12, borderWidth: 2 }} />
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              )}
+              <span>{loading ? 'Lecture…' : 'Ajouter PDF'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="header-tamagotchi-btn"
+              onClick={() => setTamagotchiOpen(true)}
+              title="Mickey"
+              aria-label="Ouvrir Mickey"
+            >
+              <svg viewBox="0 0 100 100" fill="currentColor" width="16" height="16">
+                <circle cx="20" cy="25" r="20" />
+                <circle cx="80" cy="25" r="20" />
+                <circle cx="50" cy="65" r="35" />
+              </svg>
+            </button>
           </div>
         </header>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-          <Uploader
-            loading={loading}
-            drag={drag}
-            compact={records.length > 0}
-            onPick={() => fileRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={onDrop}
-          />
-          <MickeyTamagotchiButton onClick={() => setTamagotchiOpen(true)} />
-        </div>
+        {drag && (
+          <div className="drag-drop-hint animate-fade-in" onDrop={onDrop} onDragLeave={() => setDrag(false)}>
+            Déposez vos fichiers PDF Chronos ici…
+          </div>
+        )}
+
         <input
           ref={fileRef}
           type="file"
@@ -817,20 +847,21 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
       <button className="btn-back" onClick={onBack} data-testid="btn-back-employees">
         <IconArrowLeft /> Retour
       </button>
-      <div className="card" style={{ marginTop: 8, marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div className="avatar" style={{ width: 44, height: 44, fontSize: 14 }}>{dayInitials(name)}</div>
+      <div className="employee-hero-card" style={{ marginTop: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div className="avatar employee-hero-avatar">{dayInitials(name)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 17 }} data-testid="text-employee-name">
+            <div className="employee-hero-name" data-testid="text-employee-name">
               {prettyName(name)}
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', marginTop: 2 }}>
-              {active}/{total} jours travaillés sur {byWeek.length} semaine(s)
+            <div className="employee-hero-meta">
+              <span className="hero-stat-pill">{active}/{total} jours travaillés</span>
+              <span className="hero-stat-sub">sur {byWeek.length} semaine(s)</span>
             </div>
           </div>
           <button
             type="button"
-            className="btn-export"
+            className="btn-export-apple"
             data-testid="btn-export-indiv"
             aria-label={`Exporter le planning de ${prettyName(name)} en PDF`}
             title="Exporter en PDF"
@@ -892,9 +923,12 @@ function DayCard({
   const shiftTime = first?.shiftTime;
   const isMulti = records.length > 1 || (!!shiftTime && shiftTime !== first.time);
 
+  const todayIso = new Date().toISOString().split('T')[0];
+  const isToday = date === todayIso;
+
   if (isOff) {
     return (
-      <div className="day-card" data-off="true" data-testid={`day-${date}`}>
+      <div className={`day-card ${isToday ? 'is-today' : ''}`} data-off="true" data-testid={`day-${date}`}>
         <div className="day-tag">
           <span className="d">{DAY_FR_SHORT[dayName] ?? dayName.slice(0, 3).toUpperCase()}</span>
           <span className="n">{dayPart}</span>
@@ -902,7 +936,7 @@ function DayCard({
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="day-scene off" data-testid={`scene-${date}`}>
-            Repos / congé
+            Repos / congé {isToday && <span className="badge-today">Aujourd'hui</span>}
           </div>
           <div className="row-meta" style={{ marginTop: 2 }}>
             {formatDateLong(date)}
@@ -924,7 +958,7 @@ function DayCard({
       const scenesOfDay = new Set<string>();
       for (const dr of dayRecs) {
         if (timesMatch(dr.time, rec.time, 5)) {
-          let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+          let clean = cleanSceneName(dr.scene);
           if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
             scenesOfDay.add(clean);
           }
@@ -936,13 +970,13 @@ function DayCard({
 
     return (
       <div
-        className="day-card"
+        className={`day-card ${isToday ? 'is-today' : ''}`}
         data-off="false"
         data-interactive={interactive ? 'true' : 'false'}
         data-testid={`day-${rec.date}`}
         role={interactive ? 'button' : undefined}
         tabIndex={interactive ? 0 : undefined}
-        aria-label={interactive ? `Voir l'équipe de ${rec.scene} le ${formatDateLong(rec.date)}` : undefined}
+        aria-label={interactive ? `Voir l'équipe de ${cleanSceneName(rec.scene)} le ${formatDateLong(rec.date)}` : undefined}
         onClick={interactive ? () => onOpenScene!(rec.scene) : undefined}
         style={interactive ? { cursor: 'pointer' } : undefined}
       >
@@ -955,15 +989,18 @@ function DayCard({
           <div
             className="day-scene"
             data-testid={`scene-${rec.date}`}
-            style={{ borderLeft: `3.5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`, paddingLeft: 6, borderRadius: '2px 0 0 2px' }}
+            style={{ borderLeft: `3.5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`, paddingLeft: 8, borderRadius: '2px 0 0 2px' }}
           >
-            <div>
-              {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span className="day-scene-name" style={{ fontWeight: 600 }}>
+                {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
+              </span>
               {rec.role && (
-                <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
-                  · {rec.role}
+                <span className="role-tag">
+                  {rec.role}
                 </span>
               )}
+              {isToday && <span className="badge-today">Aujourd'hui</span>}
             </div>
             {assocScenes && assocScenes.length > 0 && (
               <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
@@ -985,6 +1022,7 @@ function DayCard({
       </div>
     );
   }
+
 
   // Multi-créneaux ou vacation globale distincte
   return (

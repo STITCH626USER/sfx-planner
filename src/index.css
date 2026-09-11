@@ -3182,3 +3182,218 @@ nav.seg button[aria-selected="true"] {
 .ios-guide-btn:hover {
   background: var(--amber-2);
 }
+
+/* ══════════════════════════════════════════════════════════
+   APPLE-GRADE MINIMALIST DESIGN SYSTEM & INTERACTIONS
+══════════════════════════════════════════════════════════ */
+
+.app-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 10px 14px !important;
+  background: transparent !important;
+  gap: 12px !important;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-header-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--amber);
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-header-add:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+  filter: brightness(1.05);
+}
+
+.btn-header-add:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-header-add:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.header-tamagotchi-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-tamagotchi-btn:hover {
+  color: var(--amber);
+  background: rgba(217, 119, 6, 0.12);
+  border-color: rgba(217, 119, 6, 0.3);
+  transform: scale(1.06);
+}
+
+.drag-drop-hint {
+  margin: 6px 12px 12px 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px dashed var(--amber);
+  background: rgba(217, 119, 6, 0.08);
+  color: var(--amber);
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Apple Hero Employee Card */
+.employee-hero-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: var(--spring-transition);
+}
+
+:root[data-theme="dark"] .employee-hero-card {
+  background: rgba(20, 26, 38, 0.75);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.employee-hero-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, var(--amber), #f59e0b) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25) !important;
+}
+
+.employee-hero-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: -0.015em;
+}
+
+.employee-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hero-stat-pill {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--amber);
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hero-stat-sub {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+.btn-export-apple {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-export-apple:hover:not(:disabled) {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
+}
+
+.btn-export-apple:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* DayCard Visual Polish */
+.day-card.is-today {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 0 1.5px var(--amber), 0 6px 20px rgba(217, 119, 6, 0.18) !important;
+}
+
+.badge-today {
+  background: var(--amber);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.role-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--amber);
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.day-card[data-off="true"] {
+  opacity: 0.52 !important;
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+  box-shadow: none !important;
+}
+
+.day-card[data-off="true"]:hover {
+  opacity: 0.85 !important;
+}
+
