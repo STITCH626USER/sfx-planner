@@ -102,6 +102,13 @@ export default function App() {
   const [showPwaBanner, setShowPwaBanner] = useState(false);
 
   useEffect(() => {
+    // Keep the address bar perfectly clean without any query params
+    if (window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
     if (!isStandalone) {
