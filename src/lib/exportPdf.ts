@@ -47,7 +47,7 @@ function slug(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'scene';
 }
 
-/* ─── Universal PDF Download / Share (iOS, Safari, Android & Desktop) ─── */
+/* ─── Direct PDF Download (Mobile & Desktop) ─── */
 export async function downloadOrSharePdf(doc: jsPDF, filename: string): Promise<void> {
   if (typeof window === 'undefined') {
     doc.save(filename);
@@ -57,55 +57,23 @@ export async function downloadOrSharePdf(doc: jsPDF, filename: string): Promise<
   const blob = doc.output('blob');
   const blobUrl = URL.createObjectURL(blob);
 
-  // Detect mobile devices (iPhone, iPad, iPod, Android)
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 2);
-
-  // 1. DESKTOP (Mac, Windows, Linux, Chrome, Safari, Edge):
-  // Direct file download straight into the user's "Téléchargements" (Downloads) folder!
-  if (!isMobile) {
-    try {
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.rel = 'noopener';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
+  try {
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) {
         document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      }, 3000);
-      return;
-    } catch {
-      doc.save(filename);
-      return;
-    }
-  }
-
-  // 2. MOBILE ONLY (iPhone / iPad / Android touch devices):
-  if (navigator.share && navigator.canShare) {
-    try {
-      const file = new File([blob], filename, { type: 'application/pdf' });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: filename,
-        });
-        return;
       }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') return; // User closed share sheet
-      console.warn('Web Share skipped/failed, falling back', err);
-    }
+      URL.revokeObjectURL(blobUrl);
+    }, 4000);
+  } catch {
+    doc.save(filename);
   }
-
-  // Fallback on mobile: open in new tab
-  const win = window.open(blobUrl, '_blank');
-  if (!win) {
-    window.location.href = blobUrl;
-  }
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 }
 
 /* ─── Logo cache ─── */
@@ -198,9 +166,6 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   // Warning text
   doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AMBER2);
   doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
-  // Version
-  doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...MUTED);
-  doc.text('SFX Planner v3.2.9', pageW-marginX, fy+1.5, {align:'right'});
 }
 
 /* ─── Avatar circle with initials ─── */
