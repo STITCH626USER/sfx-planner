@@ -357,7 +357,7 @@ export default function App() {
           </div>
 
           <div className="apple-legal-notice">
-            <span>⚠️ Contrôle obligatoire sur UKG personnel.</span>
+            <span>⚠️ Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.</span>
           </div>
         </main>
 
@@ -547,7 +547,7 @@ export default function App() {
           <div className="footer-warning-card">
             <span className="warning-text">
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ :</strong>
-              Contrôle obligatoire sur UKG personnel.
+              Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.
             </span>
           </div>
         </footer>

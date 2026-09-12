@@ -2687,11 +2687,12 @@ nav.seg button[aria-selected="true"] {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  height: calc(38px + env(safe-area-inset-bottom)) !important;
-  padding: 0 16px calc(env(safe-area-inset-bottom)) 16px !important;
-  background: rgba(13, 20, 35, 0.85) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25) !important;
+  min-height: calc(44px + env(safe-area-inset-bottom)) !important;
+  height: auto !important;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom)) 16px !important;
+  background: rgba(13, 20, 35, 0.88) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.28) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   z-index: 1000 !important;
@@ -2704,7 +2705,7 @@ nav.seg button[aria-selected="true"] {
 }
 
 :root[data-theme="light"] .app-footer-notice {
-  background: rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
   border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04) !important;
 }
@@ -2719,18 +2720,21 @@ nav.seg button[aria-selected="true"] {
   -webkit-backdrop-filter: none !important;
   width: 100% !important;
   text-align: center !important;
-  display: block !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .app-footer-notice .warning-text {
-  font-size: 13px !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  color: rgba(255, 255, 255, 0.92) !important;
   font-weight: 600 !important;
   letter-spacing: 0.02em !important;
 }
 
 :root[data-theme="light"] .app-footer-notice .warning-text {
-  color: rgba(40, 40, 44, 0.85) !important;
+  color: rgba(40, 40, 44, 0.9) !important;
 }
 
 /* Extremely light dynamic heavy smoke drifting inside the bottom bar */
@@ -2921,14 +2925,9 @@ nav.seg button[aria-selected="true"] {
   color: var(--fg-muted) !important;
 }
 
-/* Footer notice plus compact */
+/* Footer notice */
 .app-footer-notice {
-  font-size: 10.5px !important;
-  padding: 6px 12px calc(4px + env(safe-area-inset-bottom)) 12px !important;
-}
-.footer-warning-card {
-  padding: 6px 14px !important;
-  gap: 8px !important;
+  font-size: 13.5px !important;
 }
 
 .day-card {
