@@ -2681,20 +2681,20 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(255, 176, 58, 0.1) !important;
 }
 
-/* 11. Floating HUD bottom warning banner with subtle drifting smoke SFX */
+/* 11. Discrete bottom-left warning banner */
 .app-footer-notice {
   position: fixed !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  padding: 0 16px calc(12px + env(safe-area-inset-bottom)) 16px !important;
+  padding: 0 16px calc(10px + env(safe-area-inset-bottom)) 16px !important;
   background: transparent !important;
   border-top: none !important;
   box-shadow: none !important;
   z-index: 1000 !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   overflow: visible !important;
   pointer-events: none !important;
   user-select: text !important;
@@ -2711,104 +2711,64 @@ nav.seg button[aria-selected="true"] {
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 7px !important;
   width: auto !important;
-  max-width: min(740px, calc(100% - 16px)) !important;
-  padding: 10px 18px !important;
-  background: linear-gradient(135deg, rgba(20, 26, 42, 0.94), rgba(12, 17, 30, 0.96)) !important;
-  border: 1px solid rgba(255, 176, 58, 0.35) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 176, 58, 0.14) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  transition: var(--spring-transition) !important;
+  max-width: min(720px, calc(100% - 16px)) !important;
+  padding: 6px 12px !important;
+  background: rgba(13, 20, 35, 0.92) !important;
+  border: 1px solid rgba(255, 176, 58, 0.28) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   text-align: left !important;
-  overflow: hidden !important;
 }
 
 :root[data-theme="light"] .footer-warning-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94)) !important;
-  border-color: rgba(217, 119, 6, 0.35) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 18px rgba(217, 119, 6, 0.12) !important;
-}
-
-.footer-warning-card:hover {
-  border-color: var(--amber) !important;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(255, 176, 58, 0.22) !important;
-  transform: translateY(-1px) !important;
-}
-
-.footer-warning-icon-wrap {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  flex: 0 0 36px !important;
-  border-radius: 10px !important;
-  background: rgba(255, 176, 58, 0.14) !important;
-  border: 1px solid rgba(255, 176, 58, 0.32) !important;
-  color: var(--amber) !important;
-  box-shadow: 0 2px 8px rgba(255, 176, 58, 0.15) !important;
-}
-
-:root[data-theme="light"] .footer-warning-icon-wrap {
-  background: rgba(245, 158, 11, 0.12) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
   border-color: rgba(217, 119, 6, 0.3) !important;
-  color: #d97706 !important;
-}
-
-.footer-warning-content {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: baseline !important;
-  column-gap: 8px !important;
-  row-gap: 3px !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(217, 119, 6, 0.08) !important;
 }
 
 .warning-text-lead {
+  font-size: 11.5px !important;
   font-weight: 700 !important;
-  color: rgba(255, 255, 255, 0.96) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
   letter-spacing: 0.01em !important;
 }
 
 :root[data-theme="light"] .warning-text-lead {
-  color: #0f172a !important;
+  color: #1e293b !important;
 }
 
 .warning-text-sub {
+  font-size: 11px !important;
   font-weight: 500 !important;
-  color: rgba(255, 200, 110, 0.92) !important;
+  color: rgba(255, 196, 92, 0.92) !important;
   letter-spacing: 0.01em !important;
 }
 
 :root[data-theme="light"] .warning-text-sub {
-  color: #b45309 !important;
+  color: #92400e !important;
 }
 
 @media (max-width: 640px) {
   .app-footer-notice {
-    padding: 0 8px calc(10px + env(safe-area-inset-bottom)) 8px !important;
+    padding: 0 10px calc(8px + env(safe-area-inset-bottom)) 10px !important;
+    justify-content: flex-start !important;
   }
   .footer-warning-card {
-    padding: 9px 12px !important;
-    gap: 10px !important;
-    max-width: 100% !important;
+    padding: 5px 9px !important;
+    gap: 6px !important;
+    border-radius: 7px !important;
+    flex-wrap: wrap !important;
+    max-width: calc(100% - 10px) !important;
   }
-  .footer-warning-icon-wrap {
-    width: 32px !important;
-    height: 32px !important;
-    flex: 0 0 32px !important;
-    align-self: center !important;
+  .warning-text-lead {
+    font-size: 10.5px !important;
   }
-  .footer-warning-content {
-    flex-direction: column !important;
-    row-gap: 2px !important;
-    font-size: 12px !important;
-    line-height: 1.35 !important;
+  .warning-text-sub {
+    font-size: 10px !important;
   }
 }
 
@@ -3000,10 +2960,6 @@ nav.seg button[aria-selected="true"] {
   color: var(--fg-muted) !important;
 }
 
-/* Footer notice */
-.app-footer-notice {
-  font-size: 13.5px !important;
-}
 
 .day-card {
   content-visibility: auto;

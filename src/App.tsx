@@ -357,14 +357,10 @@ export default function App() {
           </div>
 
           <div className="apple-legal-notice">
-            <div className="footer-warning-card" style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <div className="footer-warning-icon-wrap" aria-hidden="true">
-                <WarningStandIcon />
-              </div>
-              <div className="footer-warning-content">
-                <span className="warning-text-lead">Contrôle obligatoire sur UKG personnel.</span>
-                <span className="warning-text-sub">Se rapprocher de la coordination pour les formations.</span>
-              </div>
+            <div className="footer-warning-card" style={{ display: 'inline-flex' }}>
+              <AlertTriangleIcon />
+              <span className="warning-text-lead">Contrôle obligatoire sur UKG personnel.</span>
+              <span className="warning-text-sub">Se rapprocher de la coordination pour les formations.</span>
             </div>
           </div>
         </main>
@@ -549,17 +545,9 @@ export default function App() {
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
           <div className="footer-warning-card">
-            <div className="footer-smoke-bg" aria-hidden="true">
-              <div className="footer-smoke-cloud footer-smoke-cloud-1" />
-              <div className="footer-smoke-cloud footer-smoke-cloud-2" />
-            </div>
-            <div className="footer-warning-icon-wrap" aria-hidden="true">
-              <WarningStandIcon />
-            </div>
-            <div className="footer-warning-content">
-              <span className="warning-text-lead">Contrôle obligatoire sur UKG personnel.</span>
-              <span className="warning-text-sub">Se rapprocher de la coordination pour les formations.</span>
-            </div>
+            <AlertTriangleIcon />
+            <span className="warning-text-lead">Contrôle obligatoire sur UKG personnel.</span>
+            <span className="warning-text-sub">Se rapprocher de la coordination pour les formations.</span>
           </div>
         </footer>
         <ScrollToTop />
@@ -1779,18 +1767,12 @@ function Logo() {
   );
 }
 
-function WarningStandIcon() {
+function AlertTriangleIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ display: 'block' }}>
-      {/* Tripod legs / easel stand */}
-      <path d="M12 15.5v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M6 21.5l6-6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4 21.5h3.5M16.5 21.5h3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      {/* Triangular Warning Sign Board */}
-      <path d="M12 2.5L3.5 15.5h17L12 2.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" fillOpacity="0.18" />
-      {/* Warning Exclamation mark */}
-      <path d="M12 6.8v4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="13.4" r="0.9" fill="currentColor" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, color: 'var(--amber)' }}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="rgba(245, 158, 11, 0.2)" />
+      <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" />
+      <circle cx="12" cy="17" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
