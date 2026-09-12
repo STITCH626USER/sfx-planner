@@ -1489,10 +1489,7 @@ function DatePicker({ dates, date, records, onChange }: {
   return (
     <div className="date-picker-wrapper" style={{
       display: 'flex', alignItems: 'center',
-      position: 'sticky', top: 60, zIndex: 20,
-      margin: '-8px -6px 0 -6px',
-      padding: '12px 6px 12px 6px',
-      background: 'linear-gradient(to bottom, var(--bg-0) 80%, transparent)'
+      width: '100%', minWidth: 0
     }}>
       <button
         className="date-pill"
@@ -1539,7 +1536,7 @@ function DatePicker({ dates, date, records, onChange }: {
         <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Auj.</span>
       </button>
       <div ref={scrollRef} className="date-row" role="tablist" data-testid="date-row" style={{
-        position: 'static', margin: 0, padding: 0, background: 'none', flex: 1
+        position: 'static', margin: 0, padding: '8px 4px 8px 4px', background: 'none', flex: 1, alignItems: 'center'
       }}>
       {dates.map(d => {
         const sel = d === date;

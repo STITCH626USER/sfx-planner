@@ -839,18 +839,13 @@ input:focus, select:focus {
 /* Date picker component */
 .date-row {
   display: flex;
+  align-items: center;
   gap: 10px;
   overflow-x: auto;
-  padding: 12px 6px 12px 6px;
+  padding: 8px 4px 8px 4px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
-  margin: -8px -6px 0 -6px;
-  position: sticky;
-  top: 60px; /* Under the header */
-  z-index: 20;
-  /* Soft background gradient to hide content scrolling behind */
-  background: linear-gradient(to bottom, var(--bg-0) 80%, transparent);
 }
 .date-row::-webkit-scrollbar {
   display: none;
@@ -1304,33 +1299,30 @@ input:focus, select:focus {
   background: var(--bg-1);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  padding: 6px 10px;
+  padding: 4px 10px;
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Sticky date bar — stays visible while scrolling content */
+/* Sticky date bar wrapper — stays visible while scrolling content */
 .main-date-bar {
   position: sticky;
   top: 56px;
   z-index: 25;
-  margin-bottom: 12px;
-  border-radius: var(--r-md);
-  background: var(--bg-1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-soft);
-  border: 1px solid var(--line);
-  padding: 4px 0 2px 0;
+  margin-bottom: 16px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 :root[data-theme="light"] .main-date-bar {
-  background: rgba(255,255,255,0.92);
-  border-color: var(--line);
+  background: transparent;
+  border: none;
 }
 .daily-date-bar .date-row {
-  padding: 10px 4px 16px 4px;
-  margin: -8px -4px -10px -4px;
+  padding: 8px 4px 8px 4px;
+  margin: 0;
 }
 
 /* Utility classes */
