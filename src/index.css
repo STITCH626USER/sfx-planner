@@ -2681,95 +2681,61 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 8px 24px rgba(90, 75, 60, 0.08), 0 0 12px rgba(255, 176, 58, 0.1) !important;
 }
 
-/* 11. Discrete bottom-left warning banner */
+/* 11. Sticky bottom bar HUD with subtle drifting smoke SFX */
 .app-footer-notice {
   position: fixed !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  padding: 0 16px calc(10px + env(safe-area-inset-bottom)) 16px !important;
-  background: transparent !important;
-  border-top: none !important;
-  box-shadow: none !important;
+  min-height: calc(38px + env(safe-area-inset-bottom)) !important;
+  height: auto !important;
+  padding: 6px 16px calc(6px + env(safe-area-inset-bottom)) 16px !important;
+  background: rgba(13, 20, 35, 0.88) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   z-index: 1000 !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  overflow: visible !important;
-  pointer-events: none !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
   user-select: text !important;
 }
 
 :root[data-theme="light"] .app-footer-notice {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+
+.app-footer-notice .footer-warning-card {
   background: transparent !important;
-  border-top: none !important;
+  border: none !important;
   box-shadow: none !important;
-}
-
-.footer-warning-card {
-  pointer-events: auto !important;
-  position: relative !important;
-  display: inline-flex !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  width: 100% !important;
+  text-align: center !important;
+  display: flex !important;
   align-items: center !important;
-  gap: 7px !important;
-  width: auto !important;
-  max-width: min(720px, calc(100% - 16px)) !important;
-  padding: 6px 12px !important;
-  background: rgba(13, 20, 35, 0.92) !important;
-  border: 1px solid rgba(255, 176, 58, 0.28) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  text-align: left !important;
+  justify-content: center !important;
 }
 
-:root[data-theme="light"] .footer-warning-card {
-  background: rgba(255, 255, 255, 0.94) !important;
-  border-color: rgba(217, 119, 6, 0.3) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(217, 119, 6, 0.08) !important;
+.app-footer-notice .warning-text {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  text-align: center !important;
 }
 
-.warning-text-lead {
-  font-size: 11.5px !important;
-  font-weight: 700 !important;
-  color: rgba(255, 255, 255, 0.95) !important;
-  letter-spacing: 0.01em !important;
-}
-
-:root[data-theme="light"] .warning-text-lead {
-  color: #1e293b !important;
-}
-
-.warning-text-sub {
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: rgba(255, 196, 92, 0.92) !important;
-  letter-spacing: 0.01em !important;
-}
-
-:root[data-theme="light"] .warning-text-sub {
-  color: #92400e !important;
-}
-
-@media (max-width: 640px) {
-  .app-footer-notice {
-    padding: 0 10px calc(8px + env(safe-area-inset-bottom)) 10px !important;
-    justify-content: flex-start !important;
-  }
-  .footer-warning-card {
-    padding: 5px 9px !important;
-    gap: 6px !important;
-    border-radius: 7px !important;
-    flex-wrap: wrap !important;
-    max-width: calc(100% - 10px) !important;
-  }
-  .warning-text-lead {
-    font-size: 10.5px !important;
-  }
-  .warning-text-sub {
-    font-size: 10px !important;
-  }
+:root[data-theme="light"] .app-footer-notice .warning-text {
+  color: rgba(40, 40, 44, 0.85) !important;
 }
 
 /* Extremely light dynamic heavy smoke drifting inside the bottom bar */
