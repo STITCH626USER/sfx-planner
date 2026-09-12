@@ -666,29 +666,28 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
         <p className="recherche-subtitle">Recherchez un technicien pour afficher son planning complet ou l'exporter en PDF.</p>
       </div>
 
-      <div className="search-wrap">
+      <div className="search-wrap" role="search">
         <span className="search-icon"><IconSearch /></span>
-        <form autoComplete="off" onSubmit={e => e.preventDefault()} style={{ flex: 1, display: 'flex', minWidth: 0, margin: 0, padding: 0 }}>
-          <input
-            id="q_input_field"
-            name="q_random_field"
-            type="text"
-            inputMode="text"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            data-lpignore="true"
-            data-form-type="other"
-            role="presentation"
-            placeholder="Rechercher (ex: Tom)..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            data-testid="input-search"
-            aria-label="Recherche"
-            style={{ flex: 1, width: '100%' }}
-          />
-        </form>
+        <input
+          id="search-input"
+          name="search"
+          type="search"
+          inputMode="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          placeholder="Rechercher (ex: Tom)..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          data-testid="input-search"
+          aria-label="Rechercher un technicien"
+          style={{ flex: 1, width: '100%' }}
+        />
       </div>
 
       <div className="section-h">
