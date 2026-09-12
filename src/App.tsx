@@ -271,7 +271,6 @@ export default function App() {
               </button>
               <div className="apple-brand-text">
                 <span className="apple-brand-title">SFX Planner</span>
-                <span className="apple-brand-badge">STUDIO</span>
               </div>
             </div>
 
@@ -353,7 +352,7 @@ export default function App() {
             <div className="apple-feat-card">
               <div className="apple-feat-icon">📄</div>
               <div className="apple-feat-name">Feuilles de Service A4</div>
-              <div className="apple-feat-desc">Générez des exports PDF équilibrés sur toute la page, optimisés pour mobile et impression studio.</div>
+              <div className="apple-feat-desc">Générez des exports PDF équilibrés sur toute la page, optimisés pour mobile et impression.</div>
             </div>
           </div>
 
