@@ -357,7 +357,15 @@ export default function App() {
           </div>
 
           <div className="apple-legal-notice">
-            <span>⚠️ Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.</span>
+            <div className="footer-warning-card" style={{ maxWidth: '640px', margin: '0 auto' }}>
+              <div className="footer-warning-icon-wrap" aria-hidden="true">
+                <WarningStandIcon />
+              </div>
+              <div className="footer-warning-content">
+                <span className="warning-text-lead">Contrôle obligatoire sur UKG personnel.</span>
+                <span className="warning-text-sub">Se rapprocher de la coordination pour les formations.</span>
+              </div>
+            </div>
           </div>
         </main>
 
@@ -540,15 +548,18 @@ export default function App() {
         </div>
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
-          <div className="footer-smoke-bg" aria-hidden="true">
-            <div className="footer-smoke-cloud footer-smoke-cloud-1" />
-            <div className="footer-smoke-cloud footer-smoke-cloud-2" />
-          </div>
           <div className="footer-warning-card">
-            <span className="warning-text">
-              <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️ :</strong>
-              Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.
-            </span>
+            <div className="footer-smoke-bg" aria-hidden="true">
+              <div className="footer-smoke-cloud footer-smoke-cloud-1" />
+              <div className="footer-smoke-cloud footer-smoke-cloud-2" />
+            </div>
+            <div className="footer-warning-icon-wrap" aria-hidden="true">
+              <WarningStandIcon />
+            </div>
+            <div className="footer-warning-content">
+              <span className="warning-text-lead">Contrôle obligatoire sur UKG personnel.</span>
+              <span className="warning-text-sub">Se rapprocher de la coordination pour les formations.</span>
+            </div>
           </div>
         </footer>
         <ScrollToTop />
@@ -1765,6 +1776,22 @@ function Logo() {
   const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
   return (
     <img className="logo-img" src={logoSrc} alt="" width="56" height="56" decoding="async" aria-hidden="true" />
+  );
+}
+
+function WarningStandIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ display: 'block' }}>
+      {/* Tripod legs / easel stand */}
+      <path d="M12 15.5v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M6 21.5l6-6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 21.5h3.5M16.5 21.5h3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      {/* Triangular Warning Sign Board */}
+      <path d="M12 2.5L3.5 15.5h17L12 2.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" fillOpacity="0.18" />
+      {/* Warning Exclamation mark */}
+      <path d="M12 6.8v4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="12" cy="13.4" r="0.9" fill="currentColor" />
+    </svg>
   );
 }
 
