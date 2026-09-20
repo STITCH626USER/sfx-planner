@@ -235,7 +235,8 @@ export function EmployeeCalendarView({
                     <div className="cal-day-cell-content">
                       {isOff ? (
                         <div className="cal-scene-pill off-pill">
-                          <span>Repos</span>
+                          <span className="cal-off-tag">OFF</span>
+                          <span className="cal-off-text">Repos</span>
                         </div>
                       ) : (
                         uniqueScenes.map(scene => {
@@ -248,8 +249,10 @@ export function EmployeeCalendarView({
                               key={scene}
                               className={`cal-scene-pill ${isFO ? 'fo-pill' : ''}`}
                               style={{
-                                borderLeft: `3px solid ${color.accent}`,
-                              }}
+                                '--scene-accent': color.accent,
+                                '--scene-bg': color.bg,
+                                '--scene-text': color.text,
+                              } as React.CSSProperties}
                               title={isFO ? `Formation (${clean})` : clean}
                             >
                               <span className="cal-scene-name">
