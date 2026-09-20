@@ -1,23 +1,33 @@
 /**
  * Disneyland Paris Live Shows Service
  * Source: ThemeParks.wiki API (unofficial real-time Disney park data)
+ * Parks: Disneyland Park & Disney Adventure World (formerly Walt Disney Studios)
  */
 
 export interface DlpShow {
   id: string;
   name: string;
-  park: 'Disneyland Park' | 'Walt Disney Studios';
+  park: 'Disneyland Park' | 'Disney Adventure World';
   status: 'OPERATING' | 'CLOSED' | 'REFURBISHMENT' | string;
   isRelache: boolean;
+  relacheReason?: string;
   times: string[]; // ['12:30', '13:30', ...]
   nextTime?: string;
   category: 'spectacle' | 'rencontre' | 'nocturne' | 'parade';
 }
 
-const CACHE_KEY = 'dlp_shows_cache';
+const CACHE_KEY = 'dlp_shows_cache_v2';
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
-// Fallback data in case the client is completely offline or API has a temporary hiccup
+function getTodayIsoString(refDate?: Date): string {
+  const d = refDate || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Fallback catalog with authentic park naming
 const FALLBACK_SHOWS: DlpShow[] = [
   {
     id: 'lion-king',
@@ -31,16 +41,17 @@ const FALLBACK_SHOWS: DlpShow[] = [
   {
     id: 'together-pixar',
     name: 'TOGETHER : Une Aventure Musicale Pixar (Studio Theater)',
-    park: 'Walt Disney Studios',
-    status: 'OPERATING',
-    isRelache: false,
-    times: ['11:15', '12:25', '13:35', '15:40', '16:50'],
+    park: 'Disney Adventure World',
+    status: 'CLOSED',
+    isRelache: true,
+    relacheReason: 'Relâche programmée aujourd’hui',
+    times: [],
     category: 'spectacle'
   },
   {
     id: 'mickey-magician',
     name: 'Mickey et le Magicien (Animagique Theater)',
-    park: 'Walt Disney Studios',
+    park: 'Disney Adventure World',
     status: 'OPERATING',
     isRelache: false,
     times: ['13:00', '14:05', '15:10', '17:25', '18:30'],
@@ -49,10 +60,11 @@ const FALLBACK_SHOWS: DlpShow[] = [
   {
     id: 'frozen-musical',
     name: 'La Reine des Neiges : Une Invitation Musicale (Animation Celebration)',
-    park: 'Walt Disney Studios',
-    status: 'OPERATING',
-    isRelache: false,
-    times: ['10:30', '11:15', '12:00', '12:45', '13:30', '14:15', '15:00', '15:45', '16:30', '17:15', '18:00', '18:45'],
+    park: 'Disney Adventure World',
+    status: 'CLOSED',
+    isRelache: true,
+    relacheReason: 'Relâche ou fermeture saisonnière',
+    times: [],
     category: 'spectacle'
   },
   {
@@ -66,7 +78,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
   },
   {
     id: 'tales-of-magic',
-    name: 'Disney Tales of Magic (Nocturne Château)',
+    name: 'Disney Tales of Magic (Spectacle Nocturne Château)',
     park: 'Disneyland Park',
     status: 'OPERATING',
     isRelache: false,
@@ -75,8 +87,8 @@ const FALLBACK_SHOWS: DlpShow[] = [
   },
   {
     id: 'cascade-lights',
-    name: 'Disney Cascade of Lights (Lac / Studios)',
-    park: 'Walt Disney Studios',
+    name: 'Disney Cascade of Lights (Lac Adventure Way)',
+    park: 'Disney Adventure World',
     status: 'OPERATING',
     isRelache: false,
     times: ['21:50'],
@@ -85,7 +97,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
   {
     id: 'matmops-dream-factory',
     name: 'La Fabrique des Rêves de Disney Junior (Studio D)',
-    park: 'Walt Disney Studios',
+    park: 'Disney Adventure World',
     status: 'OPERATING',
     isRelache: false,
     times: ['12:00', '13:00', '14:00', '16:20', '17:20'],
@@ -94,18 +106,20 @@ const FALLBACK_SHOWS: DlpShow[] = [
   {
     id: 'dr-strange',
     name: 'Doctor Strange : Mystères Mystiques (Avengers Campus)',
-    park: 'Walt Disney Studios',
-    status: 'OPERATING',
-    isRelache: false,
-    times: ['19:30', '20:15'],
+    park: 'Disney Adventure World',
+    status: 'CLOSED',
+    isRelache: true,
+    relacheReason: 'Aucune représentation aujourd’hui',
+    times: [],
     category: 'spectacle'
   },
   {
     id: 'alice-bmx',
-    name: 'Alice & la Reine de Cœur : Retour au Pays des Merveilles',
-    park: 'Walt Disney Studios',
+    name: 'Alice & la Reine de Cœur : Retour au Pays des Merveilles (Theater of the Stars)',
+    park: 'Disney Adventure World',
     status: 'CLOSED',
     isRelache: true,
+    relacheReason: 'Relâche ou fin de saison estivale',
     times: [],
     category: 'spectacle'
   }
@@ -115,7 +129,7 @@ function categorizeShow(name: string): { category: DlpShow['category']; cleanNam
   const lower = name.toLowerCase();
   let cleanName = name;
 
-  // Pretty name translation & cleanup
+  // Pretty name translation & theater associations
   if (lower.includes('lion king')) {
     cleanName = 'Le Roi Lion : Les Rythmes de la Terre des Lions (Frontierland Theater)';
   } else if (lower.includes('together')) {
@@ -123,13 +137,13 @@ function categorizeShow(name: string): { category: DlpShow['category']; cleanNam
   } else if (lower.includes('mickey and the magician') || lower.includes('magicien')) {
     cleanName = 'Mickey et le Magicien (Animagique Theater)';
   } else if (lower.includes('frozen') || lower.includes('reine des neiges')) {
-    cleanName = 'La Reine des Neiges : Une Invitation Musicale';
+    cleanName = 'La Reine des Neiges : Une Invitation Musicale (Animation Celebration)';
   } else if (lower.includes('stars on parade')) {
     cleanName = 'Disney Stars on Parade';
   } else if (lower.includes('tales of magic')) {
-    cleanName = 'Disney Tales of Magic (Spectacle Nocturne)';
+    cleanName = 'Disney Tales of Magic (Spectacle Nocturne Château)';
   } else if (lower.includes('cascade of lights')) {
-    cleanName = 'Disney Cascade of Lights';
+    cleanName = 'Disney Cascade of Lights (Lac Adventure Way)';
   } else if (lower.includes('dream factory') || lower.includes('fabrique des')) {
     cleanName = 'La Fabrique des Rêves de Disney Junior (Studio D)';
   } else if (lower.includes('doctor strange')) {
@@ -138,6 +152,12 @@ function categorizeShow(name: string): { category: DlpShow['category']; cleanNam
     cleanName = 'A Million Splashes of Colour';
   } else if (lower.includes('sleeping beauty')) {
     cleanName = 'Valse Royale de la Belle au Bois Dormant';
+  } else if (lower.includes('stitch live')) {
+    cleanName = 'Stitch Live! (Production Courtyard)';
+  } else if (lower.includes('animation academy')) {
+    cleanName = 'Animation Academy (Toon Studio)';
+  } else if (lower.includes('arendelle')) {
+    cleanName = 'Une Célébration en Arendelle';
   }
 
   if (lower.includes('tales of magic') || lower.includes('cascade of lights') || lower.includes('fireworks') || lower.includes('nocturne')) {
@@ -152,14 +172,21 @@ function categorizeShow(name: string): { category: DlpShow['category']; cleanNam
   return { category: 'spectacle', cleanName };
 }
 
-export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: string; isOffline: boolean }> {
+export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: string; isOffline: boolean; todayDate: string }> {
+  const todayIso = getTodayIsoString();
+
   // Check local cache
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Date.now() - parsed.timestamp < CACHE_TTL) {
-        return { shows: parsed.shows, lastUpdated: parsed.lastUpdated, isOffline: false };
+      if (parsed.todayDate === todayIso && Date.now() - parsed.timestamp < CACHE_TTL) {
+        return {
+          shows: parsed.shows,
+          lastUpdated: parsed.lastUpdated,
+          isOffline: false,
+          todayDate: todayIso
+        };
       }
     }
   } catch {
@@ -167,6 +194,8 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
   }
 
   try {
+    // dae968d5-630d-4719-8b06-3d107e944401: Disneyland Park
+    // ca888437-ebb4-4d50-aed2-d227f7096968: Disney Adventure World (formerly Walt Disney Studios)
     const park1Promise = fetch('https://api.themeparks.wiki/v1/entity/dae968d5-630d-4719-8b06-3d107e944401/live')
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -185,7 +214,7 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
       p1.liveData.forEach((item: any) => allItems.push({ ...item, park: 'Disneyland Park' }));
     }
     if (p2?.liveData) {
-      p2.liveData.forEach((item: any) => allItems.push({ ...item, park: 'Walt Disney Studios' }));
+      p2.liveData.forEach((item: any) => allItems.push({ ...item, park: 'Disney Adventure World' }));
     }
 
     const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
@@ -195,12 +224,20 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
       .filter(item => !item.name.toLowerCase().startsWith('reserved viewing'))
       .map(item => {
         const { category, cleanName } = categorizeShow(item.name);
-        const times: string[] = (item.showtimes || [])
+
+        // Filter showtimes STRICTLY for today's date
+        const todaysShowtimes = (item.showtimes || []).filter((t: any) => {
+          if (!t.startTime) return false;
+          const showDate = t.startTime.slice(0, 10);
+          return showDate === todayIso;
+        });
+
+        const times: string[] = todaysShowtimes
           .map((t: any) => (t.startTime ? t.startTime.slice(11, 16) : ''))
           .filter(Boolean)
           .sort();
 
-        // Calculate next upcoming showtime
+        // Calculate next upcoming showtime today
         let nextTime: string | undefined;
         for (const t of times) {
           const [th, tm] = t.split(':').map(Number);
@@ -210,21 +247,34 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
           }
         }
 
-        const isClosed = item.status === 'CLOSED' || item.status === 'REFURBISHMENT';
-        const isRelache = isClosed || times.length === 0;
+        const isClosedStatus = item.status === 'CLOSED' || item.status === 'REFURBISHMENT';
+        // A show is in relâche if closed by status OR if it has NO scheduled performances for TODAY's date
+        const isRelache = isClosedStatus || times.length === 0;
+
+        let relacheReason: string | undefined;
+        if (isRelache) {
+          if (item.status === 'REFURBISHMENT') {
+            relacheReason = 'Fermeture technique / réhabilitation';
+          } else if (item.status === 'CLOSED') {
+            relacheReason = 'Fermé aujourd’hui';
+          } else {
+            relacheReason = 'Relâche programmée aujourd’hui (aucune séance)';
+          }
+        }
 
         return {
           id: item.id || cleanName,
           name: cleanName,
           park: item.park,
-          status: item.status || (isRelache ? 'CLOSED' : 'OPERATING'),
+          status: isRelache ? 'CLOSED' : (item.status || 'OPERATING'),
           isRelache,
+          relacheReason,
           times,
           nextTime,
           category
         };
       })
-      // Sort: spectacles with showtimes first, then parades, then relâches at the end
+      // Sort: spectacles in operation first, then relâches, sorted alphabetically
       .sort((a, b) => {
         if (a.isRelache !== b.isRelache) {
           return a.isRelache ? 1 : -1;
@@ -234,10 +284,15 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
 
     const nowStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ shows, lastUpdated: nowStr, timestamp: Date.now() }));
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        shows,
+        lastUpdated: nowStr,
+        todayDate: todayIso,
+        timestamp: Date.now()
+      }));
     } catch {}
 
-    return { shows, lastUpdated: nowStr, isOffline: false };
+    return { shows, lastUpdated: nowStr, isOffline: false, todayDate: todayIso };
   } catch (e) {
     console.warn('Failed to fetch live DLP shows, falling back to local dataset', e);
     const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
@@ -252,6 +307,6 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
       }
       return { ...s, nextTime };
     });
-    return { shows, lastUpdated: 'Secours (Hors ligne)', isOffline: true };
+    return { shows, lastUpdated: 'Secours (Hors ligne)', isOffline: true, todayDate: todayIso };
   }
 }

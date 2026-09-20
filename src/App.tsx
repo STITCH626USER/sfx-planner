@@ -70,8 +70,8 @@ function ConsoleClock({ onClick }: { onClick: () => void }) {
       type="button"
       className="ma3-console-clock ma3-clock-clickable"
       onClick={onClick}
-      title="Voir les horaires de shows & spectacles DLP en direct"
-      aria-label="Voir les horaires de spectacles et relâches Disneyland Paris"
+      title="Cliquer pour afficher les horaires des spectacles & relâches Disneyland Paris en direct"
+      aria-label="Spectacles & relâches Disneyland Paris"
     >
       <span className="ma3-clock-dot" />
       <span className="ma3-clock-time">
@@ -82,12 +82,13 @@ function ConsoleClock({ onClick }: { onClick: () => void }) {
   );
 }
 
+
 function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [shows, setShows] = useState<DlpShow[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [isOffline, setIsOffline] = useState(false);
-  const [parkFilter, setParkFilter] = useState<'ALL' | 'Disneyland Park' | 'Walt Disney Studios'>('ALL');
+  const [parkFilter, setParkFilter] = useState<'ALL' | 'Disneyland Park' | 'Disney Adventure World'>('ALL');
   const [tabFilter, setTabFilter] = useState<'ALL' | 'OPERATING' | 'RELACHE'>('ALL');
   const [search, setSearch] = useState('');
 
@@ -209,10 +210,10 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
               </button>
               <button
                 type="button"
-                className={`dlp-filter-pill ${parkFilter === 'Walt Disney Studios' ? 'active' : ''}`}
-                onClick={() => setParkFilter('Walt Disney Studios')}
+                className={`dlp-filter-pill ${parkFilter === 'Disney Adventure World' ? 'active' : ''}`}
+                onClick={() => setParkFilter('Disney Adventure World')}
               >
-                Walt Disney Studios
+                Disney Adventure World
               </button>
             </div>
 
@@ -245,7 +246,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             <input
               type="text"
               className="dlp-search-input"
-              placeholder="Rechercher un spectacle, une parade, un horaire (ex: Roi Lion, 17:30)…"
+              placeholder="Rechercher un spectacle, une parade, un horaire (ex: Together, Roi Lion, 17:30)…"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -257,7 +258,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           {loading && shows.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
               <div className="spinner" style={{ margin: '0 auto 12px auto' }} />
-              <div>Interrogation en direct des serveurs Disneyland Paris…</div>
+              <div>Interrogation en direct des horaires du jour Disneyland Paris & Disney Adventure World…</div>
             </div>
           ) : filteredShows.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
@@ -277,7 +278,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span className="dlp-show-name">{show.name}</span>
                           <span className={`dlp-park-badge ${show.park === 'Disneyland Park' ? 'park-dlp' : 'park-wds'}`}>
-                            {show.park === 'Disneyland Park' ? 'Disneyland' : 'Studios'}
+                            {show.park === 'Disneyland Park' ? 'Disneyland Park' : 'Adventure World'}
                           </span>
                         </div>
                       </div>
@@ -285,7 +286,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                       <div>
                         {isRelache ? (
                           <span className="dlp-status-pill relache">
-                            <span className="dlp-relache-cross">✕</span> RELÂCHE
+                            <span className="dlp-relache-cross">✕</span> EN RELÂCHE
                           </span>
                         ) : (
                           <span className="dlp-status-pill operating">
@@ -297,7 +298,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
                     {!isRelache && show.times.length > 0 && (
                       <div className="dlp-showtimes-row">
-                        <span className="dlp-showtimes-label">Séances :</span>
+                        <span className="dlp-showtimes-label">Séances aujourd'hui :</span>
                         <div className="dlp-times-pills">
                           {show.times.map(t => {
                             const isNext = t === show.nextTime;
@@ -318,7 +319,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
                     {isRelache && (
                       <div className="dlp-relache-note">
-                        Aucune séance programmée aujourd'hui (jour de relâche ou fermeture technique).
+                        ⚠️ {show.relacheReason || 'Aucune séance programmée aujourd’hui (jour de relâche ou fermeture technique).'}
                       </div>
                     )}
                   </div>
@@ -327,6 +328,7 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             </div>
           )}
         </div>
+
 
         {/* Modal Footer */}
         <div className="dlp-modal-footer">
@@ -578,7 +580,6 @@ export default function App() {
             </div>
 
             <div className="apple-nav-actions">
-              <ConsoleClock onClick={() => setShowDlpModal(true)} />
               <button
                 type="button"
                 className="apple-theme-btn"
@@ -590,6 +591,7 @@ export default function App() {
             </div>
           </div>
         </header>
+
 
 
         {/* Hero Section Apple */}
@@ -682,11 +684,9 @@ export default function App() {
           </div>
         )}
 
-        {showDlpModal && (
-          <DlpShowsModal isOpen={showDlpModal} onClose={() => setShowDlpModal(false)} />
-        )}
       </div>
     );
+
 
 
   }
@@ -1332,13 +1332,9 @@ function DayCard({
                   {rec.role}
                 </span>
               )}
-              {isToday && (
-                <span className="badge-today">
-                  <span className="ma3-live-beacon" />
-                  Aujourd'hui
-                </span>
-              )}
+              {isToday && <span className="badge-today">Aujourd'hui</span>}
             </div>
+
             {isToday && (() => {
               const liveStatus = getShiftLiveStatus(rec.time);
               if (!liveStatus) return null;
@@ -1404,13 +1400,9 @@ function DayCard({
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', textTransform: 'capitalize' }}>
                 {formatDateLong(date)}
               </div>
-              {isToday && (
-                <span className="badge-today">
-                  <span className="ma3-live-beacon" />
-                  Aujourd'hui
-                </span>
-              )}
+              {isToday && <span className="badge-today">Aujourd'hui</span>}
             </div>
+
             <div style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
               {records.length} créneau{records.length > 1 ? 'x' : ''}
             </div>

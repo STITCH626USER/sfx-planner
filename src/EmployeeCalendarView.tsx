@@ -226,12 +226,9 @@ export function EmployeeCalendarView({
                       {showWeekBadge && (
                         <span className="cal-week-tag" title={weekLabel}>{shortWeek}</span>
                       )}
-                      {isToday && (
-                        <span className="cal-today-dot ma3-pulsing-dot" title="Aujourd'hui (LIVE)">
-                          <span className="ma3-live-beacon" />
-                        </span>
-                      )}
+                      {isToday && <span className="cal-today-dot" title="Aujourd'hui" />}
                     </div>
+
 
 
                     <div className="cal-day-cell-content">
