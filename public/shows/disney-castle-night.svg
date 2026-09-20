@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sky-dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#050819"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <radialGradient id="firework-gold" cx="70%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="25%" stop-color="#fbbf24" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#ea580c" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#050819" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="firework-pink" cx="30%" cy="40%" r="40%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="30%" stop-color="#f43f5e" stop-opacity="0.7"/>
+      <stop offset="70%" stop-color="#8b5cf6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#050819" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#sky-dark)"/>
+  <circle cx="280" cy="70" r="110" fill="url(#firework-gold)"/>
+  <circle cx="120" cy="90" r="90" fill="url(#firework-pink)"/>
+
+  <!-- Delicate pyrotechnic sparks and willow bursts -->
+  <g stroke="#fef08a" stroke-linecap="round" opacity="0.85">
+    <line x1="280" y1="70" x2="280" y2="25" stroke-width="1.8"/>
+    <line x1="280" y1="70" x2="280" y2="115" stroke-width="1.8"/>
+    <line x1="280" y1="70" x2="235" y2="70" stroke-width="1.8"/>
+    <line x1="280" y1="70" x2="325" y2="70" stroke-width="1.8"/>
+    <line x1="280" y1="70" x2="248" y2="38" stroke-width="1.5"/>
+    <line x1="280" y1="70" x2="312" y2="102" stroke-width="1.5"/>
+    <line x1="280" y1="70" x2="248" y2="102" stroke-width="1.5"/>
+    <line x1="280" y1="70" x2="312" y2="38" stroke-width="1.5"/>
+    <circle cx="280" cy="20" r="2.5" fill="#fff"/>
+    <circle cx="330" cy="70" r="2.5" fill="#fff"/>
+    <circle cx="243" cy="33" r="2" fill="#fde047"/>
+    <circle cx="317" cy="107" r="2" fill="#fde047"/>
+    <circle cx="243" cy="107" r="2" fill="#fde047"/>
+    <circle cx="317" cy="33" r="2" fill="#fde047"/>
+  </g>
+
+  <!-- High-fidelity Sleeping Beauty Castle Silhouette (Disneyland Paris) -->
+  <g transform="translate(145, 45) scale(0.62)" fill="#060913">
+    <!-- Main Center Grand Spire -->
+    <path d="M 180 5 L 183 50 L 177 50 Z" fill="#ffd700"/>
+    <polygon points="180,50 188,110 172,110"/>
+    <rect x="174" y="110" width="12" height="150"/>
+    <!-- Center Rose Window & Balcony -->
+    <circle cx="180" cy="135" r="7" fill="#38bdf8" opacity="0.8"/>
+    <!-- Flanking High Turrets -->
+    <polygon points="150,65 156,120 144,120"/>
+    <rect x="145" y="120" width="10" height="140"/>
+    <polygon points="210,65 216,120 204,120"/>
+    <rect x="205" y="120" width="10" height="140"/>
+    <!-- Outer Towers with Conical Roofs -->
+    <polygon points="115,100 123,150 107,150"/>
+    <rect x="108" y="150" width="14" height="110"/>
+    <polygon points="245,100 253,150 237,150"/>
+    <rect x="238" y="150" width="14" height="110"/>
+    <!-- Low Gate Bastions -->
+    <polygon points="80,140 88,175 72,175"/>
+    <rect x="73" y="175" width="14" height="85"/>
+    <polygon points="280,140 288,175 272,175"/>
+    <rect x="273" y="175" width="14" height="85"/>
+    <!-- Lower Hill Rock Base & Ramparts -->
+    <path d="M 50 200 L 70 175 L 290 175 L 310 200 L 320 260 L 40 260 Z"/>
+    <!-- Drawbridge Arch illuminated -->
+    <path d="M 168 260 L 168 215 C 168 200 192 200 192 215 L 192 260 Z" fill="#fbbf24" opacity="0.7"/>
+  </g>
+</svg>
