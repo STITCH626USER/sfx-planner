@@ -422,12 +422,12 @@ export default function App() {
               className="app-logo"
               onClick={() => setShowResetConfirm(true)}
               style={{ cursor: 'pointer' }}
-              title="SFX Planner 3000"
+              title="SFX Planner"
             >
               <Logo />
             </div>
             <div className="app-title-wrap" onClick={() => setShowResetConfirm(true)} style={{ cursor: 'pointer' }}>
-              <div className="app-title">SFX Planner 3000</div>
+              <div className="app-title">SFX Planner</div>
             </div>
           </div>
 
@@ -609,7 +609,7 @@ export default function App() {
             <img src="icon-192.png" alt="SFX Logo" className="pwa-banner-icon" />
             <div className="pwa-banner-text">
               <div className="pwa-banner-title" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                Installer SFX Planner 3000 sur votre écran d'accueil ?
+                Installer SFX Planner sur votre écran d'accueil ?
               </div>
             </div>
           </div>

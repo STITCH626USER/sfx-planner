@@ -1,5 +1,5 @@
 {
-  "name": "SFX Planner 3000",
+  "name": "SFX Planner",
   "short_name": "SFX Planner",
   "description": "Visualisation et export des plannings de l'équipe SFX",
   "start_url": "./index.html",

@@ -199,19 +199,19 @@ function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: nu
   doc.setTextColor(100, 116, 139);
   doc.text("SFX PLANNER", marginX + 1, fy + 2.5);
 
-  // Center UKG warning
+  // Center UKG warning (exact text matching permanent bottom popup, ASCII safe)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.0);
+  doc.setFontSize(6.5);
   doc.setTextColor(...AMBER2);
-  doc.text("⚠  Contrôle obligatoire sur UKG personnel", pageW / 2, fy + 2.5, { align: 'center' });
+  doc.text("Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.", pageW / 2, fy + 2.5, { align: 'center' });
 
-  // Right date
+  // Right date (no "Document officiel" per user request)
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.2);
   doc.setTextColor(148, 163, 184);
   const now = new Date();
   const dStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-  doc.text(`Document officiel · Édité le ${dStr}`, pageW - marginX - 1, fy + 2.5, { align: 'right' });
+  doc.text(`Édité le ${dStr}`, pageW - marginX - 1, fy + 2.5, { align: 'right' });
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -619,10 +619,10 @@ async function generateIndivPdf(opts: {
   
   const startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle, logo, 'SFX PLANNER', opts.statsBadge);
   
-  const isIndiv = opts.filename.includes('indiv');
+  const isWeekGrid = opts.filename.includes('indiv') || opts.filename.includes('scene');
   const numWeeks = Math.ceil(opts.allDates.length / 7);
   
-  if (isIndiv) {
+  if (isWeekGrid) {
     // 7 days per column, dynamic height to fill exactly 100% of vertical space without void!
     const bottomLimit = pageH - 14; // footer top
     const availableH = bottomLimit - startY; // approx 162mm
@@ -858,10 +858,11 @@ function drawIndivDayBlock(
   const rx = px + pictoW + 2.4;
 
   if (isOff) {
+    const isScene = Boolean(themeColorName);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
-    doc.text('Repos / Congé', rx, y + h / 2 + 1.2);
+    doc.text(isScene ? 'Relâche / Aucun service' : 'Repos / Congé', rx, y + h / 2 + 1.2);
 
     const pillW = 12;
     const pillH = 5.2;
@@ -874,7 +875,7 @@ function drawIndivDayBlock(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.2);
     doc.setTextColor(148, 163, 184);
-    doc.text('OFF', pillX + pillW / 2, pillY + 3.6, { align: 'center' });
+    doc.text(isScene ? '—' : 'OFF', pillX + pillW / 2, pillY + 3.6, { align: 'center' });
     return;
   }
 
@@ -889,23 +890,6 @@ function drawIndivDayBlock(
     const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
     const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
-    // Time pill top right
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.6);
-    const tw = doc.getTextWidth(cleanTime);
-    const pillW = tw + 4.2;
-    const pillH = 5.2;
-    const pillX = x + w - pillW - 2.2;
-    const pillY = y + 2.5;
-
-    doc.setFillColor(...scBg);
-    doc.setDrawColor(...scAccent);
-    doc.setLineWidth(0.25);
-    doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
-    doc.setTextColor(...scAccent);
-    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.7, { align: 'center' });
-
-    // Scene name
     let rawNm = cleanText(cleanSceneName(row.name));
     let mainName = rawNm;
     let role = row.subtext || '';
@@ -915,6 +899,23 @@ function drawIndivDayBlock(
       role = matchRole[2].trim();
     }
 
+    // Time pill top right (centered if no role)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.6);
+    const tw = doc.getTextWidth(cleanTime);
+    const pillW = tw + 4.2;
+    const pillH = 5.2;
+    const pillX = x + w - pillW - 2.2;
+    const pillY = role ? y + 2.5 : y + (h - pillH) / 2;
+
+    doc.setFillColor(...scBg);
+    doc.setDrawColor(...scAccent);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
+    doc.setTextColor(...scAccent);
+    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.7, { align: 'center' });
+
+    // Scene name
     const maxSceneW = pillX - rx - 1.2;
     let fontSize = 8.0;
     doc.setFont('helvetica', 'bold');
@@ -932,7 +933,7 @@ function drawIndivDayBlock(
       }
       dispScene = dispScene.trim() + '...';
     }
-    doc.text(dispScene, rx, y + 6.8);
+    doc.text(dispScene, rx, role ? y + 6.8 : y + h / 2 + 1.8);
 
     // Role
     if (role) {
@@ -1138,23 +1139,28 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene), subtext});
   }
 
-  const dateMapKeys = Array.from(dateMap.keys()).filter(Boolean).sort();
   const allDatesTotal = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
+  for (const d of allDatesTotal) {
+    if (!dateMap.has(d)) dateMap.set(d, []);
+  }
   const pStart = allDatesTotal[0] ? fmtDate(allDatesTotal[0]) : '';
   const pEnd   = allDatesTotal[allDatesTotal.length-1] ? fmtDate(allDatesTotal[allDatesTotal.length-1]) : '';
-  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} - ${pEnd}` : pStart;
+  const period = pStart && pEnd && pStart !== pEnd ? `${pStart} — ${pEnd}` : pStart;
+  const numWeeks = Math.ceil(allDatesTotal.length / 7);
+  const activeDays = Array.from(dateMap.entries()).filter(([, rows]) => rows.length > 0).length;
 
-  for (const d of dateMapKeys) {
+  for (const d of allDatesTotal) {
     dateMap.get(d)!.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   }
 
   await generateIndivPdf({
-    title: cleanText(scene),
-    subtitle: period ? `Période : ${period}` : 'Période',
+    title: cleanText(cleanSceneName(scene)).toUpperCase(),
+    subtitle: period ? `Planning de scène · ${period}` : 'Planning de scène',
+    statsBadge: `${sceneRecs.length} SERVICES · ${activeDays}/${allDatesTotal.length} JOURS · ${numWeeks} SEM.`,
     dateMap,
-    allDates: dateMapKeys,
-    filename: `sfx-planning-${slug(scene)}.pdf`,
-    themeColorName: scene, // Force scene color for all bubbles
+    allDates: allDatesTotal,
+    filename: `sfx-planning-scene-${slug(scene)}.pdf`,
+    themeColorName: scene, // Force scene color for all cards
   });
 }
 
