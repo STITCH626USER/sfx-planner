@@ -418,22 +418,31 @@ export default function App() {
       <aside className="app-sidebar">
         <header className="app-header">
           <div className="app-header-left">
-            <button
-              type="button"
+            <div
               className="app-logo"
-              aria-label="Changer le mode d'affichage"
-              title="Changer le mode d'affichage"
-              data-testid="btn-theme-toggle"
-              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+              onClick={() => setShowResetConfirm(true)}
+              style={{ cursor: 'pointer' }}
+              title="SFX Planner 3000"
             >
               <Logo />
-            </button>
+            </div>
             <div className="app-title-wrap" onClick={() => setShowResetConfirm(true)} style={{ cursor: 'pointer' }}>
               <div className="app-title">SFX Planner 3000</div>
             </div>
           </div>
 
           <div className="app-header-actions">
+            <button
+              type="button"
+              className="btn-header-theme"
+              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+              title={theme === 'dark' ? 'Basculer en mode clair' : 'Basculer en mode sombre'}
+              aria-label="Changer le thème"
+              data-testid="btn-theme-toggle"
+            >
+              {theme === 'dark' ? <IconSun /> : <IconMoon />}
+              <span className="theme-btn-text">{theme === 'dark' ? 'Clair' : 'Sombre'}</span>
+            </button>
             <button
               type="button"
               className="btn-header-add"
@@ -1716,6 +1725,23 @@ function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; d
         </div>
       </div>
     </div>
+  );
+}
+
+function IconSun() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function IconMoon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
   );
 }
 
