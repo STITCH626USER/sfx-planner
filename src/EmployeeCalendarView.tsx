@@ -279,7 +279,7 @@ export function EmployeeCalendarView({
         >
           <div
             ref={popoverRef}
-            className="cal-popover-bubble animate-scale-up"
+            className="cal-popover-bubble"
             onClick={e => e.stopPropagation()}
           >
             <div className="cal-popover-head">

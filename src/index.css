@@ -1403,6 +1403,8 @@ input:focus, select:focus {
   border-top-color: var(--amber);
   animation: spin 0.65s linear infinite;
   vertical-align: -2px;
+  will-change: transform;
+  transform: translateZ(0);
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
@@ -1785,30 +1787,30 @@ input:focus, select:focus {
 .export-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(2, 4, 8, 0.7);
+  background: rgba(2, 4, 8, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  animation: modalFadeIn 0.25s var(--spring-physics);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: modalFadeIn 0.18s ease-out;
   overscroll-behavior: contain;
+  will-change: opacity;
+  transform: translateZ(0);
 }
 @keyframes modalFadeIn {
-  from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
-  to { opacity: 1; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .export-modal {
   background: var(--bg-modal);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
   color: var(--fg);
-  border: 1px solid var(--line-strong);
+  border: 1.5px solid var(--line-strong);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
   width: 100%;
   max-width: 460px;
   max-height: calc(100dvh - 32px);
@@ -1816,11 +1818,14 @@ input:focus, select:focus {
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-  animation: modalScaleUp 0.35s var(--spring-physics);
+  animation: modalSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
-@keyframes modalScaleUp {
-  from { transform: scale(0.92); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+@keyframes modalSlideUp {
+  from { transform: translateY(12px) translateZ(0); opacity: 0; }
+  to { transform: translateY(0) translateZ(0); opacity: 1; }
 }
 
 .daily-group-head {
@@ -2649,6 +2654,9 @@ body {
   z-index: -100;
   opacity: 0.038;
   mix-blend-mode: screen;
+  contain: strict;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 :root[data-theme="light"] .smoke-bg {
@@ -4478,9 +4486,9 @@ nav.seg button[aria-selected="true"] {
 .cal-popover-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -4488,6 +4496,8 @@ nav.seg button[aria-selected="true"] {
   padding: 20px;
   animation: calFadeIn 0.15s ease-out;
   box-sizing: border-box;
+  will-change: opacity;
+  transform: translateZ(0);
 }
 
 @media (max-width: 639px) {
@@ -4503,14 +4513,14 @@ nav.seg button[aria-selected="true"] {
   to { opacity: 1; }
 }
 
-@keyframes calPopoverScale {
+@keyframes calPopoverSlide {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(4px);
+    transform: translateY(8px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0) translateZ(0);
   }
 }
 
@@ -4527,7 +4537,10 @@ nav.seg button[aria-selected="true"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: calPopoverScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: calPopoverSlide 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 :root[data-theme="light"] .cal-popover-bubble {
