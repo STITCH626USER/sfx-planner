@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@600;700;800&family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /* SFX Planner — Premium Space-Midnight Glassmorphism Aesthetic.
    A-to-Z complete interface redesign. Modern mobile-first layout. */
@@ -65,6 +65,7 @@
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   --font-time:    'Barlow Condensed', 'Saira Condensed', sans-serif;
+  --font-name:    'Barlow Semi Condensed', 'Barlow Condensed', var(--font-display);
   --spring-physics: cubic-bezier(0.34, 1.56, 0.64, 1);
   --spring-transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -1111,11 +1112,11 @@ input:focus, select:focus {
   box-shadow: var(--shadow-card);
 }
 .team-name {
-  font-family: var(--font-display);
+  font-family: var(--font-name);
   font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
+  font-size: 16.5px;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
 }
 .team-meta {
   font-size: 12.5px;
@@ -3398,11 +3399,11 @@ nav.seg button[aria-selected="true"] {
 }
 
 .employee-hero-name {
-  font-family: var(--font-display);
-  font-size: 19px;
+  font-family: var(--font-name);
+  font-size: 21px;
   font-weight: 700;
   color: var(--fg);
-  letter-spacing: -0.015em;
+  letter-spacing: 0.005em;
 }
 
 .employee-hero-meta {
