@@ -123,7 +123,7 @@ export function EmployeeCalendarView({
           <div className="cal-unified-info">
             <div className="cal-unified-title">
               {selectedWeek === 'all'
-                ? (byWeek.length > 1 ? 'Planning unifié' : byWeek[0]?.[0] || 'Planning')
+                ? (byWeek.length > 1 ? 'Calendrier' : byWeek[0]?.[0] || 'Calendrier')
                 : selectedWeek}
             </div>
             <div className="cal-unified-sub">
