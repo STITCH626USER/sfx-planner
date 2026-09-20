@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /* SFX Planner — Premium Space-Midnight Glassmorphism Aesthetic.
    A-to-Z complete interface redesign. Modern mobile-first layout. */
@@ -64,7 +64,7 @@
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --font-time:    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  --font-time:    'Barlow Condensed', 'Saira Condensed', sans-serif;
   --spring-physics: cubic-bezier(0.34, 1.56, 0.64, 1);
   --spring-transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -816,30 +816,30 @@ input:focus, select:focus {
 /* Beautiful neon style time pill badges */
 .time-pill {
   font-family: var(--font-time);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: "tnum" 1, "cv11" 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   background: var(--on-bg);
   color: var(--on-fg);
-  padding: 6px 13px;
+  padding: 5px 14px;
   border-radius: 999px;
   border: 1px solid var(--on-line);
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(255, 176, 58, 0.08);
+  box-shadow: 0 2px 10px rgba(255, 176, 58, 0.1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1.25;
+  line-height: 1.15;
 }
 .time-pill.off {
   background: var(--off-bg);
   color: var(--off-fg);
   border-color: var(--line);
   box-shadow: none;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 .time-pill.formation {
   background: rgba(159, 130, 255, 0.12);
@@ -1610,8 +1610,9 @@ input:focus, select:focus {
     padding: 10px 12px;
   }
   .compact-team-row .time-pill {
-    font-size: 13.5px;
-    padding: 5px 11px;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 3px 9px;
     letter-spacing: 0.035em;
   }
   .uploader {
@@ -4355,11 +4356,10 @@ nav.seg button[aria-selected="true"] {
 .cal-popover-shift-banner .shift-time {
   font-family: var(--font-time);
   color: var(--amber);
-  font-weight: 600;
-  font-size: 14.5px;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.035em;
   font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: "tnum" 1, "cv11" 1;
 }
 
 .cal-popover-slot-card {
