@@ -222,6 +222,23 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
     const shows: DlpShow[] = allItems
       .filter(item => item.entityType === 'SHOW')
       .filter(item => !item.name.toLowerCase().startsWith('reserved viewing'))
+      // Exclude character meets, autograph sessions, photo locations, and drawing classes
+      .filter(item => {
+        const l = item.name.toLowerCase();
+        if (
+          l.startsWith('meet ') ||
+          l.startsWith('rencontre') ||
+          l.includes('encounter') ||
+          l.includes('pavilion') ||
+          l.includes('pavillon') ||
+          l.includes('academy') ||
+          l.includes('meeting') ||
+          l.includes('character')
+        ) {
+          return false;
+        }
+        return true;
+      })
       .map(item => {
         const { category, cleanName } = categorizeShow(item.name);
 
@@ -233,6 +250,7 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
         });
 
         const times: string[] = todaysShowtimes
+
           .map((t: any) => (t.startTime ? t.startTime.slice(11, 16) : ''))
           .filter(Boolean)
           .sort();

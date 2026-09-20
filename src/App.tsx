@@ -771,33 +771,49 @@ export default function App() {
           </div>
         )}
 
-        <div className="sidebar-nav-block">
-          <nav className="seg" role="tablist" aria-label="Catégories">
-            <button
-              role="tab"
-              aria-selected={tab === 'recherche'}
-              data-testid="tab-recherche"
-              title="Planning individuel"
-              aria-label="Planning individuel"
-              onClick={() => setTab('recherche')}
-            >
-              <IconUser />
-              <span className="tab-label-full">Planning individuel</span>
-              <span className="tab-label-short">Planning indiv.</span>
-            </button>
-            <button
-              role="tab"
-              aria-selected={tab === 'daily'}
-              data-testid="tab-daily"
-              onClick={() => setTab('daily')}
-            >
-              <IconCalendar />
-              <span className="tab-label-full">Vue globale</span>
-              <span className="tab-label-short">Vue globale</span>
-            </button>
-          </nav>
-        </div>
+        {tab !== 'shows' ? (
+          <div className="sidebar-nav-block">
+            <nav className="seg" role="tablist" aria-label="Catégories">
+              <button
+                role="tab"
+                aria-selected={tab === 'recherche'}
+                data-testid="tab-recherche"
+                title="Planning individuel"
+                aria-label="Planning individuel"
+                onClick={() => setTab('recherche')}
+              >
+                <IconUser />
+                <span className="tab-label-full">Planning individuel</span>
+                <span className="tab-label-short">Planning indiv.</span>
+              </button>
+              <button
+                role="tab"
+                aria-selected={tab === 'daily'}
+                data-testid="tab-daily"
+                onClick={() => setTab('daily')}
+              >
+                <IconCalendar />
+                <span className="tab-label-full">Vue globale</span>
+                <span className="tab-label-short">Vue globale</span>
+              </button>
+            </nav>
+          </div>
+        ) : (
+          <div className="sidebar-nav-block">
+            <div style={{ padding: '4px 8px' }}>
+              <button
+                type="button"
+                className="btn-back"
+                onClick={() => setTab(previousTab || 'daily')}
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 600 }}
+              >
+                <IconArrowLeft /> Retour planning
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
+
 
       <main className="app-main" data-testid="main-content">
         {error && (
