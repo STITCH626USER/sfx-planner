@@ -3,7 +3,6 @@ import type { PlanningRecord } from './parsePdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, parseRange } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
-const NAVY:    [number,number,number] = [13,  20,  35];
 const AMBER:   [number,number,number] = [255, 176, 58];
 const AMBER2:  [number,number,number] = [232, 130, 30];
 const VIOLET:  [number,number,number] = [108, 92,  231];
@@ -123,13 +122,15 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   const h = 20;
   const innerW = pageW - marginX * 2;
 
-  // Navy/Slate Console Background
-  doc.setFillColor(...NAVY);
-  doc.roundedRect(marginX, y, innerW, h, 2.0, 2.0, 'F');
+  // Print-friendly Light Header: Pure white card with subtle slate-300 border
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(203, 213, 225); // Slate-300
+  doc.setLineWidth(0.3);
+  doc.roundedRect(marginX, y, innerW, h, 2.0, 2.0, 'FD');
 
-  // Subtle bottom accent line
+  // Subtle top amber bar
   doc.setFillColor(...AMBER);
-  doc.rect(marginX + 2, y + h - 0.7, innerW - 4, 0.7, 'F');
+  doc.rect(marginX + 2, y, innerW - 4, 0.8, 'F');
 
   // Logo
   let tx = marginX + 6;
@@ -139,38 +140,38 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
       const ly = y + 2.8;
       const ls = 14.4;
       doc.addImage(logo, 'PNG', lx, ly, ls, ls);
-      doc.setDrawColor(...AMBER);
+      doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.3);
       doc.circle(lx + ls / 2, ly + ls / 2, ls / 2 + 0.2, 'S');
       tx = lx + ls + 4.5;
     } catch { /* ignore */ }
   }
 
-  // Title (Technician name in uppercase)
+  // Title (Technician name in uppercase, dark ink)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13.5);
-  doc.setTextColor(...WHITE);
+  doc.setTextColor(15, 23, 42); // Slate-900
   doc.text(cleanText(title).toUpperCase(), tx, y + 8.2);
 
   // Subtitle (Period readout)
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.2);
-  doc.setTextColor(165, 185, 210);
+  doc.setTextColor(71, 85, 105); // Slate-600
   const cleanSub = cleanText(subtitle).replace(/\s*-\s*/, ' — ');
   doc.text(cleanSub, tx, y + 14.0);
 
-  // Stats badge (clean readout)
+  // Stats badge (clean readout in light warm pill)
   if (statsBadge) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     const badgeW = doc.getTextWidth(statsBadge) + 8;
     const bx = pageW - marginX - 36 - badgeW;
     const by = y + 5.0;
-    doc.setFillColor(26, 38, 56);
-    doc.setDrawColor(45, 62, 88);
+    doc.setFillColor(254, 243, 199); // Amber-100
+    doc.setDrawColor(252, 211, 77);  // Amber-300
     doc.setLineWidth(0.25);
     doc.roundedRect(bx, by, badgeW, 8.5, 1.5, 1.5, 'FD');
-    doc.setTextColor(255, 191, 36);
+    doc.setTextColor(180, 83, 9);   // Amber-700
     doc.text(statsBadge, bx + badgeW / 2, by + 5.8, { align: 'center' });
   }
 
@@ -178,7 +179,7 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   const rightX = pageW - marginX - 5;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
-  doc.setTextColor(...AMBER);
+  doc.setTextColor(...AMBER2);
   doc.text(rightLabel, rightX, y + 11.0, { align: 'right' });
 
   return y + h + 4;
@@ -554,31 +555,33 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
   const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>();
 
   for (const r of empRecs) {
-    if (!dateMap.has(r.date)) dateMap.set(r.date,[]);
-    let name = cleanSceneName(r.scene) || '-';
-    if (r.role && !isTrainingScene(r.scene)) {
-      name = `${name} (${r.role})`;
+    if (!dateMap.has(r.date)) dateMap.set(r.date, []);
+    let clean = cleanSceneName(r.scene) || '-';
+    let role = (r.role && !isTrainingScene(r.scene)) ? r.role : '';
+    let name = clean;
+    if (role) {
+      name = `${name} (${role})`;
     }
-    if (r.shiftTime && r.shiftTime !== r.time) {
-      name = `${name} [Journée: ${r.shiftTime}]`;
-    }
-    let isFO=false; let subtext: string | undefined;
+    let isFO = false;
+    let subtext: string | undefined;
     if (isTrainingScene(r.scene)) {
-      isFO=true;
+      isFO = true;
       const dayRecs = records.filter(dr => dr.date === r.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene));
       const scenesOfDay = new Set<string>();
       for (const dr of dayRecs) {
         if (timesMatch(dr.time, r.time, 5)) {
-          let clean = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
-          if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-            scenesOfDay.add(clean);
+          let cln = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+          if (cln && cln.toLowerCase() !== 'fo' && cln.toLowerCase() !== 'formation') {
+            scenesOfDay.add(cln);
           }
         }
       }
       scenesOfDay.add('Formation autre');
       if (scenesOfDay.size > 0) subtext = 'Possibilités : ' + Array.from(scenesOfDay).sort().join(', ');
+    } else if (r.shiftTime && r.shiftTime !== r.time) {
+      subtext = `Journée: ${r.shiftTime}`;
     }
-    dateMap.get(r.date)!.push(r.time==='OFF' ? {name:'Repos / Congé',time:'OFF'} : {name,time:r.time,isFO,subtext});
+    dateMap.get(r.date)!.push(r.time === 'OFF' ? { name: 'Repos / Congé', time: 'OFF' } : { name, time: r.time, isFO, subtext });
   }
 
   const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
@@ -795,24 +798,75 @@ function drawIndivDayBlock(
 
   const isOff = rows.length === 0 || rows.every(r => /^off$/i.test(r.time));
 
+  // Base card (soft slate-50 for OFF, pure white for working day)
+  doc.setFillColor(isOff ? 248 : 255, isOff ? 250 : 255, isOff ? 252 : 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
+
+  // Refined thin left accent stripe (1.4mm)
+  if (!isOff) {
+    const firstRow = rows[0];
+    const isFOFirst = firstRow.isFO || isTrainingScene(firstRow.name);
+    const scFirst = getSceneColor(themeColorName || firstRow.name);
+    const firstColor: [number, number, number] = isFOFirst ? VIOLET : scFirst.rgbAccent;
+
+    if (rows.length > 1) {
+      const hPart = h / rows.length;
+      for (let idx = 0; idx < rows.length; idx++) {
+        const r = rows[idx];
+        const isFO = r.isFO || isTrainingScene(r.name);
+        const sc = getSceneColor(themeColorName || r.name);
+        const col: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
+        doc.setFillColor(...col);
+        doc.rect(x, y + idx * hPart, 1.4, hPart, 'F');
+      }
+    } else {
+      doc.setFillColor(...firstColor);
+      doc.rect(x, y, 1.4, h, 'F');
+    }
+  }
+
+  // Date Picto on left
+  const pictoW = 12.8;
+  const pictoH = Math.min(h - 2.8, 17.5);
+  const py = y + (h - pictoH) / 2;
+  const px = x + (isOff ? 1.8 : 2.5);
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(px, py, pictoW, pictoH, 1.4, 1.4, 'FD');
+
+  const cx = px + pictoW / 2;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(4.8);
+  doc.setTextColor(71, 85, 105);
+  doc.text(dayName, cx, py + 4.2, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(dayNum, cx, py + 10.5, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(4.0);
+  doc.setTextColor(100, 116, 139);
+  doc.text(monthName, cx, py + 14.5, { align: 'center' });
+
+  // Content area on right
+  const rx = px + pictoW + 2.4;
+
   if (isOff) {
-    // Soft, peaceful OFF card
-    doc.setFillColor(248, 250, 252);
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.25);
-    doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Repos / Congé', rx, y + h / 2 + 1.2);
 
-    // Date header line
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`${dayName} ${dayNum} ${monthName}`, x + 4.5, y + 5.5);
-
-    // Pill on right
-    const pillW = 13;
+    const pillW = 12;
     const pillH = 5.2;
-    const pillX = x + w - pillW - 3.5;
-    const pillY = y + 2.2;
+    const pillX = x + w - pillW - 2.5;
+    const pillY = y + (h - pillH) / 2;
     doc.setFillColor(241, 245, 249);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.2);
@@ -820,160 +874,222 @@ function drawIndivDayBlock(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.2);
     doc.setTextColor(148, 163, 184);
-    doc.text('OFF', pillX + pillW / 2, pillY + 3.7, { align: 'center' });
-
-    // Body
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.8);
-    doc.setTextColor(148, 163, 184);
-    doc.text('Repos / Congé', x + 4.5, y + h / 2 + 3.0);
+    doc.text('OFF', pillX + pillW / 2, pillY + 3.6, { align: 'center' });
     return;
   }
 
-  // Working day: clean white card with crisp left accent stripe
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
+  // Working day
+  const rowCount = rows.length;
 
-  const firstRow = rows[0];
-  const isFOFirst = firstRow.isFO || isTrainingScene(firstRow.name);
-  const scFirst = getSceneColor(themeColorName || firstRow.name);
-  const stripeRgb: [number, number, number] = isFOFirst ? VIOLET : scFirst.rgbAccent;
-  const isMulti = rows.length > 1;
+  if (rowCount === 1) {
+    const row = rows[0];
+    const isFO = row.isFO || isTrainingScene(row.name);
+    const sc = getSceneColor(themeColorName || row.name);
+    const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
+    const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
+    const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
-  // Left vertical accent stripe
-  if (isMulti) {
-    const secondRow = rows[1];
-    const isFOSecond = secondRow.isFO || isTrainingScene(secondRow.name);
-    const scSecond = getSceneColor(themeColorName || secondRow.name);
-    const secondRgb: [number, number, number] = isFOSecond ? VIOLET : scSecond.rgbAccent;
-
-    doc.setFillColor(...stripeRgb);
-    doc.rect(x, y, 3.2, h * 0.5, 'F');
-    doc.setFillColor(...secondRgb);
-    doc.rect(x, y + h * 0.5, 3.2, h * 0.5, 'F');
-  } else {
-    doc.setFillColor(...stripeRgb);
-    doc.rect(x, y, 3.2, h, 'F');
-  }
-
-  const cx = x + 5.5;
-
-  if (!isMulti) {
-    const rawNm = cleanText(cleanSceneName(firstRow.name));
-    const matchRole = rawNm.match(/^(.*?)\s*\((.*?)\)$/);
-    const mainName = matchRole ? matchRole[1].trim() : rawNm;
-    const roleName = matchRole ? matchRole[2].trim() : (firstRow.subtext || '');
-
-    // 1. Top row: Date on left
+    // Time pill top right
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.0);
-    doc.setTextColor(30, 41, 59);
-    doc.text(`${dayName} ${dayNum} ${monthName}`, cx, y + 5.5);
-
-    // Time pill on right
-    const cleanTime = (firstRow.time || '').replace(/\s*-\s*/, ' - ');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
+    doc.setFontSize(6.6);
     const tw = doc.getTextWidth(cleanTime);
-    const pillW = tw + 5.5;
-    const pillH = 5.4;
-    const pillX = x + w - pillW - 3.5;
-    const pillY = y + 2.0;
+    const pillW = tw + 4.2;
+    const pillH = 5.2;
+    const pillX = x + w - pillW - 2.2;
+    const pillY = y + 2.5;
 
-    doc.setFillColor(scFirst.rgbBg[0], scFirst.rgbBg[1], scFirst.rgbBg[2]);
-    doc.setDrawColor(...stripeRgb);
-    doc.setLineWidth(0.3);
+    doc.setFillColor(...scBg);
+    doc.setDrawColor(...scAccent);
+    doc.setLineWidth(0.25);
     doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
+    doc.setTextColor(...scAccent);
+    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.7, { align: 'center' });
 
-    doc.setTextColor(...stripeRgb);
-    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.8, { align: 'center' });
+    // Scene name
+    let rawNm = cleanText(cleanSceneName(row.name));
+    let mainName = rawNm;
+    let role = row.subtext || '';
+    const matchRole = rawNm.match(/^(.*?)\s*\((.*?)\)$/);
+    if (matchRole) {
+      mainName = matchRole[1].trim();
+      role = matchRole[2].trim();
+    }
 
-    // Subtle divider line
-    doc.setDrawColor(241, 245, 249);
-    doc.setLineWidth(0.2);
-    doc.line(cx, y + 8.2, x + w - 3.5, y + 8.2);
-
-    // 2. Scene Name (large, full width!)
+    const maxSceneW = pillX - rx - 1.2;
+    let fontSize = 8.0;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.4);
+    doc.setFontSize(fontSize);
     doc.setTextColor(15, 23, 42);
 
-    let displayMain = mainName;
-    const maxMainW = w - 10;
-    if (doc.getTextWidth(displayMain) > maxMainW) {
-      while (displayMain.length > 0 && doc.getTextWidth(displayMain + '...') > maxMainW) {
-        displayMain = displayMain.slice(0, -1);
-      }
-      displayMain = displayMain.trim() + '...';
+    while (fontSize > 6.4 && doc.getTextWidth(mainName) > maxSceneW) {
+      fontSize -= 0.3;
+      doc.setFontSize(fontSize);
     }
-    doc.text(displayMain, cx, y + 13.0);
+    let dispScene = mainName;
+    if (doc.getTextWidth(dispScene) > maxSceneW) {
+      while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
+        dispScene = dispScene.slice(0, -1);
+      }
+      dispScene = dispScene.trim() + '...';
+    }
+    doc.text(dispScene, rx, y + 6.8);
 
-    // 3. Role / Subtext
-    if (roleName) {
+    // Role
+    if (role) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(5.8);
       doc.setTextColor(100, 116, 139);
-      let displayRole = roleName;
-      if (doc.getTextWidth(displayRole) > maxMainW) {
-        while (displayRole.length > 0 && doc.getTextWidth(displayRole + '...') > maxMainW) {
-          displayRole = displayRole.slice(0, -1);
+      let dispRole = role;
+      if (doc.getTextWidth(dispRole) > maxSceneW) {
+        while (dispRole.length > 0 && doc.getTextWidth(dispRole + '...') > maxSceneW) {
+          dispRole = dispRole.slice(0, -1);
         }
-        displayRole = displayRole.trim() + '...';
+        dispRole = dispRole.trim() + '...';
       }
-      doc.text(displayRole, cx, y + 17.2);
+      doc.text(dispRole, rx, y + 12.0);
     }
-  } else {
-    // Multi-row day (Formation + Vacation)
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(30, 41, 59);
-    doc.text(`${dayName} ${dayNum} ${monthName}`, cx, y + 5.2);
-
-    // Subtle divider line
-    doc.setDrawColor(241, 245, 249);
-    doc.setLineWidth(0.2);
-    doc.line(cx, y + 6.8, x + w - 3.5, y + 6.8);
-
-    for (let idx = 0; idx < rows.length; idx++) {
+  } else if (rowCount === 2) {
+    const rH = (h - 2.4) / 2;
+    for (let idx = 0; idx < 2; idx++) {
       const row = rows[idx];
-      const rY = y + 7.5 + idx * 6.5;
       const isFO = row.isFO || isTrainingScene(row.name);
-      const rowSc = getSceneColor(themeColorName || row.name);
-      const rowColor: [number, number, number] = isFO ? VIOLET : rowSc.rgbAccent;
-      const rowBg: [number, number, number] = isFO ? [245, 243, 255] : rowSc.rgbBg;
+      const sc = getSceneColor(themeColorName || row.name);
+      const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
+      const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
 
-      let rNm = cleanText(cleanSceneName(row.name));
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.2);
-      doc.setTextColor(15, 23, 42);
-
+      const rowY = y + 1.2 + idx * rH;
       const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
+
+      // Time pill
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(5.8);
       const tw = doc.getTextWidth(cleanTime);
-      const pillW = tw + 4.5;
-      const pillH = 4.8;
-      const pillX = x + w - pillW - 3.0;
-      const pillY = rY + 0.6;
+      const pillW = tw + 3.8;
+      const pillH = 4.6;
+      const pillX = x + w - pillW - 2.0;
+      const pillY = rowY + (rH - pillH) / 2;
 
-      const maxTextW = w - 7 - pillW - 2;
-      if (doc.getTextWidth(rNm) > maxTextW) {
-        while (rNm.length > 0 && doc.getTextWidth(rNm + '...') > maxTextW) {
-          rNm = rNm.slice(0, -1);
-        }
-        rNm = rNm.trim() + '...';
-      }
-      doc.text(rNm, cx, rY + 4.0);
-
-      doc.setFillColor(...rowBg);
-      doc.setDrawColor(...rowColor);
+      doc.setFillColor(...scBg);
+      doc.setDrawColor(...scAccent);
       doc.setLineWidth(0.25);
       doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
+      doc.setTextColor(...scAccent);
+      doc.text(cleanTime, pillX + pillW / 2, pillY + 3.3, { align: 'center' });
 
-      doc.setTextColor(...rowColor);
-      doc.text(cleanTime, pillX + pillW / 2, pillY + 3.4, { align: 'center' });
+      // Scene
+      let rawNm = cleanText(cleanSceneName(row.name));
+      let mainName = rawNm.replace(/\s*\([^)]*\).*$/, '').replace(/\s*\[[^\]]*\].*$/, '').trim();
+      let role = '';
+      const matchRole = rawNm.match(/\((.*?)\)/);
+      if (matchRole) role = matchRole[1];
+
+      const maxSceneW = pillX - rx - 1.2;
+      let fontSize = 6.8;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(fontSize);
+      doc.setTextColor(15, 23, 42);
+
+      while (fontSize > 5.8 && doc.getTextWidth(mainName) > maxSceneW) {
+        fontSize -= 0.3;
+        doc.setFontSize(fontSize);
+      }
+      let dispScene = mainName;
+      if (doc.getTextWidth(dispScene) > maxSceneW) {
+        while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
+          dispScene = dispScene.slice(0, -1);
+        }
+        dispScene = dispScene.trim() + '...';
+      }
+      doc.text(dispScene, rx, rowY + rH * 0.45);
+
+      if (role) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.0);
+        doc.setTextColor(100, 116, 139);
+        let dispRole = role;
+        if (doc.getTextWidth(dispRole) > maxSceneW) {
+          while (dispRole.length > 0 && doc.getTextWidth(dispRole + '...') > maxSceneW) {
+            dispRole = dispRole.slice(0, -1);
+          }
+          dispRole = dispRole.trim() + '...';
+        }
+        doc.text(dispRole, rx, rowY + rH * 0.82);
+      }
+
+      if (idx === 0) {
+        doc.setDrawColor(241, 245, 249);
+        doc.setLineWidth(0.2);
+        doc.line(rx, rowY + rH, x + w - 2, rowY + rH);
+      }
+    }
+  } else {
+    // 3 or more rows - DYNAMIC FIT inside card!
+    const rH = (h - 2.0) / rowCount;
+    for (let idx = 0; idx < rowCount; idx++) {
+      const row = rows[idx];
+      const isFO = row.isFO || isTrainingScene(row.name);
+      const sc = getSceneColor(themeColorName || row.name);
+      const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
+      const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
+
+      const rowY = y + 1.0 + idx * rH;
+      const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
+
+      // Time pill
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(5.2);
+      const tw = doc.getTextWidth(cleanTime);
+      const pillW = tw + 3.4;
+      const pillH = 4.2;
+      const pillX = x + w - pillW - 1.8;
+      const pillY = rowY + (rH - pillH) / 2;
+
+      doc.setFillColor(...scBg);
+      doc.setDrawColor(...scAccent);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
+      doc.setTextColor(...scAccent);
+      doc.text(cleanTime, pillX + pillW / 2, pillY + 3.0, { align: 'center' });
+
+      // Scene
+      let rawNm = cleanText(cleanSceneName(row.name));
+      let mainName = rawNm.replace(/\s*\([^)]*\).*$/, '').replace(/\s*\[[^\]]*\].*$/, '').trim();
+      let role = '';
+      const matchRole = rawNm.match(/\((.*?)\)/);
+      if (matchRole) role = matchRole[1];
+
+      let fullLabel = mainName;
+      if (role && !mainName.toLowerCase().includes('formation')) {
+        fullLabel = `${mainName} (${role})`;
+      }
+
+      const maxSceneW = pillX - rx - 1.2;
+      let fontSize = 5.8;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(fontSize);
+      doc.setTextColor(15, 23, 42);
+
+      let dispScene = fullLabel;
+      if (doc.getTextWidth(dispScene) > maxSceneW) {
+        dispScene = mainName;
+        while (fontSize > 5.0 && doc.getTextWidth(dispScene) > maxSceneW) {
+          fontSize -= 0.3;
+          doc.setFontSize(fontSize);
+        }
+        if (doc.getTextWidth(dispScene) > maxSceneW) {
+          while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
+            dispScene = dispScene.slice(0, -1);
+          }
+          dispScene = dispScene.trim() + '...';
+        }
+      }
+      doc.text(dispScene, rx, rowY + rH / 2 + 1.6);
+
+      if (idx < rowCount - 1) {
+        doc.setDrawColor(241, 245, 249);
+        doc.setLineWidth(0.2);
+        doc.line(rx, rowY + rH, x + w - 2, rowY + rH);
+      }
     }
   }
 }
