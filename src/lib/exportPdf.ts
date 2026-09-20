@@ -626,13 +626,60 @@ async function generateIndivPdf(opts: {
   const isDense = opts.filename.includes('scene') || maxRowsPerDay >= 3;
 
   if (!isDense) {
-    // Standard individual employee schedule: 7 days per column, 1 to 4 weeks adaptive width
+    // Standard individual employee schedule: strictly 1 column = 1 week (Sunday to Saturday, 7 days per column)
+    // Find min and max date in allDates to determine full calendar weeks starting on Sunday
+    let firstIso = opts.allDates[0];
+    let lastIso = opts.allDates[opts.allDates.length - 1];
+
+    // Compute first Sunday on or before firstIso
+    const [y1, m1, d1] = firstIso.split('-').map(Number);
+    const startDate = new Date(y1, m1 - 1, d1);
+    const startDay = startDate.getDay(); // 0 is Sunday
+    startDate.setDate(startDate.getDate() - startDay);
+
+    // Compute last Saturday on or after lastIso
+    const [y2, m2, d2] = lastIso.split('-').map(Number);
+    const endDate = new Date(y2, m2 - 1, d2);
+    const endDay = endDate.getDay(); // 6 is Saturday
+    if (endDay !== 6) {
+      endDate.setDate(endDate.getDate() + (6 - endDay));
+    }
+
+    // Build array of weeks, each containing exactly 7 days (Dimanche -> Samedi)
+    const weeks: string[][] = [];
+    let cur = new Date(startDate);
+    let currentWeek: string[] = [];
+    while (cur <= endDate) {
+      const yStr = cur.getFullYear();
+      const mStr = String(cur.getMonth() + 1).padStart(2, '0');
+      const dStr = String(cur.getDate()).padStart(2, '0');
+      currentWeek.push(`${yStr}-${mStr}-${dStr}`);
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        cur.setDate(cur.getDate() + 1);
+        const yStr = cur.getFullYear();
+        const mStr = String(cur.getMonth() + 1).padStart(2, '0');
+        const dStr = String(cur.getDate()).padStart(2, '0');
+        currentWeek.push(`${yStr}-${mStr}-${dStr}`);
+      }
+      weeks.push(currentWeek);
+    }
+
     const availableH = bottomLimit - startY;
     const gapBlock = 2.2;
+    // Exactly 7 days per column, so each day block gets generous height
     const blockH = Math.min(23, (availableH - 6 * gapBlock) / 7);
-    const cols = Math.min(4, Math.max(1, numWeeks));
 
-    // Adaptive column width and centering based on number of weeks (1 to 4)
+    // Render up to 4 columns (weeks) per page
+    const maxColsPerPage = 4;
+    const cols = Math.min(maxColsPerPage, Math.max(1, weeks.length));
+
     let colW: number;
     if (cols === 1) {
       colW = 160;
@@ -647,29 +694,25 @@ async function generateIndivPdf(opts: {
     const totalUsedWidth = cols * colW + (cols - 1) * gutter;
     const baseStartX = (pageW - totalUsedWidth) / 2;
 
-    let currentCol = 0;
-    let currentY = startY;
+    for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
+      const colOnPage = wIdx % maxColsPerPage;
 
-    for (let i = 0; i < opts.allDates.length; i++) {
-      const d = opts.allDates[i];
-      const rows = opts.dateMap.get(d) || [];
-
-      if (i > 0 && i % 7 === 0) {
-        currentCol++;
-        currentY = startY;
-
-        if (currentCol >= cols) {
-          drawPremiumFooter(doc, pageW, pageH, marginX);
-          doc.addPage();
-          startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
-          currentCol = 0;
-          currentY = startY;
-        }
+      if (wIdx > 0 && colOnPage === 0) {
+        drawPremiumFooter(doc, pageW, pageH, marginX);
+        doc.addPage();
+        startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
       }
 
-      const x = baseStartX + currentCol * (colW + gutter);
-      drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
-      currentY += blockH + gapBlock;
+      const weekDays = weeks[wIdx];
+      const x = baseStartX + colOnPage * (colW + gutter);
+      let currentY = startY;
+
+      for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+        const d = weekDays[dayIdx];
+        const rows = opts.dateMap.get(d) || [{ name: 'Repos / Congé', time: 'OFF' }];
+        drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
+        currentY += blockH + gapBlock;
+      }
     }
 
     drawPremiumFooter(doc, pageW, pageH, marginX);

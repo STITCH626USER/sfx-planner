@@ -390,6 +390,10 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('daily');
   
   const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem('sfx_theme') as Theme | null;
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {}
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
@@ -490,6 +494,9 @@ export default function App() {
 
 
   useEffect(() => {
+    try {
+      localStorage.setItem('sfx_theme', theme);
+    } catch {}
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
@@ -509,7 +516,11 @@ export default function App() {
     if (!window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
-      setTheme(e.matches ? 'dark' : 'light');
+      // Only react dynamically if the user hasn't explicitly set a custom theme in localStorage
+      const saved = localStorage.getItem('sfx_theme');
+      if (!saved) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
     };
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);

@@ -9,6 +9,20 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <script>
+      // Immediate theme detection to prevent flash of light theme and sync with macOS
+      (function() {
+        try {
+          var saved = localStorage.getItem('sfx_theme');
+          var isDark = saved ? saved === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var theme = isDark ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.className = theme;
+          if (document.body) {
+            document.body.className = theme;
+          }
+        } catch (e) {}
+      })();
+
       // Bulletproof cache buster and SW unregister
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
