@@ -268,9 +268,8 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   doc.line(cardX, y+headerH, cardX+cardW, y+headerH);
 
   // Left accent bar (thinner, more elegant)
-  doc.setFillColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-  doc.roundedRect(cardX, y, 1.8, cardH, 1.5, 1.5, 'F');
-  doc.rect(cardX+0.9, y, 0.9, cardH, 'F');
+  doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
+  doc.roundedRect(cardX, y, 2.0, cardH, 0.8, 0.8, 'F');
 
   // Scene name (compact font)
   doc.setFont('helvetica','bold'); 
@@ -320,9 +319,13 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
       const px = cardX+cardW-padX-tw; const py = ry+(currentH-th)/2;
       
       const isOff = /^off$/i.test(timeStr);
-      const pillColor: [number,number,number] = isOff ? [240, 240, 243] : [255, 240, 225];
-      const pillText: [number,number,number] = isOff ? MUTED : AMBER;
-      doc.setFillColor(...pillColor); doc.roundedRect(px, py, tw, th, th/2, th/2, 'F');
+      const pillColor: [number,number,number] = isOff ? [240, 240, 243] : sc.rgbBg;
+      const pillBorder: [number,number,number] = isOff ? [220, 220, 225] : sc.rgbAccent;
+      const pillText: [number,number,number] = isOff ? MUTED : sc.rgbText;
+      doc.setFillColor(...pillColor);
+      doc.setDrawColor(...pillBorder);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(px, py, tw, th, 1.2, 1.2, 'FD');
       doc.setFont('helvetica','bold'); doc.setFontSize(7);
       doc.setTextColor(...pillText); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
       
@@ -790,13 +793,9 @@ function drawIndivDayBlock(
   const firstRow = rows[0];
   const isFO = firstRow.isFO || isTrainingScene(firstRow.name);
   const sc = getSceneColor(themeColorName || firstRow.name);
-  const stripeRgb: [number, number, number] = isFO ? VIOLET : [
-    Math.max(0, Math.round(sc.rgbText[0] * 0.85)),
-    Math.max(0, Math.round(sc.rgbText[1] * 0.85)),
-    Math.max(0, Math.round(sc.rgbText[2] * 0.85))
-  ];
+  const stripeRgb: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
   doc.setFillColor(...stripeRgb);
-  doc.roundedRect(x, y, 2.5, h, 1, 1, 'F');
+  doc.roundedRect(x, y, 2.8, h, 0.8, 0.8, 'F');
 
   // Date Badge for worked day
   doc.setFillColor(241, 245, 249);
@@ -831,17 +830,20 @@ function drawIndivDayBlock(
       const pillX = x + w - pillW - 2.5;
       const pillY = rY + (rH - pillH) / 2;
 
-      // Color scheme for time pill
+      // Color scheme for time pill matching scene
       if (isFO) {
         doc.setFillColor(245, 243, 255);
         doc.setDrawColor(196, 181, 253);
-        doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, 'FD');
+        doc.setLineWidth(0.3);
+        doc.roundedRect(pillX, pillY, pillW, pillH, 1.2, 1.2, 'FD');
         doc.setTextColor(109, 40, 217);
       } else {
-        doc.setFillColor(254, 243, 199);
-        doc.setDrawColor(245, 158, 11);
-        doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, 'FD');
-        doc.setTextColor(180, 83, 9);
+        const rowSc = getSceneColor(themeColorName || row.name);
+        doc.setFillColor(rowSc.rgbBg[0], rowSc.rgbBg[1], rowSc.rgbBg[2]);
+        doc.setDrawColor(rowSc.rgbAccent[0], rowSc.rgbAccent[1], rowSc.rgbAccent[2]);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(pillX, pillY, pillW, pillH, 1.2, 1.2, 'FD');
+        doc.setTextColor(rowSc.rgbText[0], rowSc.rgbText[1], rowSc.rgbText[2]);
       }
       doc.text(timeStr, pillX + pillW / 2, pillY + pillH - 1.8, { align: 'center' });
     }
@@ -951,8 +953,9 @@ export function listScenes(records: PlanningRecord[]): string[] {
 }
 
 function shortenSceneName(scene: string): string {
-  let s = cleanText(scene).toUpperCase();
-  s = s.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '');
+  if (isTrainingScene(scene)) return 'FO';
+  let s = cleanText(cleanSceneName(scene)).toUpperCase();
+  s = s.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '').replace(/^DLP\s+/, '');
   s = s.split(/\s+/)[0];
   if (s.length > 9) s = s.substring(0, 9);
   return s;
@@ -1066,30 +1069,36 @@ async function generateGridGlobalPdf(opts: {
           const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
           
           if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
-            doc.setFillColor(240, 242, 245);
+            doc.setFillColor(245, 247, 250);
             doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
             doc.setTextColor(148, 163, 184);
             doc.setFont('helvetica', 'bold'); doc.setFontSize(fOff);
             doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1.2, {align: 'center'});
           } else {
-            const sc = getSceneColor(mainRec.scene);
-            const sceneAbbr = shortenSceneName(mainRec.scene);
+            const cleanScene = cleanSceneName(mainRec.scene);
+            const sc = getSceneColor(cleanScene);
+            const sceneAbbr = shortenSceneName(cleanScene);
             
+            // Soft scene background tint across the cell
+            doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
+            doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
+            
+            // Solid scene color badge
             doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
-            doc.rect(dx+0.4, y+0.4, badgeW, rowH-0.8, 'F');
+            doc.roundedRect(dx+0.6, y+0.6, badgeW, rowH-1.2, 0.8, 0.8, 'F');
             
             doc.setTextColor(255, 255, 255);
             doc.setFont('helvetica', 'bold'); doc.setFontSize(fScene);
-            doc.text(sceneAbbr, dx + 0.4 + badgeW/2, y + rowH/2 + 1, {align: 'center'});
+            doc.text(sceneAbbr, dx + 0.6 + badgeW/2, y + rowH/2 + 1, {align: 'center'});
             
             let timeStr = mainRec.time;
             if (recs.length > 1) {
               const fO = recs.find(r => isTrainingScene(r.scene));
               if (fO) timeStr += ' +FO';
             }
-            doc.setTextColor(20, 30, 40);
+            doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
             doc.setFont('helvetica', 'bold'); doc.setFontSize(fTime);
-            doc.text(timeStr, dx + 0.4 + badgeW + (colDayW - badgeW - 0.8)/2, y + rowH/2 + 1.2, {align: 'center'});
+            doc.text(timeStr, dx + 0.6 + badgeW + (colDayW - badgeW - 1.2)/2, y + rowH/2 + 1.2, {align: 'center'});
           }
         }
         y += rowH;

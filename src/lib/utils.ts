@@ -136,9 +136,22 @@ export function getSceneColor(scene: string): SceneColor {
     };
   }
 
-  const s = scene.trim();
+  // Strip prefixes, parenthesized roles, and bracketed shifts for consistent hashing & lookup
+  let s = cleanSceneName(scene).trim();
+  s = s.replace(/\s*\([^)]*\).*$/, '').replace(/\s*\[[^\]]*\].*$/, '').trim();
   const lower = s.toLowerCase();
-  
+
+  if (lower.includes('repos') || lower.includes('congé') || lower === 'off') {
+    return {
+      bg: '#f8fafc',
+      text: '#475569',
+      accent: '#94a3b8',
+      rgbBg: [248, 250, 252],
+      rgbText: [100, 116, 139],
+      rgbAccent: [148, 163, 184]
+    };
+  }
+
   let hue: number;
   if (lower.includes('arendelle')) {
     hue = 230; // Blue
@@ -150,31 +163,29 @@ export function getSceneColor(scene: string): SceneColor {
     hue = 310; // Pink
   } else if (lower.includes('illumination')) {
     hue = 350; // Red
-  } else if (lower.includes('fo') || lower.includes('formation')) {
+  } else if (isTrainingScene(s) || lower.includes('formation') || lower === 'fo') {
     hue = 270; // Purple
   } else if (lower.includes('marvel')) {
     hue = 190; // Cyan
   } else if (lower.includes('matmops')) {
-    hue = 60;  // Pure Yellow (dark mustard text, pastel yellow bg)
+    hue = 60;  // Pure Yellow / Chartreuse Lime
   } else if (lower.includes('pooltechn')) {
     hue = 10;  // Rust Red
   } else if (lower.includes('studiotsh')) {
     hue = 100; // Bright Green
   } else if (lower.includes('lionking')) {
     hue = 40;  // Gold
-  } else if (lower.includes('repos') || lower.includes('congé') || lower === 'off') {
-    return {
-      bg: '#f8fafc',
-      text: '#475569',
-      accent: '#94a3b8',
-      rgbBg: [248, 250, 252],
-      rgbText: [100, 116, 139],
-      rgbAccent: [148, 163, 184]
-    };
+  } else if (lower.includes('videopolis')) {
+    hue = 210; // Azure
+  } else if (lower.includes('regie')) {
+    hue = 285; // Indigo
+  } else if (lower.includes('star') || lower.includes('tour')) {
+    hue = 175; // Teal
   } else {
+    // High dispersion deterministic hash for any generated scene
     let hash = 0;
-    for (let i = 0; i < s.length; i++) {
-      hash = s.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < lower.length; i++) {
+      hash = lower.charCodeAt(i) + ((hash << 5) - hash);
     }
     // Mix the hash to avoid prefix clustering (e.g. all "ENT " scenes)
     hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
