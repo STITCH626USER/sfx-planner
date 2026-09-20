@@ -4,7 +4,7 @@ import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
-import { fetchDlpShows, type DlpShow } from './lib/dlpShows';
+import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
 
 
 type Tab = 'recherche' | 'daily' | 'shows';
@@ -86,11 +86,12 @@ function ConsoleClock({ onClick, isActive }: { onClick: () => void; isActive?: b
 
 function DlpShowsPanel({ onBack }: { onBack: () => void }) {
   const [shows, setShows] = useState<DlpShow[]>([]);
+  const [parkHours, setParkHours] = useState<DlpParkHours>({ disneyland: '09:30 - 23:00', adventureWorld: '09:30 - 21:00' });
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [isOffline, setIsOffline] = useState(false);
   const [parkFilter, setParkFilter] = useState<'ALL' | 'Disneyland Park' | 'Disney Adventure World'>('ALL');
-  const [tabFilter, setTabFilter] = useState<'ALL' | 'OPERATING' | 'RELACHE'>('ALL');
+  const [tabFilter, setTabFilter] = useState<'ALL' | 'OPERATING' | 'ENDED' | 'RELACHE'>('ALL');
   const [search, setSearch] = useState('');
 
   const loadData = useCallback(async () => {
@@ -98,6 +99,7 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
     try {
       const data = await fetchDlpShows();
       setShows(data.shows);
+      if (data.parkHours) setParkHours(data.parkHours);
       setLastUpdated(data.lastUpdated);
       setIsOffline(data.isOffline);
     } finally {
@@ -111,7 +113,8 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
 
   const filteredShows = shows.filter(s => {
     if (parkFilter !== 'ALL' && s.park !== parkFilter) return false;
-    if (tabFilter === 'OPERATING' && s.isRelache) return false;
+    if (tabFilter === 'OPERATING' && (s.isRelache || s.isEnded)) return false;
+    if (tabFilter === 'ENDED' && !s.isEnded) return false;
     if (tabFilter === 'RELACHE' && !s.isRelache) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -120,7 +123,8 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
     return true;
   });
 
-  const operatingCount = shows.filter(s => !s.isRelache).length;
+  const operatingCount = shows.filter(s => !s.isRelache && !s.isEnded).length;
+  const endedCount = shows.filter(s => s.isEnded).length;
   const relacheCount = shows.filter(s => s.isRelache).length;
 
   return (
@@ -142,14 +146,41 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
       <div className="dlp-view-card">
         <div className="dlp-view-header-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="dlp-view-icon-badge">🏰</div>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--amber)',
+                flexShrink: 0
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--fg)', letterSpacing: '-0.02em' }}>
-                Spectacles & Relâches DLP en direct
+              <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--fg)', letterSpacing: '-0.02em' }}>
+                Programme des spectacles DLP
               </h2>
-              <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                 <span className="ma3-clock-dot" style={{ width: 7, height: 7 }} />
-                <span>Horaires officiels du jour ({lastUpdated || 'en cours…'})</span>
+                <span>Données affichées sur l'app ({lastUpdated || 'en cours…'})</span>
+                <span style={{ opacity: 0.65 }}>·</span>
+                <a
+                  href="https://themeparks.wiki"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3, opacity: 0.8 }}
+                >
+                  powered by ThemeParks Wiki
+                </a>
                 {isOffline && <span style={{ color: 'var(--amber)', fontWeight: 700 }}>· Mode secours</span>}
               </div>
             </div>
@@ -177,6 +208,33 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
             </svg>
             <span>{loading ? 'Chargement…' : 'Actualiser'}</span>
           </button>
+        </div>
+
+        {/* Park Hours of the Day Bar */}
+        <div
+          style={{
+            padding: '10px 18px',
+            background: 'rgba(0, 0, 0, 0.15)',
+            borderBottom: '1px solid var(--line-light, rgba(255, 255, 255, 0.06))',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Horaires des parcs aujourd'hui :
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div className="dlp-park-hours-badge">
+              <span className="dlp-park-badge park-dlp" style={{ fontSize: 10, padding: '1px 6px' }}>Disneyland Park</span>
+              <span className="dlp-park-hours-val">{parkHours.disneyland}</span>
+            </div>
+            <div className="dlp-park-hours-badge">
+              <span className="dlp-park-badge park-wds" style={{ fontSize: 10, padding: '1px 6px' }}>Adventure World</span>
+              <span className="dlp-park-hours-val">{parkHours.adventureWorld}</span>
+            </div>
+          </div>
         </div>
 
         {/* Filters and search bar */}
@@ -220,6 +278,15 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
             >
               En cours ({operatingCount})
             </button>
+            {endedCount > 0 && (
+              <button
+                type="button"
+                className={`dlp-filter-pill ${tabFilter === 'ENDED' ? 'active' : ''}`}
+                onClick={() => setTabFilter('ENDED')}
+              >
+                Terminés ({endedCount})
+              </button>
+            )}
             <button
               type="button"
               className={`dlp-filter-pill dlp-relache-tab ${tabFilter === 'RELACHE' ? 'active' : ''}`}
@@ -258,10 +325,11 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filteredShows.map(show => {
               const isRelache = show.isRelache;
+              const isEnded = !!show.isEnded;
               return (
                 <div
                   key={show.id}
-                  className={`dlp-show-card ${isRelache ? 'is-relache' : 'is-operating'}`}
+                  className={`dlp-show-card ${isRelache ? 'is-relache' : isEnded ? 'is-ended' : 'is-operating'}`}
                   style={{ padding: '14px 16px' }}
                 >
                   <div className="dlp-show-card-header">
@@ -278,6 +346,10 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
                       {isRelache ? (
                         <span className="dlp-status-pill relache" style={{ fontSize: 11 }}>
                           <span className="dlp-relache-cross">✕</span> EN RELÂCHE
+                        </span>
+                      ) : isEnded ? (
+                        <span className="dlp-status-pill ended" style={{ fontSize: 11 }}>
+                          ✓ SHOWS TERMINÉS AUJOURD'HUI
                         </span>
                       ) : (
                         <span className="dlp-status-pill operating" style={{ fontSize: 11 }}>

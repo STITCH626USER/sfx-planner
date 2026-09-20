@@ -5415,6 +5415,11 @@ nav.seg button[aria-selected="true"] {
   border-left: 4px solid #10b981;
 }
 
+.dlp-show-card.is-ended {
+  border-left: 4px solid #94a3b8;
+  opacity: 0.85;
+}
+
 .dlp-show-card.is-relache {
   border-left: 4px solid #ef4444;
   opacity: 0.78;
@@ -5515,6 +5520,45 @@ nav.seg button[aria-selected="true"] {
   background: #fef2f2;
   color: #dc2626;
   border-color: #fecaca;
+}
+
+.dlp-status-pill.ended {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+:root[data-theme="light"] .dlp-status-pill.ended {
+  background: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+.dlp-park-hours-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--line-light, rgba(255, 255, 255, 0.08));
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+:root[data-theme="light"] .dlp-park-hours-badge {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.dlp-park-hours-title {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.dlp-park-hours-val {
+  font-family: 'JetBrains Mono', var(--font-mono, monospace);
+  font-weight: 600;
+  color: var(--amber, #f59e0b);
 }
 
 .dlp-relache-cross {

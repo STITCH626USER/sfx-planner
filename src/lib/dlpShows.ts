@@ -4,12 +4,18 @@
  * Parks: Disneyland Park & Disney Adventure World (formerly Walt Disney Studios)
  */
 
+export interface DlpParkHours {
+  disneyland: string;
+  adventureWorld: string;
+}
+
 export interface DlpShow {
   id: string;
   name: string;
   park: 'Disneyland Park' | 'Disney Adventure World';
   status: 'OPERATING' | 'CLOSED' | 'REFURBISHMENT' | string;
   isRelache: boolean;
+  isEnded?: boolean; // True when the last show of the day started > 30 mins ago
   relacheReason?: string;
   times: string[]; // ['12:30', '13:30', ...]
   nextTime?: string;
@@ -172,7 +178,13 @@ function categorizeShow(name: string): { category: DlpShow['category']; cleanNam
   return { category: 'spectacle', cleanName };
 }
 
-export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: string; isOffline: boolean; todayDate: string }> {
+export async function fetchDlpShows(): Promise<{
+  shows: DlpShow[];
+  parkHours: DlpParkHours;
+  lastUpdated: string;
+  isOffline: boolean;
+  todayDate: string;
+}> {
   const todayIso = getTodayIsoString();
 
   // Check local cache
@@ -183,6 +195,7 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
       if (parsed.todayDate === todayIso && Date.now() - parsed.timestamp < CACHE_TTL) {
         return {
           shows: parsed.shows,
+          parkHours: parsed.parkHours || { disneyland: '09:30 - 23:00', adventureWorld: '09:30 - 21:00' },
           lastUpdated: parsed.lastUpdated,
           isOffline: false,
           todayDate: todayIso
@@ -203,11 +216,37 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
 
-    const [p1, p2] = await Promise.all([park1Promise, park2Promise]);
+    const sched1Promise = fetch('https://api.themeparks.wiki/v1/entity/dae968d5-630d-4719-8b06-3d107e944401/schedule')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+    const sched2Promise = fetch('https://api.themeparks.wiki/v1/entity/ca888437-ebb4-4d50-aed2-d227f7096968/schedule')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+
+    const [p1, p2, s1, s2] = await Promise.all([park1Promise, park2Promise, sched1Promise, sched2Promise]);
 
     if (!p1 && !p2) {
       throw new Error('APIs unavailable');
     }
+
+    // Helper to extract operating hours for today from schedule API
+    const extractHours = (scheduleData: any, defaultHours: string): string => {
+      try {
+        if (!scheduleData?.schedule?.length) return defaultHours;
+        const entry = scheduleData.schedule.find((s: any) => s.date === todayIso && s.type === 'OPERATING');
+        if (entry?.openingTime && entry?.closingTime) {
+          const open = entry.openingTime.slice(11, 16);
+          const close = entry.closingTime.slice(11, 16);
+          return `${open} - ${close}`;
+        }
+      } catch {}
+      return defaultHours;
+    };
+
+    const parkHours: DlpParkHours = {
+      disneyland: extractHours(s1, '09:30 - 23:00'),
+      adventureWorld: extractHours(s2, '09:30 - 21:00')
+    };
 
     const allItems: any[] = [];
     if (p1?.liveData) {
@@ -279,6 +318,18 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
             relacheReason = 'Relâche programmée aujourd’hui (aucune séance)';
           }
         }
+        // Check if all shows for today have ended:
+        // "une fois que le dernier show de la journée est passé (environ 30 min après le début) -> shows terminés aujourd'hui"
+        let isEnded = false;
+        if (!isRelache && times.length > 0) {
+          const lastTime = times[times.length - 1];
+          const [lh, lm] = lastTime.split(':').map(Number);
+          const lastShowMinutes = lh * 60 + lm;
+          // 30 min after start of last show
+          if (nowMinutes >= lastShowMinutes + 30) {
+            isEnded = true;
+          }
+        }
 
         return {
           id: item.id || cleanName,
@@ -286,17 +337,23 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
           park: item.park,
           status: isRelache ? 'CLOSED' : (item.status || 'OPERATING'),
           isRelache,
+          isEnded,
           relacheReason,
           times,
           nextTime,
           category
         };
       })
-      // Sort: spectacles in operation first, then relâches, sorted alphabetically
+      // Sort: spectacles in operation (active) first, then ended shows, then relâches
       .sort((a, b) => {
-        if (a.isRelache !== b.isRelache) {
-          return a.isRelache ? 1 : -1;
-        }
+        const getScore = (s: DlpShow) => {
+          if (s.isRelache) return 3;
+          if (s.isEnded) return 2;
+          return 1;
+        };
+        const scoreA = getScore(a);
+        const scoreB = getScore(b);
+        if (scoreA !== scoreB) return scoreA - scoreB;
         return a.name.localeCompare(b.name, 'fr');
       });
 
@@ -304,13 +361,14 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         shows,
+        parkHours,
         lastUpdated: nowStr,
         todayDate: todayIso,
         timestamp: Date.now()
       }));
     } catch {}
 
-    return { shows, lastUpdated: nowStr, isOffline: false, todayDate: todayIso };
+    return { shows, parkHours, lastUpdated: nowStr, isOffline: false, todayDate: todayIso };
   } catch (e) {
     console.warn('Failed to fetch live DLP shows, falling back to local dataset', e);
     const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
@@ -323,8 +381,23 @@ export async function fetchDlpShows(): Promise<{ shows: DlpShow[]; lastUpdated: 
           break;
         }
       }
-      return { ...s, nextTime };
+      let isEnded = false;
+      if (!s.isRelache && s.times.length > 0) {
+        const lastTime = s.times[s.times.length - 1];
+        const [lh, lm] = lastTime.split(':').map(Number);
+        const lastShowMinutes = lh * 60 + lm;
+        if (nowMinutes >= lastShowMinutes + 30) {
+          isEnded = true;
+        }
+      }
+      return { ...s, nextTime, isEnded };
     });
-    return { shows, lastUpdated: 'Secours (Hors ligne)', isOffline: true, todayDate: todayIso };
+    return {
+      shows,
+      parkHours: { disneyland: '09:30 - 23:00', adventureWorld: '09:30 - 21:00' },
+      lastUpdated: 'Secours (Hors ligne)',
+      isOffline: true,
+      todayDate: todayIso
+    };
   }
 }
