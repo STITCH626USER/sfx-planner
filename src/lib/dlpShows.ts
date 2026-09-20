@@ -22,7 +22,7 @@ export interface DlpShow {
   category: 'spectacle' | 'rencontre' | 'nocturne' | 'parade';
 }
 
-const CACHE_KEY = 'dlp_shows_cache_v3';
+const CACHE_KEY = 'dlp_shows_cache_v4';
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function getTodayIsoString(refDate?: Date): string {
@@ -273,7 +273,9 @@ export async function fetchDlpShows(): Promise<{
           l.includes('moment musical') ||
           // 3. La valse royale de la belle au bois dormant
           l.includes('valse royale') ||
-          (l.includes('sleeping beauty') && l.includes('waltz'))
+          (l.includes('sleeping beauty') && l.includes('waltz')) ||
+          // 4. Stitch Live
+          l.includes('stitch live')
         ) {
           return false;
         }
