@@ -59,6 +59,24 @@ export default function App() {
     return 'dark';
   });
 
+  const [comfortMode, setComfortMode] = useState<boolean>(() => {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem('sfx_comfort_mode') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (comfortMode) {
+      document.documentElement.setAttribute('data-comfort', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-comfort');
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sfx_comfort_mode', comfortMode ? 'true' : 'false');
+    }
+  }, [comfortMode]);
+
   const [records, setRecords] = useState<PlanningRecord[]>(() => {
     try {
       const saved = localStorage.getItem('sfx_records');
@@ -278,6 +296,18 @@ export default function App() {
             <div className="apple-nav-actions">
               <button
                 type="button"
+                className={`apple-comfort-btn ${comfortMode ? 'active' : ''}`}
+                onClick={() => setComfortMode(current => !current)}
+                title={comfortMode ? "Désactiver le mode confort visuel" : "Activer le mode confort visuel (grand format)"}
+                aria-label="Mode confort visuel"
+                aria-pressed={comfortMode}
+                data-testid="btn-comfort-toggle-landing"
+              >
+                <IconEye />
+                <span>{comfortMode ? 'Confort ON' : 'Confort'}</span>
+              </button>
+              <button
+                type="button"
                 className="apple-theme-btn"
                 onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
                 title="Basculer thème sombre / clair"
@@ -429,6 +459,18 @@ export default function App() {
           </div>
 
           <div className="app-header-actions">
+            <button
+              type="button"
+              className={`btn-header-comfort ${comfortMode ? 'active' : ''}`}
+              onClick={() => setComfortMode(current => !current)}
+              title={comfortMode ? "Désactiver le mode confort visuel" : "Activer le mode confort visuel (grand format)"}
+              aria-label="Mode confort visuel"
+              aria-pressed={comfortMode}
+              data-testid="btn-comfort-toggle"
+            >
+              <IconEye />
+              <span>{comfortMode ? 'Confort ON' : 'Confort'}</span>
+            </button>
             <button
               type="button"
               className="btn-header-add"
