@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, parseRange } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
 const NAVY:    [number,number,number] = [13,  20,  35];
@@ -961,6 +961,38 @@ function shortenSceneName(scene: string): string {
   return s;
 }
 
+function getDailyAmplitude(recs: PlanningRecord[]): string {
+  // 1. If any record has shiftTime, use it
+  const withShift = recs.find(r => r.shiftTime && r.shiftTime !== 'OFF');
+  if (withShift?.shiftTime) return withShift.shiftTime;
+
+  // 2. Parse working records to find min start and max end
+  let minStart = Infinity;
+  let maxEnd = -Infinity;
+
+  for (const r of recs) {
+    if (!r.time || r.time === 'OFF' || /^off$/i.test(r.time)) continue;
+    const rng = parseRange(r.time);
+    if (rng) {
+      if (rng.start < minStart) minStart = rng.start;
+      if (rng.end > maxEnd) maxEnd = rng.end;
+    }
+  }
+
+  if (minStart !== Infinity && maxEnd !== -Infinity && minStart < maxEnd) {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const sH = Math.floor(minStart / 60);
+    const sM = minStart % 60;
+    const eH = Math.floor(maxEnd / 60);
+    const eM = maxEnd % 60;
+    return `${pad(sH)}:${pad(sM)}-${pad(eH)}:${pad(eM)}`;
+  }
+
+  // 3. Fallback to first non-off time
+  const firstWork = recs.find(r => r.time && r.time !== 'OFF' && !/^off$/i.test(r.time));
+  return firstWork?.time || recs[0]?.time || '';
+}
+
 async function generateGridGlobalPdf(opts: {
   title: string; subtitle: string; filename: string;
   records: PlanningRecord[];
@@ -1037,7 +1069,7 @@ async function generateGridGlobalPdf(opts: {
       const fTime = Math.max(5, Math.min(7.5, rowH * 0.8));
       const fScene = Math.max(4, Math.min(6.2, rowH * 0.7));
       const fOff = Math.max(5, Math.min(7.5, rowH * 0.8));
-      const badgeW = 17.5;
+      const badgeW = 16.5;
 
       for (let i = 0; i < emps.length; i++) {
         const emp = emps[i];
@@ -1075,30 +1107,98 @@ async function generateGridGlobalPdf(opts: {
             doc.setFont('helvetica', 'bold'); doc.setFontSize(fOff);
             doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1.2, {align: 'center'});
           } else {
-            const cleanScene = cleanSceneName(mainRec.scene);
+            const hasFormation = recs.some(r => isTrainingScene(r.scene));
+            const nonFoRecs = recs.filter(r => !isTrainingScene(r.scene) && r.time !== 'OFF' && !/^off$/i.test(r.time));
+            const isMixedFo = hasFormation && nonFoRecs.length > 0;
+            const amplitudeStr = getDailyAmplitude(recs);
+
+            const primaryRec = nonFoRecs[0] || recs[0];
+            const cleanScene = cleanSceneName(primaryRec.scene);
             const sc = getSceneColor(cleanScene);
-            const sceneAbbr = shortenSceneName(cleanScene);
-            
-            // Soft scene background tint across the cell
-            doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-            doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
-            
-            // Solid scene color badge
-            doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
-            doc.roundedRect(dx+0.6, y+0.6, badgeW, rowH-1.2, 0.8, 0.8, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(fScene);
-            doc.text(sceneAbbr, dx + 0.6 + badgeW/2, y + rowH/2 + 1, {align: 'center'});
-            
-            let timeStr = mainRec.time;
-            if (recs.length > 1) {
-              const fO = recs.find(r => isTrainingScene(r.scene));
-              if (fO) timeStr += ' +FO';
+            const foSc = getSceneColor('Formation');
+
+            if (isMixedFo) {
+              // --- MULTICOLORE CELL (FORMATION + SCENE) ---
+              // 1. Base scene background
+              doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
+              doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
+
+              // 2. Slanted multi-color violet stripes across the cell
+              doc.saveGraphicsState();
+              doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8);
+              doc.clip();
+              doc.setDrawColor(221, 214, 254); // Violet tint
+              doc.setLineWidth(2.2);
+              const cellH = rowH - 0.8;
+              const cellW = colDayW - 0.8;
+              const step = 4.4;
+              for (let sx = dx + 0.4 - cellH; sx < dx + 0.4 + cellW + cellH; sx += step) {
+                doc.line(sx, y + 0.4, sx + cellH, y + 0.4 + cellH);
+              }
+              doc.restoreGraphicsState();
+
+              // 3. Two-tone Multi-color Badge: [ SCENE | FO ]
+              const leftBadgeW = 10.5;
+              const rightBadgeW = 6.0;
+              const totalBadgeW = leftBadgeW + rightBadgeW; // 16.5mm
+              const badgeH = rowH - 1.2;
+
+              // Left part (Scene color)
+              doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
+              doc.roundedRect(dx+0.6, y+0.6, leftBadgeW, badgeH, 0.8, 0.8, 'F');
+              doc.rect(dx+0.6 + leftBadgeW - 1.5, y+0.6, 1.5, badgeH, 'F');
+
+              doc.setTextColor(255, 255, 255);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(Math.min(fScene, 5.5));
+              let sAbbr = shortenSceneName(cleanScene);
+              if (sAbbr.length > 5) sAbbr = sAbbr.substring(0, 5);
+              doc.text(sAbbr, dx + 0.6 + leftBadgeW/2, y + rowH/2 + 1, {align: 'center'});
+
+              // Right part (Formation Purple)
+              doc.setFillColor(foSc.rgbAccent[0], foSc.rgbAccent[1], foSc.rgbAccent[2]);
+              doc.roundedRect(dx+0.6 + leftBadgeW, y+0.6, rightBadgeW, badgeH, 0.8, 0.8, 'F');
+              doc.rect(dx+0.6 + leftBadgeW, y+0.6, 1.5, badgeH, 'F');
+
+              doc.setTextColor(255, 255, 255);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(Math.min(fScene, 5.5));
+              doc.text('FO', dx + 0.6 + leftBadgeW + rightBadgeW/2, y + rowH/2 + 1, {align: 'center'});
+
+              // 4. White pill with daily amplitude (just amplitude, no +FO)
+              const timeX = dx + 0.6 + totalBadgeW + 0.8;
+              const timeW = colDayW - 0.8 - (totalBadgeW + 1.4);
+              const timeH = Math.min(rowH - 1.4, 5.6);
+              const timeY = y + (rowH - timeH) / 2;
+
+              doc.setFillColor(255, 255, 255);
+              doc.setDrawColor(196, 181, 253);
+              doc.setLineWidth(0.2);
+              doc.roundedRect(timeX, timeY, timeW, timeH, 0.6, 0.6, 'FD');
+
+              doc.setTextColor(15, 23, 42);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(Math.min(fTime, 6.2));
+              doc.text(amplitudeStr, timeX + timeW/2, timeY + timeH/2 + 1.1, {align: 'center'});
+
+            } else {
+              // --- STANDARD CELL (SINGLE SCENE OR PURE FORMATION) ---
+              const sceneAbbr = shortenSceneName(cleanScene);
+              
+              // Soft scene background tint across the cell
+              doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
+              doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
+              
+              // Solid scene color badge
+              doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
+              doc.roundedRect(dx+0.6, y+0.6, badgeW, rowH-1.2, 0.8, 0.8, 'F');
+              
+              doc.setTextColor(255, 255, 255);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(fScene);
+              doc.text(sceneAbbr, dx + 0.6 + badgeW/2, y + rowH/2 + 1, {align: 'center'});
+              
+              // Just the daily amplitude (clean, no +FO)
+              doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(fTime);
+              doc.text(amplitudeStr, dx + 0.6 + badgeW + (colDayW - badgeW - 1.2)/2, y + rowH/2 + 1.2, {align: 'center'});
             }
-            doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(fTime);
-            doc.text(timeStr, dx + 0.6 + badgeW + (colDayW - badgeW - 1.2)/2, y + rowH/2 + 1.2, {align: 'center'});
           }
         }
         y += rowH;
