@@ -50,7 +50,6 @@ function formatRangeShort(startIso: string, endIso: string): string {
 interface PopoverData {
   date: string;
   records: PlanningRecord[];
-  anchorRect?: DOMRect;
 }
 
 interface EmployeeCalendarViewProps {
@@ -209,15 +208,13 @@ export function EmployeeCalendarView({
                     role="button"
                     tabIndex={0}
                     aria-label={`Voir les horaires du ${formatFullDate(dateStr)}`}
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setPopover({ date: dateStr, records: recs, anchorRect: rect });
+                    onClick={() => {
+                      setPopover({ date: dateStr, records: recs });
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setPopover({ date: dateStr, records: recs, anchorRect: rect });
+                        setPopover({ date: dateStr, records: recs });
                       }
                     }}
                   >
@@ -273,19 +270,17 @@ export function EmployeeCalendarView({
 
       {/* Interactive Popover Bubble */}
       {popover && (
-        <>
-          <div
-            className="cal-popover-backdrop"
-            onClick={() => setPopover(null)}
-            aria-hidden="true"
-          />
+        <div
+          className="cal-popover-overlay"
+          onClick={() => setPopover(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Détail des horaires du ${formatFullDate(popover.date)}`}
+        >
           <div
             ref={popoverRef}
             className="cal-popover-bubble animate-scale-up"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Détail des horaires du ${formatFullDate(popover.date)}`}
-            style={getPopoverStyle(popover.anchorRect)}
+            onClick={e => e.stopPropagation()}
           >
             <div className="cal-popover-head">
               <div className="cal-popover-date">
@@ -407,48 +402,8 @@ export function EmployeeCalendarView({
               })()}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
-}
-
-// Calculate popover positioning relative to clicked anchor or center/bottom on mobile
-function getPopoverStyle(anchorRect?: DOMRect): React.CSSProperties {
-  if (typeof window === 'undefined') return {};
-  const isMobile = window.innerWidth < 640;
-
-  if (isMobile) {
-    // Mobile: sleek floating bottom-sheet card
-    return {
-      position: 'fixed',
-      bottom: 'calc(16px + env(safe-area-inset-bottom))',
-      left: 12,
-      right: 12,
-      zIndex: 2000,
-      maxHeight: '75vh',
-    };
-  }
-
-  // Desktop: floating anchored popover with bounds clamping
-  const popoverW = 340;
-  let left = anchorRect
-    ? anchorRect.left + anchorRect.width / 2 - popoverW / 2
-    : window.innerWidth / 2 - popoverW / 2;
-
-  // Clamp horizontally
-  left = Math.max(16, Math.min(window.innerWidth - popoverW - 16, left));
-
-  let top = anchorRect ? anchorRect.bottom + 8 : 120;
-  if (anchorRect && top + 240 > window.innerHeight) {
-    top = Math.max(16, anchorRect.top - 250);
-  }
-
-  return {
-    position: 'fixed',
-    top,
-    left,
-    width: popoverW,
-    zIndex: 2000,
-  };
 }

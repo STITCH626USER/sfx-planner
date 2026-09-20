@@ -4475,14 +4475,27 @@ nav.seg button[aria-selected="true"] {
 /* ==========================================================================
    INTERACTIVE POPOVER BUBBLE (HORAIRES SANS NOUVELLE FENETRE)
    ========================================================================== */
-.cal-popover-backdrop {
+.cal-popover-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1999;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
   animation: calFadeIn 0.15s ease-out;
+  box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+  .cal-popover-overlay {
+    align-items: flex-end;
+    padding: 12px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes calFadeIn {
@@ -4502,23 +4515,26 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-bubble {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
   background: #111622;
   border: 1.5px solid #2d3b50;
   border-top: 3px solid var(--amber);
   border-radius: 6px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
-  z-index: 2000;
-  animation: calPopoverScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+  animation: calPopoverScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root[data-theme="light"] .cal-popover-bubble {
   background: #ffffff;
   border-color: #cbd5e1;
   border-top: 3px solid var(--amber);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
 }
 
 .cal-popover-head {
@@ -4598,7 +4614,7 @@ nav.seg button[aria-selected="true"] {
 .cal-popover-body {
   padding: 14px 16px;
   overflow-y: auto;
-  max-height: calc(75vh - 54px);
+  max-height: calc(85vh - 54px);
 }
 
 /* Off state in popover */
