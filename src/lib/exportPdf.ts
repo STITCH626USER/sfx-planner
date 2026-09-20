@@ -617,19 +617,20 @@ async function generateIndivPdf(opts: {
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 8;
   
-  const startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle, logo, 'SFX PLANNER', opts.statsBadge);
-  
-  const isWeekGrid = opts.filename.includes('indiv') || opts.filename.includes('scene');
+  let startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle, logo, 'SFX PLANNER', opts.statsBadge);
+  const bottomLimit = pageH - 14; // footer top
+  const gutter = 3.0;
+
   const numWeeks = Math.ceil(opts.allDates.length / 7);
-  
-  if (isWeekGrid) {
-    // 7 days per column, dynamic height to fill exactly 100% of vertical space without void!
-    const bottomLimit = pageH - 14; // footer top
-    const availableH = bottomLimit - startY; // approx 162mm
+  const maxRowsPerDay = Math.max(0, ...opts.allDates.map(d => (opts.dateMap.get(d) || []).length));
+  const isDense = opts.filename.includes('scene') || maxRowsPerDay >= 3;
+
+  if (!isDense) {
+    // Standard individual employee schedule: 7 days per column, 1 to 4 weeks adaptive width
+    const availableH = bottomLimit - startY;
     const gapBlock = 2.2;
     const blockH = Math.min(23, (availableH - 6 * gapBlock) / 7);
     const cols = Math.min(4, Math.max(1, numWeeks));
-    const gutter = 3.5;
 
     // Adaptive column width and centering based on number of weeks (1 to 4)
     let colW: number;
@@ -660,7 +661,7 @@ async function generateIndivPdf(opts: {
         if (currentCol >= cols) {
           drawPremiumFooter(doc, pageW, pageH, marginX);
           doc.addPage();
-          drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
+          startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
           currentCol = 0;
           currentY = startY;
         }
@@ -676,82 +677,35 @@ async function generateIndivPdf(opts: {
     return;
   }
 
-  // Scene export fallback
-  const maxAvailableH = pageH - 13 - (startY + 5);
-  let totalCols = 1;
-  let simY = startY + 5;
-  for (let i = 0; i < opts.allDates.length; i++) {
-    const d = opts.allDates[i];
-    const rows = opts.dateMap.get(d) || [];
-    const pictoH = 11;
-    let totalBubblesH = 0;
-    for (let j = 0; j < rows.length; j++) {
-      let bH = 5.5;
-      if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2;
-      totalBubblesH += bH + (j < rows.length - 1 ? 0.6 : 0);
-    }
-    const pad = 1;
-    const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
-    const gapBlock = 1.5;
-    
-    if (simY + blockH > startY + 5 + maxAvailableH) {
-      totalCols++;
-      simY = startY + 5;
-    }
-    simY += blockH + gapBlock;
-  }
-
+  // Dense / Scene schedule: dynamic card height and smooth multi-page column flow
   const cols = 4;
-  let colsPerPage: number[] = [];
-  if (totalCols > 0) {
-    const numPages = Math.ceil(totalCols / cols);
-    colsPerPage = new Array(numPages).fill(Math.floor(totalCols / numPages));
-    const remainder = totalCols % numPages;
-    for (let i = 0; i < remainder; i++) {
-      colsPerPage[i]++;
-    }
-  }
-
-  const gutter = 2;
-  const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
-  let currentY = startY + 5;
+  const colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
+  const gapBlock = 2.0;
   let currentCol = 0;
-  let currentPageIndex = 0;
-  let activeColsLimit = colsPerPage[0] || cols;
+  let currentY = startY;
 
   for (let i = 0; i < opts.allDates.length; i++) {
     const d = opts.allDates[i];
     const rows = opts.dateMap.get(d) || [];
-    
-    const pictoH = 11;
-    let totalBubblesH = 0;
-    for (let j = 0; j < rows.length; j++) {
-      let bH = 5.5;
-      if (rows[j].subtext) bH += Math.ceil(rows[j].subtext!.length / 45) * 2;
-      totalBubblesH += bH + (j < rows.length - 1 ? 0.6 : 0);
-    }
-    const pad = 1;
-    const blockH = Math.max(pictoH, totalBubblesH) + pad * 2;
-    const gapBlock = 1.5;
+    const rowCount = Math.max(1, rows.length);
+    const cardH = Math.max(16.0, 3.0 + rowCount * 5.2);
 
-    if (currentY + blockH > startY + 5 + maxAvailableH) {
+    if (currentY + cardH > bottomLimit) {
       currentCol++;
-      currentY = startY + 5;
-      if (currentCol >= activeColsLimit) {
+      currentY = startY;
+
+      if (currentCol >= cols) {
         drawPremiumFooter(doc, pageW, pageH, marginX);
         doc.addPage();
-        currentPageIndex++;
-        activeColsLimit = colsPerPage[currentPageIndex] || cols;
-        currentY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo) + 5;
+        startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
         currentCol = 0;
+        currentY = startY;
       }
     }
 
-    const usedWidth = activeColsLimit * colW + (activeColsLimit - 1) * gutter;
-    const startX = (pageW - usedWidth) / 2;
-    const x = startX + currentCol * (colW + gutter);
-    drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
-    currentY += blockH + gapBlock;
+    const x = marginX + currentCol * (colW + gutter);
+    drawIndivDayBlock(doc, x, currentY, colW, cardH, d, rows, opts.themeColorName);
+    currentY += cardH + gapBlock;
   }
 
   drawPremiumFooter(doc, pageW, pageH, marginX);
@@ -828,10 +782,10 @@ function drawIndivDayBlock(
   }
 
   // Date Picto on left
-  const pictoW = 12.8;
-  const pictoH = Math.min(h - 2.8, 17.5);
-  const py = y + (h - pictoH) / 2;
-  const px = x + (isOff ? 1.8 : 2.5);
+  const pictoW = 12.0;
+  const pictoH = Math.min(18.0, h - 2.8);
+  const px = x + (isOff ? 1.8 : 2.2);
+  const py = y + (h <= 24 ? (h - pictoH) / 2 : 1.6);
 
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(226, 232, 240);
@@ -845,9 +799,9 @@ function drawIndivDayBlock(
   doc.text(dayName, cx, py + 4.2, { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11.5);
+  doc.setFontSize(11.0);
   doc.setTextColor(15, 23, 42);
-  doc.text(dayNum, cx, py + 10.5, { align: 'center' });
+  doc.text(dayNum, cx, py + 10.4, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(4.0);
@@ -855,7 +809,7 @@ function drawIndivDayBlock(
   doc.text(monthName, cx, py + 14.5, { align: 'center' });
 
   // Content area on right
-  const rx = px + pictoW + 2.4;
+  const rx = px + pictoW + 2.2;
 
   if (isOff) {
     const isScene = Boolean(themeColorName);
@@ -1038,16 +992,16 @@ function drawIndivDayBlock(
 
       // Time pill
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(5.2);
+      doc.setFontSize(5.0);
       const tw = doc.getTextWidth(cleanTime);
-      const pillW = tw + 3.4;
+      const pillW = tw + 2.8;
       const pillH = 4.2;
       const pillX = x + w - pillW - 1.8;
       const pillY = rowY + (rH - pillH) / 2;
 
       doc.setFillColor(...scBg);
       doc.setDrawColor(...scAccent);
-      doc.setLineWidth(0.25);
+      doc.setLineWidth(0.2);
       doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
       doc.setTextColor(...scAccent);
       doc.text(cleanTime, pillX + pillW / 2, pillY + 3.0, { align: 'center' });
@@ -1071,24 +1025,21 @@ function drawIndivDayBlock(
       doc.setTextColor(15, 23, 42);
 
       let dispScene = fullLabel;
-      if (doc.getTextWidth(dispScene) > maxSceneW) {
-        dispScene = mainName;
-        while (fontSize > 5.0 && doc.getTextWidth(dispScene) > maxSceneW) {
-          fontSize -= 0.3;
-          doc.setFontSize(fontSize);
-        }
-        if (doc.getTextWidth(dispScene) > maxSceneW) {
-          while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
-            dispScene = dispScene.slice(0, -1);
-          }
-          dispScene = dispScene.trim() + '...';
-        }
+      while (fontSize > 4.4 && doc.getTextWidth(dispScene) > maxSceneW) {
+        fontSize -= 0.2;
+        doc.setFontSize(fontSize);
       }
-      doc.text(dispScene, rx, rowY + rH / 2 + 1.6);
+      if (doc.getTextWidth(dispScene) > maxSceneW) {
+        while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
+          dispScene = dispScene.slice(0, -1);
+        }
+        dispScene = dispScene.trim() + '...';
+      }
+      doc.text(dispScene, rx, rowY + rH / 2 + 1.5);
 
       if (idx < rowCount - 1) {
         doc.setDrawColor(241, 245, 249);
-        doc.setLineWidth(0.2);
+        doc.setLineWidth(0.15);
         doc.line(rx, rowY + rH, x + w - 2, rowY + rH);
       }
     }
