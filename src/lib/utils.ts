@@ -15,6 +15,69 @@ export function parseRange(timeStr: string): { start: number; end: number } | nu
   return { start, end };
 }
 
+export interface ShiftLiveStatus {
+  state: 'upcoming' | 'live' | 'finished';
+  progress: number; // 0 to 100
+  label: string;
+  timeRemaining?: string;
+}
+
+export function getShiftLiveStatus(timeStr: string, refDate?: Date): ShiftLiveStatus | null {
+  const range = parseRange(timeStr);
+  if (!range) return null;
+
+  const now = refDate || new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let { start, end } = range;
+  // Handle overnight shift (e.g. 15:00 - 01:00)
+  if (end < start) {
+    end += 24 * 60;
+  }
+
+  let effectiveCurrent = currentMinutes;
+  // If overnight and we are past midnight (e.g. 00:30 when shift is 16:00 - 02:00)
+  if (range.end < range.start && currentMinutes < range.start && currentMinutes <= range.end) {
+    effectiveCurrent += 24 * 60;
+  }
+
+  if (effectiveCurrent < start) {
+    const diff = start - effectiveCurrent;
+    const hours = Math.floor(diff / 60);
+    const mins = diff % 60;
+    const label = hours > 0 ? `Débute dans ${hours}h${mins > 0 ? (mins < 10 ? '0' : '') + mins : ''}` : `Débute dans ${mins}min`;
+    return {
+      state: 'upcoming',
+      progress: 0,
+      label,
+      timeRemaining: label
+    };
+  }
+
+  if (effectiveCurrent >= start && effectiveCurrent <= end) {
+    const total = end - start;
+    const elapsed = effectiveCurrent - start;
+    const progress = total > 0 ? Math.min(100, Math.max(0, Math.round((elapsed / total) * 100))) : 100;
+    const remaining = end - effectiveCurrent;
+    const remH = Math.floor(remaining / 60);
+    const remM = remaining % 60;
+    const remStr = remH > 0 ? `${remH}h${remM > 0 ? (remM < 10 ? '0' : '') + remM : ''}` : `${remM}m`;
+    return {
+      state: 'live',
+      progress,
+      label: `CUE EN COURS · ${progress}%`,
+      timeRemaining: `Fin dans ${remStr}`
+    };
+  }
+
+  return {
+    state: 'finished',
+    progress: 100,
+    label: 'CUE TERMINÉ'
+  };
+}
+
+
 export function timesMatch(t1: string, t2: string, tolerance = 3): boolean {
   const r1 = parseRange(t1);
   const r2 = parseRange(t2);

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 
 
@@ -47,6 +47,34 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
   }
   return 'time-pill';
 }
+
+function ConsoleClock() {
+  const [timeStr, setTimeStr] = useState(() => {
+    const d = new Date();
+    return d.toTimeString().split(' ')[0];
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const d = new Date();
+      setTimeStr(d.toTimeString().split(' ')[0]);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const [h, m, s] = timeStr.split(':');
+
+  return (
+    <div className="ma3-console-clock" title="Horloge Console GrandMA3">
+      <span className="ma3-clock-dot" />
+      <span className="ma3-clock-time">
+        {h}<span className="ma3-clock-colon">:</span>{m}<span className="ma3-clock-colon">:</span>{s}
+      </span>
+      <span className="ma3-clock-tag">TC LIVE</span>
+    </div>
+  );
+}
+
 
 export default function App() {
 
@@ -432,6 +460,7 @@ export default function App() {
           </div>
 
           <div className="app-header-actions">
+            <ConsoleClock />
             <button
               type="button"
               className="btn-header-theme"
@@ -1041,8 +1070,35 @@ function DayCard({
                   {rec.role}
                 </span>
               )}
-              {isToday && <span className="badge-today">Aujourd'hui</span>}
+              {isToday && (
+                <span className="badge-today">
+                  <span className="ma3-live-beacon" />
+                  Aujourd'hui
+                </span>
+              )}
             </div>
+            {isToday && (() => {
+              const liveStatus = getShiftLiveStatus(rec.time);
+              if (!liveStatus) return null;
+              return (
+                <div className={`ma3-cue-bar-wrapper state-${liveStatus.state}`}>
+                  <div className="ma3-cue-bar-header">
+                    <span className="ma3-cue-state-text">
+                      <span className={`ma3-status-led led-${liveStatus.state}`} />
+                      {liveStatus.label}
+                    </span>
+                    {liveStatus.timeRemaining && (
+                      <span className="ma3-cue-timer">{liveStatus.timeRemaining}</span>
+                    )}
+                  </div>
+                  {liveStatus.state === 'live' && (
+                    <div className="ma3-cue-progress-track">
+                      <div className="ma3-cue-progress-fill" style={{ width: `${liveStatus.progress}%` }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             {assocScenes && assocScenes.length > 0 && (
               <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
                 Peut correspondre à {assocScenes.join(', ')}
@@ -1065,6 +1121,7 @@ function DayCard({
   }
 
 
+
   // Multi-créneaux ou vacation globale distincte
   return (
     <div
@@ -1081,8 +1138,16 @@ function DayCard({
             <div className="day-date">{date.split('-').length === 3 ? `${date.split('-')[2]}/${date.split('-')[1]}` : date}</div>
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', textTransform: 'capitalize' }}>
-              {formatDateLong(date)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', textTransform: 'capitalize' }}>
+                {formatDateLong(date)}
+              </div>
+              {isToday && (
+                <span className="badge-today">
+                  <span className="ma3-live-beacon" />
+                  Aujourd'hui
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
               {records.length} créneau{records.length > 1 ? 'x' : ''}
@@ -1110,7 +1175,33 @@ function DayCard({
         )}
       </div>
 
+      {isToday && (() => {
+        const targetTime = shiftTime || records[0]?.time;
+        if (!targetTime) return null;
+        const liveStatus = getShiftLiveStatus(targetTime);
+        if (!liveStatus) return null;
+        return (
+          <div className={`ma3-cue-bar-wrapper state-${liveStatus.state}`} style={{ margin: '0 0 6px 0' }}>
+            <div className="ma3-cue-bar-header">
+              <span className="ma3-cue-state-text">
+                <span className={`ma3-status-led led-${liveStatus.state}`} />
+                {liveStatus.label}
+              </span>
+              {liveStatus.timeRemaining && (
+                <span className="ma3-cue-timer">{liveStatus.timeRemaining}</span>
+              )}
+            </div>
+            {liveStatus.state === 'live' && (
+              <div className="ma3-cue-progress-track">
+                <div className="ma3-cue-progress-fill" style={{ width: `${liveStatus.progress}%` }} />
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+
         {records.map((rec, idx) => {
           const interactive = !!onOpenScene && !!rec.scene;
           let assocScenes: string[] | undefined;
@@ -1573,7 +1664,7 @@ function DatePicker({ dates, date, records, onChange }: {
       width: '100%', minWidth: 0
     }}>
       <button
-        className="date-pill"
+        className="date-pill ma3-btn-today-live"
         onClick={() => {
           const today = new Date().toISOString().split('T')[0];
           let targetDate = dates.includes(today) ? today : null;
@@ -1596,25 +1687,25 @@ function DatePicker({ dates, date, records, onChange }: {
             }, 50);
           }
         }}
-        title="Aller à aujourd'hui"
+        title="Aller au jour actuel (LIVE)"
         style={{
           flex: '0 0 auto',
-          padding: '10px 12px',
+          padding: '8px 12px',
           minWidth: 'auto',
           justifyContent: 'center',
           marginRight: 10,
-          boxShadow: '4px 0 12px var(--shadow-color, rgba(0,0,0,0.15))',
-          border: '1px solid var(--line-strong)'
+          position: 'relative'
         }}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 4 }}>
+        <span className="ma3-live-beacon" style={{ position: 'absolute', top: 6, right: 6 }} />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 3 }}>
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
           <path d="M9 16l2 2 4-4"></path>
         </svg>
-        <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Auj.</span>
+        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>LIVE</span>
       </button>
       <div ref={scrollRef} className="date-row" role="tablist" data-testid="date-row" style={{
         position: 'static', margin: 0, padding: '8px 4px 8px 4px', background: 'none', flex: 1, alignItems: 'center'
