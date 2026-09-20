@@ -22,7 +22,7 @@ export interface DlpShow {
   category: 'spectacle' | 'rencontre' | 'nocturne' | 'parade';
 }
 
-const CACHE_KEY = 'dlp_shows_cache_v2';
+const CACHE_KEY = 'dlp_shows_cache_v3';
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function getTodayIsoString(refDate?: Date): string {
@@ -63,16 +63,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     times: ['13:00', '14:05', '15:10', '17:25', '18:30'],
     category: 'spectacle'
   },
-  {
-    id: 'frozen-musical',
-    name: 'La Reine des Neiges : Une Invitation Musicale (Animation Celebration)',
-    park: 'Disney Adventure World',
-    status: 'CLOSED',
-    isRelache: true,
-    relacheReason: 'Relâche ou fermeture saisonnière',
-    times: [],
-    category: 'spectacle'
-  },
+
   {
     id: 'parade-stars',
     name: 'Disney Stars on Parade',
@@ -272,7 +263,17 @@ export async function fetchDlpShows(): Promise<{
           l.includes('pavillon') ||
           l.includes('academy') ||
           l.includes('meeting') ||
-          l.includes('character')
+          l.includes('character') ||
+          // User exclusions:
+          // 1. La reine des neiges invitation
+          (l.includes('frozen') && l.includes('invitation')) ||
+          (l.includes('reine des neiges') && l.includes('invitation')) ||
+          // 2. Les musical moments (Mary Poppins, Rapunzel)
+          l.includes('musical moment') ||
+          l.includes('moment musical') ||
+          // 3. La valse royale de la belle au bois dormant
+          l.includes('valse royale') ||
+          (l.includes('sleeping beauty') && l.includes('waltz'))
         ) {
           return false;
         }

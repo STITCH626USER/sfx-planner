@@ -84,7 +84,7 @@ function ConsoleClock({ onClick, isActive }: { onClick: () => void; isActive?: b
 
 
 
-function DlpShowsPanel({ onBack }: { onBack: () => void }) {
+function DlpShowsPanel() {
   const [shows, setShows] = useState<DlpShow[]>([]);
   const [parkHours, setParkHours] = useState<DlpParkHours>({ disneyland: '09:30 - 23:00', adventureWorld: '09:30 - 21:00' });
   const [loading, setLoading] = useState(false);
@@ -129,19 +129,6 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="dlp-shows-view animate-fade-in" data-testid="panel-dlp-shows">
-      {/* Back button */}
-      <div style={{ marginBottom: 12 }}>
-        <button
-          type="button"
-          className="btn-back"
-          onClick={onBack}
-          data-testid="btn-back-shows"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
-        >
-          <IconArrowLeft /> Retour au planning
-        </button>
-      </div>
-
       {/* Hero Header Card */}
       <div className="dlp-view-card">
         <div className="dlp-view-header-row">
@@ -166,8 +153,8 @@ function DlpShowsPanel({ onBack }: { onBack: () => void }) {
               </svg>
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--fg)', letterSpacing: '-0.02em' }}>
-                Programme des spectacles DLP
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--fg)', letterSpacing: '-0.02em' }}>
+                Horaires des shows
               </h2>
               <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                 <span className="ma3-clock-dot" style={{ width: 7, height: 7 }} />
@@ -909,7 +896,7 @@ export default function App() {
 
         <div className="main-content-panel">
           {tab === 'shows' ? (
-            <DlpShowsPanel onBack={() => setTab(previousTab || 'daily')} />
+            <DlpShowsPanel />
           ) : records.length === 0 ? (
             <EmptyAllPanel />
           ) : tab === 'recherche' ? (
