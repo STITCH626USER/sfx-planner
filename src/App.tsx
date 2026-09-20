@@ -755,17 +755,6 @@ export default function App() {
           </div>
 
           <div className="app-header-actions">
-            <ConsoleClock
-              isActive={tab === 'shows'}
-              onClick={() => {
-                if (tab !== 'shows') {
-                  setPreviousTab(tab);
-                  setTab('shows');
-                } else {
-                  setTab(previousTab);
-                }
-              }}
-            />
             <button
               type="button"
               className="btn-header-theme"
@@ -796,6 +785,21 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {/* Dedicated live widget banner row under the header */}
+        <div className="sidebar-clock-banner" style={{ margin: '8px 0 10px 0' }}>
+          <ConsoleClock
+            isActive={tab === 'shows'}
+            onClick={() => {
+              if (tab !== 'shows') {
+                setPreviousTab(tab);
+                setTab('shows');
+              } else {
+                setTab(previousTab);
+              }
+            }}
+          />
+        </div>
 
         {drag && (
           <div className="drag-drop-hint animate-fade-in" onDrop={onDrop} onDragLeave={() => setDrag(false)}>
