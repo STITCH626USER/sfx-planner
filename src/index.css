@@ -3681,7 +3681,7 @@ nav.seg button[aria-selected="true"] {
 .employee-view-toggle-bar {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   margin-bottom: 16px;
 }
 
