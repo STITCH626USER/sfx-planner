@@ -22,7 +22,7 @@ export interface DlpShow {
   category: 'spectacle' | 'rencontre' | 'nocturne' | 'parade';
 }
 
-const CACHE_KEY = 'dlp_shows_cache_v4';
+const CACHE_KEY = 'dlp_shows_cache_v5';
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function getTodayIsoString(refDate?: Date): string {
@@ -275,7 +275,9 @@ export async function fetchDlpShows(): Promise<{
           l.includes('valse royale') ||
           (l.includes('sleeping beauty') && l.includes('waltz')) ||
           // 4. Stitch Live
-          l.includes('stitch live')
+          l.includes('stitch live') ||
+          // 5. Miguel (Coco)
+          l.includes('miguel')
         ) {
           return false;
         }
