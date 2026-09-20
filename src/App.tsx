@@ -5,6 +5,7 @@ import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlob
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
+import { getShowWatermark } from './lib/showWatermarks';
 
 
 type Tab = 'recherche' | 'daily' | 'shows';
@@ -313,16 +314,17 @@ function DlpShowsPanel() {
             {filteredShows.map(show => {
               const isRelache = show.isRelache;
               const isEnded = !!show.isEnded;
+              const watermarkUri = getShowWatermark(show.name) || show.visualBg;
               return (
                 <div
                   key={show.id}
                   className={`dlp-show-card ${isRelache ? 'is-relache' : isEnded ? 'is-ended' : 'is-operating'}`}
                   style={{ padding: '14px 16px' }}
                 >
-                  {show.visualBg && (
+                  {watermarkUri && (
                     <div
                       className="dlp-show-watermark"
-                      style={{ backgroundImage: `url(${show.visualBg})` }}
+                      style={{ backgroundImage: `url("${watermarkUri}")` }}
                       aria-hidden="true"
                     />
                   )}

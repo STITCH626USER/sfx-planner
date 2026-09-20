@@ -7,6 +7,8 @@
 export interface DlpParkHours {
   disneyland: string;
   adventureWorld: string;
+}
+
 export interface DlpShow {
   id: string;
   name: string;

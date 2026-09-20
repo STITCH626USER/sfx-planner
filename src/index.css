@@ -5438,36 +5438,36 @@ nav.seg button[aria-selected="true"] {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 55%;
-  max-width: 320px;
+  width: 58%;
+  max-width: 340px;
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
-  opacity: 0.14;
+  opacity: 0.32;
   pointer-events: none;
   z-index: 0;
-  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0) 100%);
-  mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0.7) 60%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0.7) 60%, rgba(0, 0, 0, 0) 100%);
   transition: opacity 0.2s ease, transform 0.25s ease;
 }
 
 :root[data-theme="light"] .dlp-show-watermark {
-  opacity: 0.16;
-  filter: contrast(1.15) brightness(0.95);
+  opacity: 0.28;
+  filter: contrast(1.1) saturate(1.15);
 }
 
 .dlp-show-card:hover .dlp-show-watermark {
-  opacity: 0.22;
+  opacity: 0.45;
   transform: scale(1.02);
 }
 
 :root[data-theme="light"] .dlp-show-card:hover .dlp-show-watermark {
-  opacity: 0.24;
+  opacity: 0.40;
 }
 
 .dlp-show-card.is-relache .dlp-show-watermark {
   filter: grayscale(0.85);
-  opacity: 0.08;
+  opacity: 0.14;
 }
 
 :root[data-theme="light"] .dlp-show-card {
