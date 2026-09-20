@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow+Semi+Condensed:wght@600;700;800&family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /* SFX Planner — Premium Space-Midnight Glassmorphism Aesthetic.
    A-to-Z complete interface redesign. Modern mobile-first layout. */
@@ -64,8 +64,8 @@
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --font-time:    'Barlow Condensed', 'Saira Condensed', sans-serif;
-  --font-name:    'Barlow Condensed', 'Saira Condensed', sans-serif;
+  --font-time:    var(--font-body);
+  --font-name:    var(--font-body);
   --spring-physics: cubic-bezier(0.34, 1.56, 0.64, 1);
   --spring-transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -817,30 +817,31 @@ input:focus, select:focus {
 /* Beautiful neon style time pill badges */
 .time-pill {
   font-family: var(--font-time);
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
-  letter-spacing: 0.04em;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+  letter-spacing: 0.025em;
   background: var(--on-bg);
   color: var(--on-fg);
-  padding: 5px 14px;
+  padding: 6px 15px;
   border-radius: 999px;
-  border: 1px solid var(--on-line);
+  border: 1.5px solid var(--on-line);
   white-space: nowrap;
-  box-shadow: 0 2px 10px rgba(255, 176, 58, 0.1);
+  box-shadow: 0 2px 8px rgba(255, 176, 58, 0.08);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 .time-pill.off {
   background: var(--off-bg);
   color: var(--off-fg);
-  border-color: var(--line);
+  border: 1px solid var(--line);
   box-shadow: none;
-  font-size: 14.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 .time-pill.formation {
   background: rgba(159, 130, 255, 0.12);
@@ -1112,11 +1113,12 @@ input:focus, select:focus {
   box-shadow: var(--shadow-card);
 }
 .team-name {
-  font-family: var(--font-name);
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: 0.025em;
-  line-height: 1.15;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15.5px;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--fg);
 }
 .team-meta {
   font-size: 12.5px;
@@ -1239,11 +1241,12 @@ input:focus, select:focus {
   box-shadow: none;
 }
 .compact-name {
-  font-family: var(--font-name) !important;
-  font-weight: 700 !important;
-  font-size: 16.5px !important;
-  letter-spacing: 0.02em !important;
-  line-height: 1.15 !important;
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.25 !important;
+  color: var(--fg) !important;
 }
 .compact-meta {
   font-size: 11.5px;
@@ -1612,10 +1615,10 @@ input:focus, select:focus {
     padding: 10px 12px;
   }
   .compact-team-row .time-pill {
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 700;
-    padding: 3px 9px;
-    letter-spacing: 0.035em;
+    padding: 5px 12px;
+    letter-spacing: 0.02em;
   }
   .uploader {
     padding: 14px;
@@ -4359,9 +4362,10 @@ nav.seg button[aria-selected="true"] {
   font-family: var(--font-time);
   color: var(--amber);
   font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.035em;
+  font-size: 15px;
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "cv11" 1;
 }
 
 .cal-popover-slot-card {
