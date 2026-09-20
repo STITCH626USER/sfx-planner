@@ -4445,10 +4445,11 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-bubble {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
+  background: #111622;
+  border: 1.5px solid #2d3b50;
+  border-top: 3px solid var(--amber);
   border-radius: 6px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
   z-index: 2000;
   animation: calPopoverScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -4456,10 +4457,11 @@ nav.seg button[aria-selected="true"] {
   flex-direction: column;
 }
 
-:root[data-theme="dark"] .cal-popover-bubble {
-  background: #141b27;
-  border-color: #33435c;
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+:root[data-theme="light"] .cal-popover-bubble {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  border-top: 3px solid var(--amber);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
 }
 
 .cal-popover-head {
@@ -4467,13 +4469,13 @@ nav.seg button[aria-selected="true"] {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: var(--bg-2);
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #1f2a3c 0%, #151d2a 100%);
+  border-bottom: 1.5px solid #283448;
 }
 
-:root[data-theme="dark"] .cal-popover-head {
-  background: #18212e;
-  border-color: #283448;
+:root[data-theme="light"] .cal-popover-head {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom-color: #cbd5e1;
 }
 
 .cal-popover-date {
@@ -4481,28 +4483,37 @@ nav.seg button[aria-selected="true"] {
   align-items: center;
   gap: 8px;
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: var(--fg);
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .cal-popover-today-badge {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--amber);
-  background: rgba(217, 119, 6, 0.12);
-  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffd066;
+  background: #252f40;
+  padding: 2px 6px;
   border-radius: 3px;
   text-transform: uppercase;
-  border: 1px solid rgba(217, 119, 6, 0.3);
+  border: 1px solid rgba(255, 176, 32, 0.35);
+  letter-spacing: 0.04em;
+}
+
+:root[data-theme="light"] .cal-popover-today-badge {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
 }
 
 .cal-popover-close-btn {
   width: 26px;
   height: 26px;
   border-radius: 4px;
-  border: 1px solid #33435c;
+  border: 1px solid #36465e;
   background: linear-gradient(180deg, #242e40 0%, #161e2b 100%);
   color: var(--fg-muted);
   font-size: 11px;
@@ -4511,6 +4522,7 @@ nav.seg button[aria-selected="true"] {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: all 0.15s ease;
 }
 
@@ -4537,14 +4549,19 @@ nav.seg button[aria-selected="true"] {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: var(--bg-2);
-  border-radius: 12px;
-  border: 1px dashed var(--border);
+  padding: 12px 14px;
+  background: #141a26;
+  border-radius: 4px;
+  border: 1px dashed #283448;
+}
+
+:root[data-theme="light"] .cal-popover-off {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .cal-popover-off-icon {
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .cal-popover-off-text {
@@ -4554,8 +4571,12 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-off-text strong {
-  font-size: 13.5px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
   color: var(--fg);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .cal-popover-off-text span {
@@ -4575,40 +4596,50 @@ nav.seg button[aria-selected="true"] {
   align-items: center;
   justify-content: space-between;
   padding: 7px 11px;
-  border-radius: 9px;
-  background: rgba(217, 119, 6, 0.09);
-  border: 1px solid rgba(217, 119, 6, 0.2);
+  border-radius: 4px;
+  background: #18202d;
+  border: 1px solid rgba(255, 176, 32, 0.35);
   font-size: 12px;
+}
+
+:root[data-theme="light"] .cal-popover-shift-banner {
+  background: #fef3c7;
+  border-color: #fcd34d;
 }
 
 .cal-popover-shift-banner .shift-label {
   color: var(--fg-muted);
+  font-weight: 600;
 }
 
 .cal-popover-shift-banner .shift-time {
   font-family: var(--font-time);
   color: var(--amber);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+:root[data-theme="light"] .cal-popover-shift-banner .shift-time {
+  color: #b45309;
 }
 
 .cal-popover-slot-card {
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 11px;
+  background: #161c28;
+  border: 1px solid #283548;
+  border-radius: 4px;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-:root[data-theme="dark"] .cal-popover-slot-card {
-  background: rgba(24, 32, 46, 0.7);
-  border-color: rgba(255, 255, 255, 0.08);
+:root[data-theme="light"] .cal-popover-slot-card {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
 .cal-popover-slot-top {
@@ -4620,9 +4651,10 @@ nav.seg button[aria-selected="true"] {
 
 .cal-popover-slot-name {
   font-family: var(--font-display);
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--fg);
+  letter-spacing: 0.01em;
 }
 
 .cal-popover-slot-role {
@@ -4632,6 +4664,7 @@ nav.seg button[aria-selected="true"] {
 
 .cal-popover-slot-role strong {
   color: var(--fg);
+  font-weight: 700;
 }
 
 .cal-popover-slot-assoc {
@@ -4646,21 +4679,37 @@ nav.seg button[aria-selected="true"] {
   justify-content: space-between;
   width: 100%;
   margin-top: 4px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-1);
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #36465e;
+  background: linear-gradient(180deg, #242e40 0%, #161e2b 100%);
   color: var(--fg);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: all 0.15s ease;
 }
 
 .cal-popover-team-btn:hover {
-  background: var(--amber);
+  background: linear-gradient(180deg, #2c384e 0%, #1b2536 100%);
   border-color: var(--amber);
-  color: #ffffff;
+  color: #ffd066;
+}
+
+:root[data-theme="light"] .cal-popover-team-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .cal-popover-team-btn:hover {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #b45309;
 }
 
 /* ==========================================================================

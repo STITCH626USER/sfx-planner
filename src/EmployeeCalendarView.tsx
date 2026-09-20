@@ -360,7 +360,10 @@ export function EmployeeCalendarView({
                         <div
                           key={idx}
                           className="cal-popover-slot-card"
-                          style={{ borderLeft: `3.5px solid ${color.accent}` }}
+                          style={{
+                            borderLeft: `4.5px solid ${color.accent}`,
+                            background: `linear-gradient(90deg, ${color.accent}18, transparent)`,
+                          }}
                         >
                           <div className="cal-popover-slot-top">
                             <div className="cal-popover-slot-name">
