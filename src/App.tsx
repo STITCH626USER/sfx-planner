@@ -59,30 +59,17 @@ export default function App() {
     return 'dark';
   });
 
-  const [comfortMode, setComfortMode] = useState<boolean>(() => {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem('sfx_comfort_mode') === 'true';
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (comfortMode) {
-      document.documentElement.setAttribute('data-comfort', 'true');
-    } else {
-      document.documentElement.removeAttribute('data-comfort');
-    }
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('sfx_comfort_mode', comfortMode ? 'true' : 'false');
-    }
-  }, [comfortMode]);
-
   const [records, setRecords] = useState<PlanningRecord[]>(() => {
     try {
       const saved = localStorage.getItem('sfx_records');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
+
+  useEffect(() => {
+    document.documentElement.removeAttribute('data-comfort');
+    try { localStorage.removeItem('sfx_comfort_mode'); } catch {}
+  }, []);
   const [sources, setSources] = useState<SourceFile[]>(() => {
     try {
       const saved = localStorage.getItem('sfx_sources');
@@ -296,18 +283,6 @@ export default function App() {
             <div className="apple-nav-actions">
               <button
                 type="button"
-                className={`apple-comfort-btn ${comfortMode ? 'active' : ''}`}
-                onClick={() => setComfortMode(current => !current)}
-                title={comfortMode ? "Désactiver le mode confort visuel" : "Activer le mode confort visuel (grand format)"}
-                aria-label="Mode confort visuel"
-                aria-pressed={comfortMode}
-                data-testid="btn-comfort-toggle-landing"
-              >
-                <IconEye />
-                <span>{comfortMode ? 'Confort ON' : 'Confort'}</span>
-              </button>
-              <button
-                type="button"
                 className="apple-theme-btn"
                 onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
                 title="Basculer thème sombre / clair"
@@ -459,18 +434,6 @@ export default function App() {
           </div>
 
           <div className="app-header-actions">
-            <button
-              type="button"
-              className={`btn-header-comfort ${comfortMode ? 'active' : ''}`}
-              onClick={() => setComfortMode(current => !current)}
-              title={comfortMode ? "Désactiver le mode confort visuel" : "Activer le mode confort visuel (grand format)"}
-              aria-label="Mode confort visuel"
-              aria-pressed={comfortMode}
-              data-testid="btn-comfort-toggle"
-            >
-              <IconEye />
-              <span>{comfortMode ? 'Confort ON' : 'Confort'}</span>
-            </button>
             <button
               type="button"
               className="btn-header-add"
@@ -787,29 +750,9 @@ function countActiveDays(records: PlanningRecord[], name: string): number {
   return dates.size;
 }
 
-function EmployeeDetail({ name, records, allRecords, comfortMode: propComfortMode, onBack }: {
-  name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; comfortMode?: boolean; onBack: () => void;
+function EmployeeDetail({ name, records, allRecords, onBack }: {
+  name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; onBack: () => void;
 }) {
-  const [comfortMode, setComfortMode] = useState<boolean>(() => {
-    if (propComfortMode !== undefined) return propComfortMode;
-    if (typeof document !== 'undefined') {
-      return document.documentElement.getAttribute('data-comfort') === 'true';
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (propComfortMode !== undefined) {
-      setComfortMode(propComfortMode);
-      return;
-    }
-    const obs = new MutationObserver(() => {
-      setComfortMode(document.documentElement.getAttribute('data-comfort') === 'true');
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-comfort'] });
-    return () => obs.disconnect();
-  }, [propComfortMode]);
-
   useEffect(() => {
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -956,7 +899,6 @@ function EmployeeDetail({ name, records, allRecords, comfortMode: propComfortMod
         <EmployeeCalendarView
           byWeek={byWeek}
           allRecords={allRecords}
-          comfortMode={comfortMode}
           onOpenScene={canOpenScene ? (sc, d) => setOpenScene({ date: d, scene: sc }) : undefined}
         />
       ) : (
