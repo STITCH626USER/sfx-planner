@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
-/* SFX Planner — Premium Space-Midnight Glassmorphism Aesthetic.
+/* SFX Planner — grandMA3 / DIN 1451 Show Control Aesthetic.
    A-to-Z complete interface redesign. Modern mobile-first layout. */
 
 /* Block containing the segmented control for tabs */
@@ -60,12 +60,12 @@
   --pad:   18px;
   --tap:   46px;
 
-  /* Premium Physics & Font mappings — Space Grotesk High-Tech Aesthetic */
-  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body:    'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Premium Physics & Font mappings — grandMA3 DIN 1451 Aesthetic */
+  --font-display: 'Barlow Semi Condensed', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    'Barlow', ui-sans-serif, system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --font-time:    'Space Grotesk', monospace, sans-serif;
-  --font-name:    'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-time:    'Barlow Semi Condensed', sans-serif;
+  --font-name:    'Barlow Semi Condensed', sans-serif;
   --spring-physics: cubic-bezier(0.34, 1.56, 0.64, 1);
   --spring-transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -259,10 +259,11 @@ input:focus, select:focus {
 }
 .app-title {
   font-family: var(--font-display);
-  font-size: 20px;
-  letter-spacing: -0.03em;
-  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: 0.02em;
+  font-weight: 800;
   line-height: 1.15;
+  text-transform: uppercase;
   background: linear-gradient(135deg, var(--fg) 40%, var(--fg-muted));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -816,31 +817,30 @@ input:focus, select:focus {
 /* Beautiful neon style time pill badges */
 .time-pill {
   font-family: var(--font-time);
-  font-size: 15.5px;
+  font-size: 16.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: "tnum" 1, "cv11" 1;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.035em;
   background: var(--on-bg);
   color: var(--on-fg);
-  padding: 6px 15px;
+  padding: 5px 14px;
   border-radius: 999px;
   border: 1.5px solid var(--on-line);
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(255, 176, 58, 0.08);
+  box-shadow: 0 2px 10px rgba(255, 176, 58, 0.1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 .time-pill.off {
   background: var(--off-bg);
   color: var(--off-fg);
   border: 1px solid var(--line);
   box-shadow: none;
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 .time-pill.formation {
   background: rgba(159, 130, 255, 0.12);
@@ -1064,8 +1064,8 @@ input:focus, select:focus {
 .section-title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 17px;
-  letter-spacing: -0.02em;
+  font-size: 18px;
+  letter-spacing: 0.01em;
   color: var(--fg);
 }
 .section-count {
@@ -1114,9 +1114,9 @@ input:focus, select:focus {
 .team-name {
   font-family: var(--font-name);
   font-weight: 700;
-  font-size: 16px;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
+  font-size: 16.5px;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
   color: var(--fg);
 }
 .team-meta {
@@ -1180,10 +1180,10 @@ input:focus, select:focus {
 .daily-group-scene {
   min-width: 0;
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 17.5px;
   font-weight: 700 !important;
   overflow-wrap: anywhere;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
 }
 .daily-group-count {
   flex: 0 0 auto;
@@ -1242,9 +1242,9 @@ input:focus, select:focus {
 .compact-name {
   font-family: var(--font-name) !important;
   font-weight: 700 !important;
-  font-size: 15.5px !important;
-  letter-spacing: -0.015em !important;
-  line-height: 1.25 !important;
+  font-size: 16.5px !important;
+  letter-spacing: 0.01em !important;
+  line-height: 1.2 !important;
   color: var(--fg) !important;
 }
 .compact-meta {
