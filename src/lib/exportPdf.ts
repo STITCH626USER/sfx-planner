@@ -1119,23 +1119,18 @@ async function generateGridGlobalPdf(opts: {
 
             if (isMixedFo) {
               // --- MULTICOLORE CELL (FORMATION + SCENE) ---
-              // 1. Base scene background
-              doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-              doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
-
-              // 2. Slanted multi-color violet stripes across the cell
-              doc.saveGraphicsState();
-              doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8);
-              doc.clip();
-              doc.setDrawColor(221, 214, 254); // Violet tint
-              doc.setLineWidth(2.2);
-              const cellH = rowH - 0.8;
+              // 1. Two-tone background: Scene tint on left, Formation violet tint on right
               const cellW = colDayW - 0.8;
-              const step = 4.4;
-              for (let sx = dx + 0.4 - cellH; sx < dx + 0.4 + cellW + cellH; sx += step) {
-                doc.line(sx, y + 0.4, sx + cellH, y + 0.4 + cellH);
-              }
-              doc.restoreGraphicsState();
+              const cellH = rowH - 0.8;
+              const splitW = Math.round(cellW * 0.52 * 10) / 10;
+
+              // Left portion (Scene background tint)
+              doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
+              doc.rect(dx+0.4, y+0.4, splitW, cellH, 'F');
+
+              // Right portion (Formation violet background tint)
+              doc.setFillColor(243, 232, 255);
+              doc.rect(dx+0.4 + splitW, y+0.4, cellW - splitW, cellH, 'F');
 
               // 3. Two-tone Multi-color Badge: [ SCENE | FO ]
               const leftBadgeW = 10.5;
