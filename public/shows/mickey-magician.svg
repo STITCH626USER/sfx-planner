@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mm-magic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#312e81" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.95" />
+    </linearGradient>
+    <radialGradient id="mm-spark" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8" />
+      <stop offset="45%" stop-color="#818cf8" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#mm-magic)" />
+  <circle cx="280" cy="110" r="100" fill="url(#mm-spark)" />
+
+  <!-- Sorcerer Hat Silhouette & Wand Sparkles -->
+  <g transform="translate(240, 45) rotate(12)">
+    <!-- Hat Cone -->
+    <path d="M 40 20 L 75 125 L 5 125 Z" fill="#1d4ed8" opacity="0.9" />
+    <path d="M 0 120 C 10 115 70 115 80 120 C 85 125 75 132 40 132 C 5 132 -5 125 0 120 Z" fill="#2563eb" />
+    <!-- Yellow Moon on Hat -->
+    <path d="M 42 60 A 14 14 0 0 0 35 84 A 16 16 0 1 1 42 60 Z" fill="#fbbf24" />
+    <!-- Stars on Hat -->
+    <polygon points="50,45 52,50 57,51 53,55 54,60 50,57 46,60 47,55 43,51 48,50" fill="#fbbf24" transform="scale(0.8) translate(15, 10)" />
+    <polygon points="25,95 27,99 32,100 28,103 29,108 25,105 21,108 22,103 18,100 23,99" fill="#fbbf24" transform="scale(0.7) translate(10, 10)" />
+  </g>
+
+  <!-- Mickey Ears Silhouette -->
+  <circle cx="160" cy="110" r="32" fill="#090d16" opacity="0.95" />
+  <circle cx="130" cy="80" r="18" fill="#090d16" opacity="0.95" />
+  <circle cx="190" cy="80" r="18" fill="#090d16" opacity="0.95" />
+
+  <!-- Magic Wand & Arc -->
+  <line x1="180" y1="130" x2="260" y2="90" stroke="#fcd34d" stroke-width="3.5" stroke-linecap="round" />
+  <circle cx="262" cy="89" r="6" fill="#ffffff" />
+  <circle cx="262" cy="89" r="14" fill="#67e8f9" opacity="0.5" />
+
+  <!-- Magic Starbursts -->
+  <g fill="#fef08a">
+    <circle cx="280" cy="65" r="3" />
+    <circle cx="310" cy="85" r="2.5" />
+    <circle cx="250" cy="50" r="2" />
+    <circle cx="330" cy="115" r="3" />
+    <circle cx="295" cy="140" r="2" />
+    <circle cx="350" cy="70" r="1.5" />
+    <circle cx="220" cy="75" r="2.5" />
+  </g>
+</svg>

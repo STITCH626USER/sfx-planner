@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="stars-sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#stars-sky)" />
+
+  <!-- Steampunk Dragon Float Silhouette (Maleficent in Stars on Parade) -->
+  <g transform="translate(190, 40) scale(0.75)" fill="#111827">
+    <!-- Horns & Head -->
+    <path d="M 120 70 C 135 40 160 30 185 20 C 175 35 160 50 145 65 L 170 50 C 155 68 140 80 130 85 L 165 95 C 130 105 105 110 85 95 C 75 105 60 110 40 100 C 55 90 70 85 85 85 Z" />
+    <!-- Fire breath -->
+    <path d="M 40 100 C 10 95 -10 115 -40 120 C 0 130 30 120 45 112 Z" fill="#ef4444" opacity="0.9" />
+    <path d="M 35 103 C 15 100 0 112 -20 117 C 5 122 25 116 38 110 Z" fill="#fbbf24" opacity="0.95" />
+    <!-- Dragon Neck & Scales -->
+    <path d="M 130 85 C 160 110 170 140 180 190 L 140 190 C 130 150 120 120 85 95 Z" />
+    <!-- Steampunk Cogs / Gears -->
+    <circle cx="155" cy="150" r="18" fill="none" stroke="#f59e0b" stroke-width="4" stroke-dasharray="8,4" />
+    <circle cx="155" cy="150" r="8" fill="#f59e0b" />
+    <!-- Wings Outline -->
+    <path d="M 160 110 C 200 70 260 80 290 120 C 260 125 220 115 180 140 Z" fill="#1f2937" opacity="0.8" />
+  </g>
+
+  <!-- Parade Confetti & Floating Stars -->
+  <g fill="#ffffff" opacity="0.8">
+    <polygon points="120,40 123,48 131,48 125,53 127,61 120,56 113,61 115,53 109,48 117,48" fill="#fef08a" />
+    <polygon points="80,80 82,86 88,86 83,90 85,96 80,92 75,96 77,90 72,86 78,86" fill="#fef08a" transform="scale(0.8)" />
+    <polygon points="160,110 162,116 168,116 163,120 165,126 160,122 155,126 157,120 152,116 158,116" fill="#67e8f9" transform="scale(0.7)" />
+    <circle cx="60" cy="50" r="4" fill="#ec4899" />
+    <circle cx="100" cy="110" r="5" fill="#a855f7" />
+    <circle cx="140" cy="160" r="3.5" fill="#3b82f6" />
+    <circle cx="330" cy="30" r="4" fill="#fbbf24" />
+    <rect x="50" y="140" width="8" height="4" transform="rotate(25 50 140)" fill="#10b981" />
+    <rect x="90" y="30" width="7" height="3" transform="rotate(-35 90 30)" fill="#f43f5e" />
+  </g>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="col-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022c22" />
+      <stop offset="50%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <radialGradient id="col-glow" cx="70%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.8" />
+      <stop offset="40%" stop-color="#06b6d4" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#col-bg)" />
+  <circle cx="280" cy="95" r="90" fill="url(#col-glow)" />
+
+  <!-- Drones Constellation in Sky -->
+  <g fill="#5eead4">
+    <circle cx="200" cy="40" r="2.5" />
+    <circle cx="220" cy="30" r="2.5" />
+    <circle cx="245" cy="25" r="3" />
+    <circle cx="270" cy="30" r="3.5" />
+    <circle cx="290" cy="45" r="2.5" />
+    <circle cx="310" cy="65" r="3" />
+    <circle cx="320" cy="90" r="2.5" />
+    <circle cx="230" cy="55" r="2" />
+    <circle cx="260" cy="60" r="2.5" />
+    <circle cx="285" cy="70" r="2" />
+  </g>
+
+  <!-- Water Fountains & Light Beams across Lake -->
+  <g stroke-linecap="round">
+    <!-- Center Fan Fountain -->
+    <path d="M 280 200 Q 250 140 220 110" stroke="#38bdf8" stroke-width="2" fill="none" opacity="0.85" />
+    <path d="M 280 200 Q 265 130 250 95" stroke="#67e8f9" stroke-width="2" fill="none" opacity="0.9" />
+    <path d="M 280 200 Q 280 120 280 80" stroke="#a7f3d0" stroke-width="2.5" fill="none" opacity="0.95" />
+    <path d="M 280 200 Q 295 130 310 95" stroke="#67e8f9" stroke-width="2" fill="none" opacity="0.9" />
+    <path d="M 280 200 Q 310 140 340 110" stroke="#38bdf8" stroke-width="2" fill="none" opacity="0.85" />
+  </g>
+
+  <!-- Lake Water Surface & Ripple Reflections -->
+  <rect x="0" y="195" width="400" height="45" fill="#031b15" opacity="0.9" />
+  <line x1="220" y1="205" x2="340" y2="205" stroke="#2dd4bf" stroke-width="2" opacity="0.6" stroke-dasharray="8,4" />
+  <line x1="240" y1="215" x2="320" y2="215" stroke="#06b6d4" stroke-width="1.8" opacity="0.5" stroke-dasharray="12,6" />
+  <line x1="260" y1="225" x2="300" y2="225" stroke="#67e8f9" stroke-width="1.5" opacity="0.4" stroke-dasharray="6,4" />
+</svg>

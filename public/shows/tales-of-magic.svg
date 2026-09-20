@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="tom-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#090a1a" />
+      <stop offset="60%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#311042" />
+    </linearGradient>
+    <radialGradient id="tom-burst" cx="65%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.9" />
+      <stop offset="30%" stop-color="#8b5cf6" stop-opacity="0.6" />
+      <stop offset="70%" stop-color="#3b82f6" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#090a1a" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#tom-sky)" />
+  <circle cx="260" cy="70" r="90" fill="url(#tom-burst)" />
+
+  <!-- Fireworks Trails & Starbursts -->
+  <g stroke-linecap="round">
+    <!-- Starburst left -->
+    <path d="M 120 40 L 105 25 M 120 40 L 135 25 M 120 40 L 100 40 M 120 40 L 140 40 M 120 40 L 108 52 M 120 40 L 132 52 M 120 40 L 120 18 M 120 40 L 120 58" stroke="#fbbf24" stroke-width="1.8" />
+    <!-- Big Starburst right -->
+    <path d="M 280 45 L 260 25 M 280 45 L 300 25 M 280 45 L 255 45 M 280 45 L 305 45 M 280 45 L 262 60 M 280 45 L 298 60 M 280 45 L 280 20 M 280 45 L 280 70" stroke="#f472b6" stroke-width="2.2" />
+    <!-- Rising Comets -->
+    <path d="M 200 180 Q 230 110 270 50" stroke="#fde047" stroke-width="2" stroke-dasharray="2,6" fill="none" />
+    <path d="M 150 190 Q 130 110 120 45" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="2,5" fill="none" />
+  </g>
+
+  <!-- Sleeping Beauty Castle Silhouette (Disneyland Paris Le Château) -->
+  <g transform="translate(160, 65) scale(0.65)" fill="#05050f">
+    <!-- Main Center Tower -->
+    <polygon points="120,10 135,70 105,70" fill="#0b0f19" />
+    <rect x="108" y="70" width="24" height="150" />
+    <!-- Steeple Turrets -->
+    <polygon points="60,60 72,110 48,110" />
+    <rect x="52" y="110" width="16" height="110" />
+    <polygon points="180,60 192,110 168,110" />
+    <rect x="172" y="110" width="16" height="110" />
+    <!-- Flanking Lower Turrets -->
+    <polygon points="20,110 30,150 10,150" />
+    <rect x="13" y="150" width="14" height="70" />
+    <polygon points="220,110 230,150 210,150" />
+    <rect x="213" y="150" width="14" height="70" />
+    <!-- Castle Walls & Battlements -->
+    <path d="M 0 170 L 240 170 L 240 220 L 0 220 Z" />
+    <!-- Castle Arch Gateway -->
+    <path d="M 105 220 L 105 185 C 105 175 135 175 135 185 L 135 220 Z" fill="#fcd34d" opacity="0.6" />
+  </g>
+</svg>

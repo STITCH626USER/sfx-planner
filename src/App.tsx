@@ -319,6 +319,13 @@ function DlpShowsPanel() {
                   className={`dlp-show-card ${isRelache ? 'is-relache' : isEnded ? 'is-ended' : 'is-operating'}`}
                   style={{ padding: '14px 16px' }}
                 >
+                  {show.visualBg && (
+                    <div
+                      className="dlp-show-watermark"
+                      style={{ backgroundImage: `url(${show.visualBg})` }}
+                      aria-hidden="true"
+                    />
+                  )}
                   <div className="dlp-show-card-header">
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
