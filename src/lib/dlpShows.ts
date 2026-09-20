@@ -21,10 +21,9 @@ export interface DlpShow {
   nextTime?: string;
   category: 'spectacle' | 'rencontre' | 'nocturne' | 'parade';
   visualKey?: string;
-  visualBg?: string; // High quality official visual backdrop
 }
 
-const CACHE_KEY = 'dlp_shows_cache_v9';
+const CACHE_KEY = 'dlp_shows_cache_v10';
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function getTodayIsoString(refDate?: Date): string {
@@ -44,8 +43,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     status: 'OPERATING',
     isRelache: false,
     times: ['12:30', '13:30', '16:05', '17:05'],
-    category: 'spectacle',
-    visualBg: '/shows/lion-king.svg'
+    category: 'spectacle'
   },
   {
     id: 'together-pixar',
@@ -55,8 +53,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     isRelache: true,
     relacheReason: 'Relâche programmée aujourd’hui',
     times: [],
-    category: 'spectacle',
-    visualBg: '/shows/together-pixar.svg'
+    category: 'spectacle'
   },
   {
     id: 'mickey-magician',
@@ -65,8 +62,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     status: 'OPERATING',
     isRelache: false,
     times: ['13:00', '14:05', '15:10', '17:25', '18:30'],
-    category: 'spectacle',
-    visualBg: '/shows/mickey-magician.svg'
+    category: 'spectacle'
   },
   {
     id: 'parade-stars',
@@ -75,8 +71,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     status: 'OPERATING',
     isRelache: false,
     times: ['17:30'],
-    category: 'parade',
-    visualBg: '/shows/stars-parade.svg'
+    category: 'parade'
   },
   {
     id: 'tales-of-magic',
@@ -85,8 +80,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     status: 'OPERATING',
     isRelache: false,
     times: ['22:00'],
-    category: 'nocturne',
-    visualBg: '/shows/tales-of-magic.svg'
+    category: 'nocturne'
   },
   {
     id: 'cascade-lights',
@@ -95,8 +89,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     status: 'OPERATING',
     isRelache: false,
     times: ['21:50'],
-    category: 'nocturne',
-    visualBg: '/shows/cascade-lights.svg'
+    category: 'nocturne'
   },
   {
     id: 'matmops-dream-factory',
@@ -105,8 +98,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     status: 'OPERATING',
     isRelache: false,
     times: ['12:00', '13:00', '14:00', '16:20', '17:20'],
-    category: 'spectacle',
-    visualBg: '/shows/dream-factory.svg'
+    category: 'spectacle'
   },
   {
     id: 'dr-strange',
@@ -116,8 +108,7 @@ const FALLBACK_SHOWS: DlpShow[] = [
     isRelache: true,
     relacheReason: 'Aucune représentation aujourd’hui',
     times: [],
-    category: 'spectacle',
-    visualBg: '/shows/doctor-strange.svg'
+    category: 'spectacle'
   },
   {
     id: 'alice-bmx',
@@ -127,47 +118,13 @@ const FALLBACK_SHOWS: DlpShow[] = [
     isRelache: true,
     relacheReason: 'Relâche ou fin de saison estivale',
     times: [],
-    category: 'spectacle',
-    visualBg: '/shows/alice-bmx.svg'
+    category: 'spectacle'
   }
 ];
 
-function getVisualBgForShow(name: string): string | undefined {
-  const lower = name.toLowerCase();
-  if (lower.includes('lion king') || lower.includes('roi lion')) {
-    return '/shows/lion-king.svg';
-  }
-  if (lower.includes('together') || lower.includes('pixar')) {
-    return '/shows/together-pixar.svg';
-  }
-  if (lower.includes('magicien') || lower.includes('magician') || lower.includes('mickey')) {
-    return '/shows/mickey-magician.svg';
-  }
-  if (lower.includes('stars on parade') || lower.includes('parade')) {
-    return '/shows/stars-parade.svg';
-  }
-  if (lower.includes('tales of magic') || lower.includes('illuminations') || lower.includes('dreams')) {
-    return '/shows/tales-of-magic.svg';
-  }
-  if (lower.includes('cascade of lights') || lower.includes('cascade de lumi') || lower.includes('lake') || lower.includes('lac')) {
-    return '/shows/cascade-lights.svg';
-  }
-  if (lower.includes('fabrique') || lower.includes('dream factory') || lower.includes('disney junior')) {
-    return '/shows/dream-factory.svg';
-  }
-  if (lower.includes('doctor strange') || lower.includes('strange') || lower.includes('avengers')) {
-    return '/shows/doctor-strange.svg';
-  }
-  if (lower.includes('alice') || lower.includes('reine de c') || lower.includes('queen of hearts')) {
-    return '/shows/alice-bmx.svg';
-  }
-  return undefined;
-}
-
-function categorizeShow(name: string): { category: DlpShow['category']; cleanName: string; visualBg?: string } {
+function categorizeShow(name: string): { category: DlpShow['category']; cleanName: string } {
   const lower = name.toLowerCase();
   let cleanName = name;
-  const visualBg = getVisualBgForShow(name);
 
   // Pretty name translation & theater associations
   if (lower.includes('lion king')) {
@@ -201,15 +158,15 @@ function categorizeShow(name: string): { category: DlpShow['category']; cleanNam
   }
 
   if (lower.includes('tales of magic') || lower.includes('cascade of lights') || lower.includes('fireworks') || lower.includes('nocturne')) {
-    return { category: 'nocturne', cleanName, visualBg };
+    return { category: 'nocturne', cleanName };
   }
   if (lower.includes('parade') || lower.includes('cavalcade')) {
-    return { category: 'parade', cleanName, visualBg };
+    return { category: 'parade', cleanName };
   }
   if (lower.startsWith('meet ') || lower.startsWith('rencontre') || lower.includes('encounter') || lower.includes('pavilion')) {
-    return { category: 'rencontre', cleanName, visualBg };
+    return { category: 'rencontre', cleanName };
   }
-  return { category: 'spectacle', cleanName, visualBg };
+  return { category: 'spectacle', cleanName };
 }
 
 export async function fetchDlpShows(): Promise<{
@@ -332,7 +289,7 @@ export async function fetchDlpShows(): Promise<{
         return true;
       })
       .map(item => {
-        const { category, cleanName, visualBg } = categorizeShow(item.name);
+        const { category, cleanName } = categorizeShow(item.name);
 
         // Filter showtimes STRICTLY for today's date
         const todaysShowtimes = (item.showtimes || []).filter((t: any) => {
@@ -342,7 +299,6 @@ export async function fetchDlpShows(): Promise<{
         });
 
         const times: string[] = todaysShowtimes
-
           .map((t: any) => (t.startTime ? t.startTime.slice(11, 16) : ''))
           .filter(Boolean)
           .sort();
@@ -394,8 +350,7 @@ export async function fetchDlpShows(): Promise<{
           relacheReason,
           times,
           nextTime,
-          category,
-          visualBg
+          category
         };
       })
       // Sort: spectacles in operation (active) first, then ended shows, then relâches
