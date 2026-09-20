@@ -3,6 +3,7 @@ import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName } from './lib/utils';
+import { EmployeeCalendarView } from './EmployeeCalendarView';
 
 
 type Tab = 'recherche' | 'daily';
@@ -769,8 +770,20 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   const [openScene, setOpenScene] = useState<{ date: string; scene: string } | null>(null);
   const [openEmployee, setOpenEmployee] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('sfx_indiv_view');
+      if (saved === 'calendar' || saved === 'list') return saved;
+    }
+    return 'calendar';
+  });
 
-
+  const handleSetViewMode = (mode: 'calendar' | 'list') => {
+    setViewMode(mode);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sfx_indiv_view', mode);
+    }
+  };
 
   const handleExportIndiv = async () => {
     if (exporting) return;
@@ -851,33 +864,67 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
         </div>
       </div>
 
-      {byWeek.map(([weekLabel, weekRecs]) => (
-        <div className="week-block" key={weekLabel} data-testid={`week-${weekLabel}`}>
-          <div className="week-head">
-            <div className="week-name">{weekLabel}</div>
-            <div className="week-range">
-              {new Set(weekRecs.filter(r => r.time !== 'OFF').map(r => r.date)).size}/7 jours
-            </div>
-          </div>
-          {(() => {
-            const daysMap = new Map<string, PlanningRecord[]>();
-            for (const r of weekRecs) {
-              if (!daysMap.has(r.date)) daysMap.set(r.date, []);
-              daysMap.get(r.date)!.push(r);
-            }
-            const days = Array.from(daysMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-            return days.map(([dDate, dayRecs]) => (
-              <DayCard
-                key={dDate}
-                date={dDate}
-                records={dayRecs}
-                allRecords={allRecords}
-                onOpenScene={canOpenScene ? (sc) => setOpenScene({ date: dDate, scene: sc }) : undefined}
-              />
-            ));
-          })()}
+      {/* View Switcher: Calendrier vs Liste */}
+      <div className="employee-view-toggle-bar">
+        <div className="employee-view-toggle" role="tablist" aria-label="Mode d'affichage du planning">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === 'calendar'}
+            className={`view-toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`}
+            onClick={() => handleSetViewMode('calendar')}
+          >
+            <IconCalendar />
+            <span>Calendrier</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === 'list'}
+            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => handleSetViewMode('list')}
+          >
+            <IconList />
+            <span>Liste détaillée</span>
+          </button>
         </div>
-      ))}
+      </div>
+
+      {viewMode === 'calendar' ? (
+        <EmployeeCalendarView
+          byWeek={byWeek}
+          allRecords={allRecords}
+          onOpenScene={canOpenScene ? (sc, d) => setOpenScene({ date: d, scene: sc }) : undefined}
+        />
+      ) : (
+        byWeek.map(([weekLabel, weekRecs]) => (
+          <div className="week-block" key={weekLabel} data-testid={`week-${weekLabel}`}>
+            <div className="week-head">
+              <div className="week-name">{weekLabel}</div>
+              <div className="week-range">
+                {new Set(weekRecs.filter(r => r.time !== 'OFF').map(r => r.date)).size}/7 jours
+              </div>
+            </div>
+            {(() => {
+              const daysMap = new Map<string, PlanningRecord[]>();
+              for (const r of weekRecs) {
+                if (!daysMap.has(r.date)) daysMap.set(r.date, []);
+                daysMap.get(r.date)!.push(r);
+              }
+              const days = Array.from(daysMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+              return days.map(([dDate, dayRecs]) => (
+                <DayCard
+                  key={dDate}
+                  date={dDate}
+                  records={dayRecs}
+                  allRecords={allRecords}
+                  onOpenScene={canOpenScene ? (sc) => setOpenScene({ date: dDate, scene: sc }) : undefined}
+                />
+              ));
+            })()}
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -1689,6 +1736,18 @@ function IconCalendar() {
       <path d="M8 2v4M16 2v4M3 10h18" />
       <rect x="3" y="4" width="18" height="18" rx="3" />
       <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+    </svg>
+  );
+}
+function IconList() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
     </svg>
   );
 }
