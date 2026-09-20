@@ -2606,7 +2606,16 @@ body {
 }
 
 :root[data-theme="light"] .time-pill {
+  background: rgba(217, 119, 6, 0.1) !important;
+  color: #b45309 !important;
+  border-color: rgba(217, 119, 6, 0.35) !important;
   box-shadow: none !important;
+}
+
+:root[data-theme="light"] .time-pill.off {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border-color: #cbd5e1 !important;
 }
 
 :root[data-theme="light"] .daily-scene-group {
@@ -2934,12 +2943,44 @@ nav.seg button[aria-selected="true"] {
   color: #0a0f1d !important;
   font-weight: 700 !important;
 }
-:root[data-theme="light"] .date-pill .dpn {
-  color: #0a0f1d !important;
-  font-weight: 700 !important;
+:root[data-theme="light"] .date-pill {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
 }
-:root[data-theme="light"] .date-pill[aria-selected="true"] .dpn {
+
+:root[data-theme="light"] .date-pill:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border-color: #94a3b8 !important;
+}
+
+:root[data-theme="light"] .date-pill .dpd {
+  color: #b45309 !important;
+}
+
+:root[data-theme="light"] .date-pill .dpn {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+:root[data-theme="light"] .date-pill .dpm {
+  color: #64748b !important;
+}
+
+:root[data-theme="light"] .date-pill[aria-selected="true"] {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
+  border: 1px solid #fde047 !important;
+  border-top: 2.5px solid #fef08a !important;
   color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 8px rgba(217, 119, 6, 0.35) !important;
+}
+
+:root[data-theme="light"] .date-pill[aria-selected="true"] .dpd,
+:root[data-theme="light"] .date-pill[aria-selected="true"] .dpn,
+:root[data-theme="light"] .date-pill[aria-selected="true"] .dpm {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
 }
 
 :root[data-theme="light"] .compact-team-row {
