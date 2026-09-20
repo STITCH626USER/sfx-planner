@@ -22,7 +22,7 @@ export interface DlpShow {
   category: 'spectacle' | 'rencontre' | 'nocturne' | 'parade';
 }
 
-const CACHE_KEY = 'dlp_shows_cache_v6';
+const CACHE_KEY = 'dlp_shows_cache_v7';
 const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function getTodayIsoString(refDate?: Date): string {
@@ -280,7 +280,9 @@ export async function fetchDlpShows(): Promise<{
           l.includes('miguel') ||
           // 6. Princess Cavalcade / Cavalcade des Princesses
           (l.includes('princess') && l.includes('cavalcade')) ||
-          (l.includes('princesse') && l.includes('cavalcade'))
+          (l.includes('princesse') && l.includes('cavalcade')) ||
+          // 7. Disney Princess Musical Memories
+          l.includes('musical memories')
         ) {
           return false;
         }
