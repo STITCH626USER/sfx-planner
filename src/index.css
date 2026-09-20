@@ -5181,6 +5181,12 @@ nav.seg button[aria-selected="true"] {
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
+.ma3-clock-clickable.is-active-tab {
+  border-color: var(--amber) !important;
+  background: rgba(245, 158, 11, 0.22) !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.4), inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+}
+
 .ma3-clock-clickable:hover {
   border-color: var(--amber) !important;
   box-shadow: 0 0 14px rgba(245, 158, 11, 0.35), inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
@@ -5191,12 +5197,45 @@ nav.seg button[aria-selected="true"] {
   transform: translateY(1px) scale(0.97) !important;
 }
 
-.dlp-shows-modal {
+/* Dedicated Shows View */
+.dlp-shows-view {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.dlp-view-card {
   background: var(--bg-card, #1e293b);
   border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.1));
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
+
+:root[data-theme="light"] .dlp-view-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.dlp-view-header-row {
+  padding: 16px 20px 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line-light, rgba(255, 255, 255, 0.08));
+  gap: 12px;
+}
+
+:root[data-theme="light"] .dlp-view-header-row {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.dlp-view-icon-badge {
+  font-size: 28px;
+  line-height: 1;
+}
+
 
 :root[data-theme="light"] .dlp-shows-modal {
   background: #ffffff;

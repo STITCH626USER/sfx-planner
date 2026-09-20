@@ -7,7 +7,7 @@ import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow } from './lib/dlpShows';
 
 
-type Tab = 'recherche' | 'daily';
+type Tab = 'recherche' | 'daily' | 'shows';
 type Theme = 'dark' | 'light';
 
 interface SourceFile {
@@ -49,7 +49,7 @@ function timePillClass(time: string, scene: string, isFO?: boolean): string {
   return 'time-pill';
 }
 
-function ConsoleClock({ onClick }: { onClick: () => void }) {
+function ConsoleClock({ onClick, isActive }: { onClick: () => void; isActive?: boolean }) {
   const [timeStr, setTimeStr] = useState(() => {
     const d = new Date();
     return d.toTimeString().split(' ')[0];
@@ -68,7 +68,7 @@ function ConsoleClock({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
-      className="ma3-console-clock ma3-clock-clickable"
+      className={`ma3-console-clock ma3-clock-clickable ${isActive ? 'is-active-tab' : ''}`}
       onClick={onClick}
       title="Cliquer pour afficher les horaires des spectacles & relâches Disneyland Paris en direct"
       aria-label="Spectacles & relâches Disneyland Paris"
@@ -83,7 +83,8 @@ function ConsoleClock({ onClick }: { onClick: () => void }) {
 }
 
 
-function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+
+function DlpShowsPanel({ onBack }: { onBack: () => void }) {
   const [shows, setShows] = useState<DlpShow[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -105,12 +106,8 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      loadData();
-    }
-  }, [isOpen, loadData]);
-
-  if (!isOpen) return null;
+    loadData();
+  }, [loadData]);
 
   const filteredShows = shows.filter(s => {
     if (parkFilter !== 'ALL' && s.park !== parkFilter) return false;
@@ -127,222 +124,205 @@ function DlpShowsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const relacheCount = shows.filter(s => s.isRelache).length;
 
   return (
-    <div className="modal-backdrop animate-fade-in" onClick={onClose} style={{ zIndex: 10000 }}>
-      <div
-        className="modal-box dlp-shows-modal"
-        onClick={e => e.stopPropagation()}
-        style={{
-          maxWidth: 720,
-          width: '94vw',
-          maxHeight: '88vh',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          overflow: 'hidden'
-        }}
-      >
-        {/* Modal Header */}
-        <div className="dlp-modal-header">
-          <div className="dlp-modal-title-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="dlp-castle-icon">🏰</span>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--fg)', letterSpacing: '-0.01em' }}>
-                  Spectacles & Horaires DLP en direct
-                </h3>
-                <div style={{ fontSize: 11.5, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                  <span className="ma3-clock-dot" style={{ width: 6, height: 6 }} />
-                  <span>Mise à jour : {lastUpdated || 'En cours…'}</span>
-                  {isOffline && <span style={{ color: 'var(--amber)', fontWeight: 600 }}>· Mode secours</span>}
-                </div>
+    <div className="dlp-shows-view animate-fade-in" data-testid="panel-dlp-shows">
+      {/* Back button */}
+      <div style={{ marginBottom: 12 }}>
+        <button
+          type="button"
+          className="btn-back"
+          onClick={onBack}
+          data-testid="btn-back-shows"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
+        >
+          <IconArrowLeft /> Retour au planning
+        </button>
+      </div>
+
+      {/* Hero Header Card */}
+      <div className="dlp-view-card">
+        <div className="dlp-view-header-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="dlp-view-icon-badge">🏰</div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--fg)', letterSpacing: '-0.02em' }}>
+                Spectacles & Relâches DLP en direct
+              </h2>
+              <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <span className="ma3-clock-dot" style={{ width: 7, height: 7 }} />
+                <span>Horaires officiels du jour ({lastUpdated || 'en cours…'})</span>
+                {isOffline && <span style={{ color: 'var(--amber)', fontWeight: 700 }}>· Mode secours</span>}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                className="btn-refresh-dlp"
-                onClick={loadData}
-                disabled={loading}
-                title="Rafraîchir les horaires"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }}
-                >
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                </svg>
-                <span>{loading ? 'Chargement…' : 'Actualiser'}</span>
-              </button>
-              <button
-                type="button"
-                className="btn-close-modal"
-                onClick={onClose}
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
-            </div>
           </div>
 
-          {/* Filter Bar */}
-          <div className="dlp-filter-row">
-            <div className="dlp-pill-group">
-              <button
-                type="button"
-                className={`dlp-filter-pill ${parkFilter === 'ALL' ? 'active' : ''}`}
-                onClick={() => setParkFilter('ALL')}
-              >
-                Tous les Parcs
-              </button>
-              <button
-                type="button"
-                className={`dlp-filter-pill ${parkFilter === 'Disneyland Park' ? 'active' : ''}`}
-                onClick={() => setParkFilter('Disneyland Park')}
-              >
-                Disneyland Park
-              </button>
-              <button
-                type="button"
-                className={`dlp-filter-pill ${parkFilter === 'Disney Adventure World' ? 'active' : ''}`}
-                onClick={() => setParkFilter('Disney Adventure World')}
-              >
-                Disney Adventure World
-              </button>
-            </div>
+          <button
+            type="button"
+            className="btn-refresh-dlp"
+            onClick={loadData}
+            disabled={loading}
+            title="Rafraîchir les horaires du jour"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }}
+            >
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            <span>{loading ? 'Chargement…' : 'Actualiser'}</span>
+          </button>
+        </div>
 
-            <div className="dlp-pill-group">
-              <button
-                type="button"
-                className={`dlp-filter-pill ${tabFilter === 'ALL' ? 'active' : ''}`}
-                onClick={() => setTabFilter('ALL')}
-              >
-                Tous ({shows.length})
-              </button>
-              <button
-                type="button"
-                className={`dlp-filter-pill ${tabFilter === 'OPERATING' ? 'active' : ''}`}
-                onClick={() => setTabFilter('OPERATING')}
-              >
-                En cours ({operatingCount})
-              </button>
-              <button
-                type="button"
-                className={`dlp-filter-pill dlp-relache-tab ${tabFilter === 'RELACHE' ? 'active' : ''}`}
-                onClick={() => setTabFilter('RELACHE')}
-              >
-                Relâches ({relacheCount})
-              </button>
-            </div>
+        {/* Filters and search bar */}
+        <div className="dlp-filter-row" style={{ padding: '12px 18px' }}>
+          <div className="dlp-pill-group">
+            <button
+              type="button"
+              className={`dlp-filter-pill ${parkFilter === 'ALL' ? 'active' : ''}`}
+              onClick={() => setParkFilter('ALL')}
+            >
+              Tous les Parcs
+            </button>
+            <button
+              type="button"
+              className={`dlp-filter-pill ${parkFilter === 'Disneyland Park' ? 'active' : ''}`}
+              onClick={() => setParkFilter('Disneyland Park')}
+            >
+              Disneyland Park
+            </button>
+            <button
+              type="button"
+              className={`dlp-filter-pill ${parkFilter === 'Disney Adventure World' ? 'active' : ''}`}
+              onClick={() => setParkFilter('Disney Adventure World')}
+            >
+              Disney Adventure World
+            </button>
           </div>
 
-          <div style={{ padding: '0 16px 12px 16px' }}>
-            <input
-              type="text"
-              className="dlp-search-input"
-              placeholder="Rechercher un spectacle, une parade, un horaire (ex: Together, Roi Lion, 17:30)…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+          <div className="dlp-pill-group">
+            <button
+              type="button"
+              className={`dlp-filter-pill ${tabFilter === 'ALL' ? 'active' : ''}`}
+              onClick={() => setTabFilter('ALL')}
+            >
+              Tous ({shows.length})
+            </button>
+            <button
+              type="button"
+              className={`dlp-filter-pill ${tabFilter === 'OPERATING' ? 'active' : ''}`}
+              onClick={() => setTabFilter('OPERATING')}
+            >
+              En cours ({operatingCount})
+            </button>
+            <button
+              type="button"
+              className={`dlp-filter-pill dlp-relache-tab ${tabFilter === 'RELACHE' ? 'active' : ''}`}
+              onClick={() => setTabFilter('RELACHE')}
+            >
+              Relâches ({relacheCount})
+            </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="dlp-modal-body" style={{ overflowY: 'auto', padding: '12px 16px', flex: 1 }}>
-          {loading && shows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
-              <div className="spinner" style={{ margin: '0 auto 12px auto' }} />
-              <div>Interrogation en direct des horaires du jour Disneyland Paris & Disney Adventure World…</div>
-            </div>
-          ) : filteredShows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
-              Aucun spectacle ne correspond à ces critères.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filteredShows.map(show => {
-                const isRelache = show.isRelache;
-                return (
-                  <div
-                    key={show.id}
-                    className={`dlp-show-card ${isRelache ? 'is-relache' : 'is-operating'}`}
-                  >
-                    <div className="dlp-show-card-header">
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <span className="dlp-show-name">{show.name}</span>
-                          <span className={`dlp-park-badge ${show.park === 'Disneyland Park' ? 'park-dlp' : 'park-wds'}`}>
-                            {show.park === 'Disneyland Park' ? 'Disneyland Park' : 'Adventure World'}
-                          </span>
-                        </div>
-                      </div>
+        <div style={{ padding: '0 18px 14px 18px' }}>
+          <input
+            type="text"
+            className="dlp-search-input"
+            placeholder="Rechercher un spectacle, un théâtre, un horaire (ex: Together, Roi Lion, 17:30)…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
-                      <div>
-                        {isRelache ? (
-                          <span className="dlp-status-pill relache">
-                            <span className="dlp-relache-cross">✕</span> EN RELÂCHE
-                          </span>
-                        ) : (
-                          <span className="dlp-status-pill operating">
-                            <span className="ma3-status-led led-live" /> EN REPRÉSENTATION
-                          </span>
-                        )}
+      {/* Shows List */}
+      <div style={{ marginTop: 14 }}>
+        {loading && shows.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+            <div className="spinner" style={{ margin: '0 auto 14px auto' }} />
+            <div style={{ fontSize: 14, fontWeight: 500 }}>
+              Interrogation en direct des horaires du jour Disneyland Paris & Disney Adventure World…
+            </div>
+          </div>
+        ) : filteredShows.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--fg-muted)' }}>
+            Aucun spectacle ne correspond aux critères sélectionnés.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {filteredShows.map(show => {
+              const isRelache = show.isRelache;
+              return (
+                <div
+                  key={show.id}
+                  className={`dlp-show-card ${isRelache ? 'is-relache' : 'is-operating'}`}
+                  style={{ padding: '14px 16px' }}
+                >
+                  <div className="dlp-show-card-header">
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span className="dlp-show-name" style={{ fontSize: 15.5 }}>{show.name}</span>
+                        <span className={`dlp-park-badge ${show.park === 'Disneyland Park' ? 'park-dlp' : 'park-wds'}`}>
+                          {show.park === 'Disneyland Park' ? 'Disneyland Park' : 'Adventure World'}
+                        </span>
                       </div>
                     </div>
 
-                    {!isRelache && show.times.length > 0 && (
-                      <div className="dlp-showtimes-row">
-                        <span className="dlp-showtimes-label">Séances aujourd'hui :</span>
-                        <div className="dlp-times-pills">
-                          {show.times.map(t => {
-                            const isNext = t === show.nextTime;
-                            return (
-                              <span
-                                key={t}
-                                className={`dlp-time-badge ${isNext ? 'is-next' : ''}`}
-                                title={isNext ? 'Prochaine séance' : undefined}
-                              >
-                                {isNext && <span className="dlp-next-star">▶</span>}
-                                {t}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {isRelache && (
-                      <div className="dlp-relache-note">
-                        ⚠️ {show.relacheReason || 'Aucune séance programmée aujourd’hui (jour de relâche ou fermeture technique).'}
-                      </div>
-                    )}
+                    <div>
+                      {isRelache ? (
+                        <span className="dlp-status-pill relache" style={{ fontSize: 11 }}>
+                          <span className="dlp-relache-cross">✕</span> EN RELÂCHE
+                        </span>
+                      ) : (
+                        <span className="dlp-status-pill operating" style={{ fontSize: 11 }}>
+                          <span className="ma3-status-led led-live" /> EN REPRÉSENTATION
+                        </span>
+                      )}
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
+                  {!isRelache && show.times.length > 0 && (
+                    <div className="dlp-showtimes-row" style={{ marginTop: 2 }}>
+                      <span className="dlp-showtimes-label">Séances aujourd'hui :</span>
+                      <div className="dlp-times-pills">
+                        {show.times.map(t => {
+                          const isNext = t === show.nextTime;
+                          return (
+                            <span
+                              key={t}
+                              className={`dlp-time-badge ${isNext ? 'is-next' : ''}`}
+                              title={isNext ? 'Prochaine séance' : undefined}
+                            >
+                              {isNext && <span className="dlp-next-star">▶</span>}
+                              {t}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-        {/* Modal Footer */}
-        <div className="dlp-modal-footer">
-          <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
-            Données en temps réel issues des flux officiels du parc · Actualisation automatique
+                  {isRelache && (
+                    <div className="dlp-relache-note" style={{ fontSize: 13, marginTop: 2 }}>
+                      ⚠️ {show.relacheReason || 'Aucune séance programmée aujourd’hui (jour de relâche ou fermeture technique).'}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <button type="button" className="btn-modal-done" onClick={onClose}>
-            Fermer
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );
 }
+
 
 
 
@@ -400,7 +380,7 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showDlpModal, setShowDlpModal] = useState(false);
+  const [previousTab, setPreviousTab] = useState<Tab>('daily');
 
   // PWA Installation state and hooks
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
@@ -716,7 +696,17 @@ export default function App() {
           </div>
 
           <div className="app-header-actions">
-            <ConsoleClock onClick={() => setShowDlpModal(true)} />
+            <ConsoleClock
+              isActive={tab === 'shows'}
+              onClick={() => {
+                if (tab !== 'shows') {
+                  setPreviousTab(tab);
+                  setTab('shows');
+                } else {
+                  setTab(previousTab);
+                }
+              }}
+            />
             <button
               type="button"
               className="btn-header-theme"
@@ -830,7 +820,9 @@ export default function App() {
         )}
 
         <div className="main-content-panel">
-          {records.length === 0 ? (
+          {tab === 'shows' ? (
+            <DlpShowsPanel onBack={() => setTab(previousTab || 'daily')} />
+          ) : records.length === 0 ? (
             <EmptyAllPanel />
           ) : tab === 'recherche' ? (
             <RecherchePanel records={records} />
@@ -838,6 +830,7 @@ export default function App() {
             <DailyPanel records={records} date={dailyDate} onDateChange={setDailyDate} />
           )}
         </div>
+
 
         <footer className="app-footer-notice" data-testid="text-footer-notice" aria-label="Mention de fiabilité">
           <div className="footer-smoke-bg" aria-hidden="true">
@@ -907,13 +900,10 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {showDlpModal && (
-        <DlpShowsModal isOpen={showDlpModal} onClose={() => setShowDlpModal(false)} />
-      )}
     </div>
   );
 }
+
 
 
 
