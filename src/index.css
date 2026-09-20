@@ -3789,14 +3789,8 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
 }
 
-/* Week card */
-.cal-weeks-container {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.cal-week-card {
+/* Unified Calendar Card */
+.cal-unified-card {
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -3807,35 +3801,58 @@ nav.seg button[aria-selected="true"] {
   transition: var(--spring-transition);
 }
 
-:root[data-theme="dark"] .cal-week-card {
+:root[data-theme="dark"] .cal-unified-card {
   background: rgba(20, 26, 38, 0.75);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-.cal-week-head {
+.cal-unified-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-light, var(--border));
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.cal-week-title {
+.cal-unified-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cal-unified-title {
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--fg);
+  letter-spacing: -0.01em;
 }
 
-.cal-week-badge {
+.cal-unified-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+.cal-unified-dot {
+  opacity: 0.5;
+}
+
+.cal-unified-badge {
   font-size: 12px;
   font-weight: 600;
   color: var(--amber);
   background: rgba(217, 119, 6, 0.1);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 9999px;
+  border: 1px solid rgba(217, 119, 6, 0.18);
+  align-self: center;
 }
 
 /* 7-column calendar grid */
@@ -3948,7 +3965,13 @@ nav.seg button[aria-selected="true"] {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 2px;
+  gap: 4px;
+}
+
+.cal-day-cell-date-group {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
 }
 
 .cal-day-num {
@@ -3966,6 +3989,21 @@ nav.seg button[aria-selected="true"] {
   font-size: 10px;
   color: var(--fg-muted);
   line-height: 1;
+}
+
+.cal-week-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--amber);
+  line-height: 1.2;
+}
+
+:root[data-theme="dark"] .cal-week-tag {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
 }
 
 .cal-today-dot {

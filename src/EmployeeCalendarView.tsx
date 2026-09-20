@@ -12,6 +12,12 @@ const DAY_COLS = [
   { key: 'sam', label: 'SAM', full: 'Samedi' },
 ];
 
+const MONTH_FR: Record<string, string> = {
+  '01': 'janv.', '02': 'févr.', '03': 'mars', '04': 'avril', '05': 'mai',
+  '06': 'juin', '07': 'juil.', '08': 'août', '09': 'sept.', '10': 'oct.',
+  '11': 'nov.', '12': 'déc.',
+};
+
 const MONTH_FR_FULL: Record<string, string> = {
   '01': 'janvier', '02': 'février', '03': 'mars', '04': 'avril', '05': 'mai',
   '06': 'juin', '07': 'juillet', '08': 'août', '09': 'septembre', '10': 'octobre',
@@ -25,6 +31,20 @@ function formatFullDate(iso: string): string {
   const dayName = DAY_COLS[dObj.getDay()]?.full || '';
   const monthName = MONTH_FR_FULL[m[2]] || m[2];
   return `${dayName} ${parseInt(m[3], 10)} ${monthName} ${m[1]}`;
+}
+
+function formatRangeShort(startIso: string, endIso: string): string {
+  const sm = startIso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const em = endIso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!sm || !em) return `${startIso} - ${endIso}`;
+  const sDay = parseInt(sm[3], 10);
+  const eDay = parseInt(em[3], 10);
+  const sMonth = MONTH_FR[sm[2]] || sm[2];
+  const eMonth = MONTH_FR[em[2]] || em[2];
+  if (sm[2] === em[2] && sm[1] === em[1]) {
+    return `${sDay} au ${eDay} ${sMonth} ${sm[1]}`;
+  }
+  return `${sDay} ${sMonth} au ${eDay} ${eMonth} ${em[1]}`;
 }
 
 interface PopoverData {
@@ -50,13 +70,35 @@ export function EmployeeCalendarView({
 
   const todayIso = useMemo(() => new Date().toISOString().split('T')[0], []);
 
-  // Filter weeks if a specific week is selected
+  // Filter weeks if a specific week is selected, otherwise unified all weeks
   const visibleWeeks = useMemo(() => {
     if (selectedWeek === 'all') return byWeek;
     return byWeek.filter(([lbl]) => lbl === selectedWeek);
   }, [byWeek, selectedWeek]);
 
-  // Handle outside clicks to close popover
+  // Global records for visible weeks
+  const allVisibleRecords = useMemo(() => {
+    return visibleWeeks.flatMap(([, recs]) => recs);
+  }, [visibleWeeks]);
+
+  const totalWorkedDays = useMemo(() => {
+    return new Set(allVisibleRecords.filter(r => r.time !== 'OFF').map(r => r.date)).size;
+  }, [allVisibleRecords]);
+
+  const totalCalendarDays = useMemo(() => {
+    return new Set(allVisibleRecords.map(r => r.date)).size;
+  }, [allVisibleRecords]);
+
+  // Overall date range string
+  const dateRangeLabel = useMemo(() => {
+    const allDates = Array.from(new Set(allVisibleRecords.map(r => r.date))).sort();
+    if (allDates.length === 0) return '';
+    const firstDate = allDates[0];
+    const lastDate = allDates[allDates.length - 1];
+    return formatRangeShort(firstDate, lastDate);
+  }, [allVisibleRecords]);
+
+  // Close popover on Escape
   useEffect(() => {
     if (!popover) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,7 +108,7 @@ export function EmployeeCalendarView({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [popover]);
 
-  // Extract short week label for filter buttons (e.g. "Sem. 39" or "S39")
+  // Extract short week label (e.g. "S39")
   const getShortWeekLabel = (fullLabel: string) => {
     const m = fullLabel.match(/sem\.?\s*(\d+)/i);
     return m ? `S${m[1]}` : fullLabel.split('·')[0].trim();
@@ -74,140 +116,156 @@ export function EmployeeCalendarView({
 
   return (
     <div className="employee-calendar-view" data-testid="employee-calendar-view">
-      {/* Quick week filter pills if multiple weeks */}
-      {byWeek.length > 1 && (
-        <div className="cal-week-filter-bar">
-          <button
-            type="button"
-            className={`cal-week-pill ${selectedWeek === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedWeek('all')}
-          >
-            Toutes les semaines ({byWeek.length})
-          </button>
-          {byWeek.map(([wLabel]) => (
-            <button
-              key={wLabel}
-              type="button"
-              className={`cal-week-pill ${selectedWeek === wLabel ? 'active' : ''}`}
-              onClick={() => setSelectedWeek(wLabel)}
-              title={wLabel}
-            >
-              {getShortWeekLabel(wLabel)}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Week calendar blocks */}
-      <div className="cal-weeks-container">
-        {visibleWeeks.map(([weekLabel, weekRecs]) => {
-          // Group records of this week by date
-          const daysMap = new Map<string, PlanningRecord[]>();
-          for (const r of weekRecs) {
-            if (!daysMap.has(r.date)) daysMap.set(r.date, []);
-            daysMap.get(r.date)!.push(r);
-          }
-
-          // Sort dates in week
-          const sortedDates = Array.from(daysMap.keys()).sort();
-          const activeDaysCount = new Set(weekRecs.filter(r => r.time !== 'OFF').map(r => r.date)).size;
-
-          return (
-            <div className="cal-week-card" key={weekLabel}>
-              <div className="cal-week-head">
-                <div className="cal-week-title">{weekLabel}</div>
-                <div className="cal-week-badge">
-                  {activeDaysCount}/7 jours travaillés
-                </div>
-              </div>
-
-              {/* 7-column calendar grid container */}
-              <div className="cal-grid-wrapper">
-                {/* Columns Header (DIM, LUN, MAR, MER, JEU, VEN, SAM) */}
-                <div className="cal-grid-header">
-                  {DAY_COLS.map(col => (
-                    <div key={col.key} className="cal-grid-th">
-                      <span className="th-short">{col.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Days Grid Cells */}
-                <div className="cal-grid-body">
-                  {sortedDates.map(dateStr => {
-                    const recs = daysMap.get(dateStr) || [];
-                    const isOff = recs.every(r => r.time === 'OFF');
-                    const isToday = dateStr === todayIso;
-                    const dateParts = dateStr.split('-');
-                    const dayNum = dateParts[2] ? parseInt(dateParts[2], 10) : dateStr;
-                    const monthMini = dateParts[1] ? `${dateParts[2]}/${dateParts[1]}` : '';
-
-                    // Get unique scene names for this day (excluding OFF)
-                    const uniqueScenes = Array.from(
-                      new Set(recs.map(r => r.scene).filter(s => s && s !== 'OFF'))
-                    );
-
-                    return (
-                      <div
-                        key={dateStr}
-                        className={`cal-day-cell ${isOff ? 'is-off' : 'is-working'} ${isToday ? 'is-today' : ''}`}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Voir les horaires du ${formatFullDate(dateStr)}`}
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setPopover({ date: dateStr, records: recs, anchorRect: rect });
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setPopover({ date: dateStr, records: recs, anchorRect: rect });
-                          }
-                        }}
-                      >
-                        <div className="cal-day-cell-top">
-                          <span className="cal-day-num">{dayNum}</span>
-                          <span className="cal-day-month">{monthMini}</span>
-                          {isToday && <span className="cal-today-dot" title="Aujourd'hui" />}
-                        </div>
-
-                        <div className="cal-day-cell-content">
-                          {isOff ? (
-                            <div className="cal-scene-pill off-pill">
-                              <span>Repos</span>
-                            </div>
-                          ) : (
-                            uniqueScenes.map(scene => {
-                              const isFO = isTrainingScene(scene);
-                              const clean = cleanSceneName(scene);
-                              const color = getSceneColor(clean);
-
-                              return (
-                                <div
-                                  key={scene}
-                                  className={`cal-scene-pill ${isFO ? 'fo-pill' : ''}`}
-                                  style={{
-                                    borderLeft: `3px solid ${color.accent}`,
-                                  }}
-                                  title={isFO ? `Formation (${clean})` : clean}
-                                >
-                                  <span className="cal-scene-name">
-                                    {isFO ? `🎓 ${clean}` : clean}
-                                  </span>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+      {/* UNIFIED CALENDAR CARD */}
+      <div className="cal-unified-card">
+        {/* Header with period and worked days badge */}
+        <div className="cal-unified-header">
+          <div className="cal-unified-info">
+            <div className="cal-unified-title">
+              {selectedWeek === 'all'
+                ? (byWeek.length > 1 ? 'Planning unifié' : byWeek[0]?.[0] || 'Planning')
+                : selectedWeek}
             </div>
-          );
-        })}
+            <div className="cal-unified-sub">
+              {dateRangeLabel && <span>{dateRangeLabel}</span>}
+              {visibleWeeks.length > 1 && <span className="cal-unified-dot">·</span>}
+              {visibleWeeks.length > 1 && <span>{visibleWeeks.length} semaines</span>}
+            </div>
+          </div>
+          <div className="cal-unified-badge">
+            {totalWorkedDays}/{totalCalendarDays} jours travaillés
+          </div>
+        </div>
+
+        {/* Quick week filter pills if multiple weeks uploaded */}
+        {byWeek.length > 1 && (
+          <div className="cal-week-filter-bar">
+            <button
+              type="button"
+              className={`cal-week-pill ${selectedWeek === 'all' ? 'active' : ''}`}
+              onClick={() => setSelectedWeek('all')}
+            >
+              Tout afficher ({byWeek.length} sem.)
+            </button>
+            {byWeek.map(([wLabel]) => (
+              <button
+                key={wLabel}
+                type="button"
+                className={`cal-week-pill ${selectedWeek === wLabel ? 'active' : ''}`}
+                onClick={() => setSelectedWeek(wLabel)}
+                title={wLabel}
+              >
+                {getShortWeekLabel(wLabel)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 7-COLUMN UNIFIED CALENDAR GRID */}
+        <div className="cal-grid-wrapper">
+          {/* Single Column Header row for the entire unified calendar */}
+          <div className="cal-grid-header">
+            {DAY_COLS.map(col => (
+              <div key={col.key} className="cal-grid-th">
+                <span className="th-short">{col.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* All days of all visible weeks flowing row-by-row */}
+          <div className="cal-grid-body">
+            {visibleWeeks.map(([weekLabel, weekRecs]) => {
+              const daysMap = new Map<string, PlanningRecord[]>();
+              for (const r of weekRecs) {
+                if (!daysMap.has(r.date)) daysMap.set(r.date, []);
+                daysMap.get(r.date)!.push(r);
+              }
+              const sortedDates = Array.from(daysMap.keys()).sort();
+              const shortWeek = getShortWeekLabel(weekLabel);
+
+              return sortedDates.map((dateStr, dayInWeekIdx) => {
+                const recs = daysMap.get(dateStr) || [];
+                const isOff = recs.every(r => r.time === 'OFF');
+                const isToday = dateStr === todayIso;
+                const dateParts = dateStr.split('-');
+                const dayNum = dateParts[2] ? parseInt(dateParts[2], 10) : dateStr;
+                const monthNum = dateParts[1] || '';
+                const monthShort = MONTH_FR[monthNum] || '';
+
+                // Show month on first day of week (Sunday) or 1st of month
+                const showMonth = dayInWeekIdx === 0 || dayNum === 1;
+                // Show week pill badge on Sunday when multiple weeks are visible
+                const showWeekBadge = dayInWeekIdx === 0 && visibleWeeks.length > 1;
+
+                // Unique scenes for the day
+                const uniqueScenes = Array.from(
+                  new Set(recs.map(r => r.scene).filter(s => s && s !== 'OFF'))
+                );
+
+                return (
+                  <div
+                    key={dateStr}
+                    className={`cal-day-cell ${isOff ? 'is-off' : 'is-working'} ${isToday ? 'is-today' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Voir les horaires du ${formatFullDate(dateStr)}`}
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setPopover({ date: dateStr, records: recs, anchorRect: rect });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setPopover({ date: dateStr, records: recs, anchorRect: rect });
+                      }
+                    }}
+                  >
+                    <div className="cal-day-cell-top">
+                      <div className="cal-day-cell-date-group">
+                        <span className="cal-day-num">{dayNum}</span>
+                        {showMonth && <span className="cal-day-month">{monthShort}</span>}
+                      </div>
+                      {showWeekBadge && (
+                        <span className="cal-week-tag" title={weekLabel}>{shortWeek}</span>
+                      )}
+                      {isToday && <span className="cal-today-dot" title="Aujourd'hui" />}
+                    </div>
+
+                    <div className="cal-day-cell-content">
+                      {isOff ? (
+                        <div className="cal-scene-pill off-pill">
+                          <span>Repos</span>
+                        </div>
+                      ) : (
+                        uniqueScenes.map(scene => {
+                          const isFO = isTrainingScene(scene);
+                          const clean = cleanSceneName(scene);
+                          const color = getSceneColor(clean);
+
+                          return (
+                            <div
+                              key={scene}
+                              className={`cal-scene-pill ${isFO ? 'fo-pill' : ''}`}
+                              style={{
+                                borderLeft: `3px solid ${color.accent}`,
+                              }}
+                              title={isFO ? `Formation (${clean})` : clean}
+                            >
+                              <span className="cal-scene-name">
+                                {isFO ? `🎓 ${clean}` : clean}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Interactive Popover Bubble */}
