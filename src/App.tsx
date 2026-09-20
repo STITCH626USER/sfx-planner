@@ -1030,7 +1030,7 @@ function DayCard({
             style={{ borderLeft: `3.5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`, paddingLeft: 8, borderRadius: '2px 0 0 2px' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span className="day-scene-name" style={{ fontWeight: 600 }}>
+              <span className="day-scene-name" style={{ fontWeight: 700, fontSize: '15.5px' }}>
                 {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
               </span>
               {rec.role && (
@@ -1456,7 +1456,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     }}
                   >
                     <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene" style={{ fontSize: '16px', fontWeight: 600 }}>{cleanSceneName(scene)}</div>
+                      <div className="daily-group-scene" style={{ fontSize: '17px', fontWeight: 700 }}>{cleanSceneName(scene)}</div>
                       {openScenes.has(scene) && (
                         <div style={{ fontSize: '12.5px', color: 'var(--fg-muted)', marginTop: '4px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
                           {formatDateLong(date)} · {sceneRecords.length} technicien(s)
