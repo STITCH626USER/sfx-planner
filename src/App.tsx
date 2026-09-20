@@ -1016,7 +1016,10 @@ function DayCard({
         tabIndex={interactive ? 0 : undefined}
         aria-label={interactive ? `Voir l'équipe de ${cleanSceneName(rec.scene)} le ${formatDateLong(rec.date)}` : undefined}
         onClick={interactive ? () => onOpenScene!(rec.scene) : undefined}
-        style={interactive ? { cursor: 'pointer' } : undefined}
+        style={{
+          borderLeft: `5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`,
+          cursor: interactive ? 'pointer' : undefined,
+        }}
       >
         <div className="day-tag">
           <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
@@ -1422,12 +1425,17 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
             </div>
           ) : (
             <div className="daily-groups" data-testid="list-daily-scenes">
-              {byScene.map(([scene, sceneRecords], sIndex) => (
+              {byScene.map(([scene, sceneRecords], sIndex) => {
+                const scColor = getSceneColor(cleanSceneName(scene));
+                return (
                 <section
                   className="daily-scene-group animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
-                  style={{ animationDelay: `${sIndex * 0.05}s` }}
+                  style={{ 
+                    animationDelay: `${sIndex * 0.05}s`,
+                    borderLeft: `5px solid ${scColor.accent}`,
+                  }}
                 >
                   <button
                     type="button"
@@ -1444,8 +1452,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     style={{ 
                       width: '100%', 
                       cursor: 'pointer', 
-                      background: `linear-gradient(90deg, ${getSceneColor(cleanSceneName(scene)).accent}30, transparent)`,
-                      borderLeft: `4.5px solid ${getSceneColor(cleanSceneName(scene)).accent}`,
+                      background: `linear-gradient(90deg, ${scColor.accent}22, transparent)`,
+                      borderLeft: 'none',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -1463,7 +1471,19 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                         </div>
                       )}
                     </div>
-                    <span className="daily-group-count" aria-hidden="true">{sceneRecords.length}</span>
+                    <span
+                      className="daily-group-count"
+                      style={{
+                        background: scColor.accent,
+                        color: '#ffffff',
+                        border: `1px solid ${scColor.accent}`,
+                        boxShadow: `0 2px 8px ${scColor.accent}45`,
+                        fontWeight: 800,
+                      }}
+                      aria-hidden="true"
+                    >
+                      {sceneRecords.length}
+                    </span>
                   </button>
                   <div className={`compact-list-wrapper ${openScenes.has(scene) ? 'expanded' : ''}`}>
                     <div className="compact-list" data-testid={`scene-team-${scene}`}>
@@ -1515,7 +1535,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   </div>
                   </div>
                 </section>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
