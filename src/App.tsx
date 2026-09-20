@@ -787,9 +787,29 @@ function countActiveDays(records: PlanningRecord[], name: string): number {
   return dates.size;
 }
 
-function EmployeeDetail({ name, records, allRecords, onBack }: {
-  name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; onBack: () => void;
+function EmployeeDetail({ name, records, allRecords, comfortMode: propComfortMode, onBack }: {
+  name: string; records: PlanningRecord[]; allRecords?: PlanningRecord[]; comfortMode?: boolean; onBack: () => void;
 }) {
+  const [comfortMode, setComfortMode] = useState<boolean>(() => {
+    if (propComfortMode !== undefined) return propComfortMode;
+    if (typeof document !== 'undefined') {
+      return document.documentElement.getAttribute('data-comfort') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (propComfortMode !== undefined) {
+      setComfortMode(propComfortMode);
+      return;
+    }
+    const obs = new MutationObserver(() => {
+      setComfortMode(document.documentElement.getAttribute('data-comfort') === 'true');
+    });
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-comfort'] });
+    return () => obs.disconnect();
+  }, [propComfortMode]);
+
   useEffect(() => {
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -936,6 +956,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
         <EmployeeCalendarView
           byWeek={byWeek}
           allRecords={allRecords}
+          comfortMode={comfortMode}
           onOpenScene={canOpenScene ? (sc, d) => setOpenScene({ date: d, scene: sc }) : undefined}
         />
       ) : (

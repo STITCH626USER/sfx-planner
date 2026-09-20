@@ -56,12 +56,14 @@ interface PopoverData {
 interface EmployeeCalendarViewProps {
   byWeek: [string, PlanningRecord[]][];
   allRecords?: PlanningRecord[];
+  comfortMode?: boolean;
   onOpenScene?: (scene: string, date: string) => void;
 }
 
 export function EmployeeCalendarView({
   byWeek,
   allRecords,
+  comfortMode,
   onOpenScene,
 }: EmployeeCalendarViewProps) {
   const [selectedWeek, setSelectedWeek] = useState<string>('all');
@@ -115,16 +117,18 @@ export function EmployeeCalendarView({
   };
 
   return (
-    <div className="employee-calendar-view" data-testid="employee-calendar-view">
+    <div className={`employee-calendar-view ${comfortMode ? 'is-comfort-mode' : ''}`} data-testid="employee-calendar-view">
       {/* UNIFIED CALENDAR CARD */}
       <div className="cal-unified-card">
         {/* Header with period and worked days badge */}
         <div className="cal-unified-header">
           <div className="cal-unified-info">
             <div className="cal-unified-title">
-              {selectedWeek === 'all'
-                ? (byWeek.length > 1 ? 'Planning unifié' : byWeek[0]?.[0] || 'Planning')
-                : selectedWeek}
+              {comfortMode ? '🔍 Grand Format (Lisibilité Maximale)' : (
+                selectedWeek === 'all'
+                  ? (byWeek.length > 1 ? 'Planning unifié' : byWeek[0]?.[0] || 'Planning')
+                  : selectedWeek
+              )}
             </div>
             <div className="cal-unified-sub">
               {dateRangeLabel && <span>{dateRangeLabel}</span>}
@@ -161,19 +165,9 @@ export function EmployeeCalendarView({
           </div>
         )}
 
-        {/* 7-COLUMN UNIFIED CALENDAR GRID */}
-        <div className="cal-grid-wrapper">
-          {/* Single Column Header row for the entire unified calendar */}
-          <div className="cal-grid-header">
-            {DAY_COLS.map(col => (
-              <div key={col.key} className="cal-grid-th">
-                <span className="th-short">{col.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* All days of all visible weeks flowing row-by-row */}
-          <div className="cal-grid-body">
+        {/* EITHER: GRAND FORMAT (CARTES LARGES) IN COMFORT MODE */}
+        {comfortMode ? (
+          <div className="cal-comfort-container">
             {visibleWeeks.map(([weekLabel, weekRecs]) => {
               const daysMap = new Map<string, PlanningRecord[]>();
               for (const r of weekRecs) {
@@ -181,95 +175,237 @@ export function EmployeeCalendarView({
                 daysMap.get(r.date)!.push(r);
               }
               const sortedDates = Array.from(daysMap.keys()).sort();
-              const shortWeek = getShortWeekLabel(weekLabel);
+              const weekWorkedCount = new Set(weekRecs.filter(r => r.time !== 'OFF').map(r => r.date)).size;
 
-              return sortedDates.map((dateStr, dayInWeekIdx) => {
-                const recs = daysMap.get(dateStr) || [];
-                const isOff = recs.every(r => r.time === 'OFF');
-                const isToday = dateStr === todayIso;
-                const dateParts = dateStr.split('-');
-                const dayNum = dateParts[2] ? parseInt(dateParts[2], 10) : dateStr;
-                const monthNum = dateParts[1] || '';
-                const monthShort = MONTH_FR[monthNum] || '';
-
-                // Show month on first day of week (Sunday) or 1st of month
-                const showMonth = dayInWeekIdx === 0 || dayNum === 1;
-                // Show week pill badge on Sunday when multiple weeks are visible
-                const showWeekBadge = dayInWeekIdx === 0 && visibleWeeks.length > 1;
-
-                // Unique scenes for the day
-                const uniqueScenes = Array.from(
-                  new Set(recs.map(r => r.scene).filter(s => s && s !== 'OFF'))
-                );
-
-                return (
-                  <div
-                    key={dateStr}
-                    className={`cal-day-cell ${isOff ? 'is-off' : 'is-working'} ${isToday ? 'is-today' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Voir les horaires du ${formatFullDate(dateStr)}`}
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setPopover({ date: dateStr, records: recs, anchorRect: rect });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setPopover({ date: dateStr, records: recs, anchorRect: rect });
-                      }
-                    }}
-                  >
-                    <div className="cal-day-cell-top">
-                      <div className="cal-day-cell-date-group">
-                        <span className="cal-day-num">{dayNum}</span>
-                        {showMonth && <span className="cal-day-month">{monthShort}</span>}
-                      </div>
-                      {showWeekBadge && (
-                        <span className="cal-week-tag" title={weekLabel}>{shortWeek}</span>
-                      )}
-                      {isToday && <span className="cal-today-dot" title="Aujourd'hui" />}
+              return (
+                <div key={weekLabel} className="cal-comfort-week-section">
+                  {visibleWeeks.length > 1 && (
+                    <div className="cal-comfort-week-divider">
+                      <span className="cal-comfort-week-name">{weekLabel}</span>
+                      <span className="cal-comfort-week-stat">{weekWorkedCount}/7 jours travaillés</span>
                     </div>
+                  )}
 
-                    <div className="cal-day-cell-content">
-                      {isOff ? (
-                        <div className="cal-scene-pill off-pill">
-                          <span>Repos</span>
-                        </div>
-                      ) : (
-                        uniqueScenes.map(scene => {
-                          const isFO = isTrainingScene(scene);
-                          const clean = cleanSceneName(scene);
-                          const color = getSceneColor(clean);
+                  <div className="cal-comfort-days-list">
+                    {sortedDates.map((dateStr) => {
+                      const recs = daysMap.get(dateStr) || [];
+                      const isOff = recs.every(r => r.time === 'OFF');
+                      const isToday = dateStr === todayIso;
+                      const firstRec = recs[0];
+                      const dayShift = firstRec?.shiftTime;
+                      const hasMultipleSlots = recs.length > 1 || (!!dayShift && dayShift !== firstRec.time);
 
-                          return (
-                            <div
-                              key={scene}
-                              className={`cal-scene-pill ${isFO ? 'fo-pill' : ''}`}
-                              style={{
-                                borderLeft: `3px solid ${color.accent}`,
-                              }}
-                              title={isFO ? `Formation (${clean})` : clean}
-                            >
-                              <span className="cal-scene-name">
-                                {isFO ? `🎓 ${clean}` : clean}
-                              </span>
+                      return (
+                        <div
+                          key={dateStr}
+                          className={`cal-comfort-card ${isOff ? 'is-off' : 'is-working'} ${isToday ? 'is-today' : ''}`}
+                        >
+                          <div className="cal-comfort-card-head">
+                            <div className="cal-comfort-date">
+                              <span className="cal-comfort-date-text">{formatFullDate(dateStr)}</span>
+                              {isToday && <span className="cal-popover-today-badge">Aujourd'hui</span>}
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
+                            {isOff ? (
+                              <span className="cal-comfort-off-tag">🏖️ Repos</span>
+                            ) : (
+                              hasMultipleSlots && dayShift ? (
+                                <div className="cal-comfort-shift-pill">
+                                  <span>🕒 Amplitude :</span>
+                                  <strong>{dayShift}</strong>
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+
+                          {!isOff && (
+                            <div className="cal-comfort-slots">
+                              {recs.map((r, idx) => {
+                                const isFO = isTrainingScene(r.scene);
+                                const clean = cleanSceneName(r.scene);
+                                const color = getSceneColor(clean);
+
+                                // Detect associated scenes if formation
+                                let assocScenes: string[] | undefined;
+                                if (allRecords && isFO) {
+                                  const dayRecs = allRecords.filter(
+                                    dr => dr.date === r.date && dr.time !== 'OFF' && !isTrainingScene(dr.scene)
+                                  );
+                                  const scenesOfDay = new Set<string>();
+                                  for (const dr of dayRecs) {
+                                    if (timesMatch(dr.time, r.time, 5)) {
+                                      const c = cleanSceneName(dr.scene);
+                                      if (c && c.toLowerCase() !== 'fo' && c.toLowerCase() !== 'formation') {
+                                        scenesOfDay.add(c);
+                                      }
+                                    }
+                                  }
+                                  if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
+                                }
+
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="cal-comfort-slot-row"
+                                    style={{ borderLeft: `4px solid ${color.accent}` }}
+                                  >
+                                    <div className="cal-comfort-slot-main">
+                                      <div className="cal-comfort-slot-title">
+                                        {isFO ? `🎓 ${clean}` : clean}
+                                      </div>
+                                      <span className="time-pill">{r.time}</span>
+                                    </div>
+
+                                    {(r.role || (assocScenes && assocScenes.length > 0)) && (
+                                      <div className="cal-comfort-slot-meta">
+                                        {r.role && (
+                                          <span className="cal-comfort-role">
+                                            Rôle : <strong>{r.role}</strong>
+                                          </span>
+                                        )}
+                                        {assocScenes && assocScenes.length > 0 && (
+                                          <span className="cal-comfort-assoc">
+                                            Associé à : {assocScenes.join(', ')}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {onOpenScene && !isFO && (
+                                      <button
+                                        type="button"
+                                        className="cal-comfort-team-btn"
+                                        onClick={() => onOpenScene(r.scene, r.date)}
+                                      >
+                                        <span>Voir l'équipe ({clean})</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M5 12h14M12 5l7 7-7 7" />
+                                        </svg>
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              });
+                </div>
+              );
             })}
           </div>
-        </div>
+        ) : (
+          /* OR: STANDARD 7-COLUMN UNIFIED CALENDAR GRID */
+          <div className="cal-grid-wrapper">
+            {/* Single Column Header row for the entire unified calendar */}
+            <div className="cal-grid-header">
+              {DAY_COLS.map(col => (
+                <div key={col.key} className="cal-grid-th">
+                  <span className="th-short">{col.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* All days of all visible weeks flowing row-by-row */}
+            <div className="cal-grid-body">
+              {visibleWeeks.map(([weekLabel, weekRecs]) => {
+                const daysMap = new Map<string, PlanningRecord[]>();
+                for (const r of weekRecs) {
+                  if (!daysMap.has(r.date)) daysMap.set(r.date, []);
+                  daysMap.get(r.date)!.push(r);
+                }
+                const sortedDates = Array.from(daysMap.keys()).sort();
+                const shortWeek = getShortWeekLabel(weekLabel);
+
+                return sortedDates.map((dateStr, dayInWeekIdx) => {
+                  const recs = daysMap.get(dateStr) || [];
+                  const isOff = recs.every(r => r.time === 'OFF');
+                  const isToday = dateStr === todayIso;
+                  const dateParts = dateStr.split('-');
+                  const dayNum = dateParts[2] ? parseInt(dateParts[2], 10) : dateStr;
+                  const monthNum = dateParts[1] || '';
+                  const monthShort = MONTH_FR[monthNum] || '';
+
+                  // Show month on first day of week (Sunday) or 1st of month
+                  const showMonth = dayInWeekIdx === 0 || dayNum === 1;
+                  // Show week pill badge on Sunday when multiple weeks are visible
+                  const showWeekBadge = dayInWeekIdx === 0 && visibleWeeks.length > 1;
+
+                  // Unique scenes for the day
+                  const uniqueScenes = Array.from(
+                    new Set(recs.map(r => r.scene).filter(s => s && s !== 'OFF'))
+                  );
+
+                  return (
+                    <div
+                      key={dateStr}
+                      className={`cal-day-cell ${isOff ? 'is-off' : 'is-working'} ${isToday ? 'is-today' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Voir les horaires du ${formatFullDate(dateStr)}`}
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setPopover({ date: dateStr, records: recs, anchorRect: rect });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setPopover({ date: dateStr, records: recs, anchorRect: rect });
+                        }
+                      }}
+                    >
+                      <div className="cal-day-cell-top">
+                        <div className="cal-day-cell-date-group">
+                          <span className="cal-day-num">{dayNum}</span>
+                          {showMonth && <span className="cal-day-month">{monthShort}</span>}
+                        </div>
+                        {showWeekBadge && (
+                          <span className="cal-week-tag" title={weekLabel}>{shortWeek}</span>
+                        )}
+                        {isToday && <span className="cal-today-dot" title="Aujourd'hui" />}
+                      </div>
+
+                      <div className="cal-day-cell-content">
+                        {isOff ? (
+                          <div className="cal-scene-pill off-pill">
+                            <span>Repos</span>
+                          </div>
+                        ) : (
+                          uniqueScenes.map(scene => {
+                            const isFO = isTrainingScene(scene);
+                            const clean = cleanSceneName(scene);
+                            const color = getSceneColor(clean);
+
+                            return (
+                              <div
+                                key={scene}
+                                className={`cal-scene-pill ${isFO ? 'fo-pill' : ''}`}
+                                style={{
+                                  borderLeft: `3px solid ${color.accent}`,
+                                }}
+                                title={isFO ? `Formation (${clean})` : clean}
+                              >
+                                <span className="cal-scene-name">
+                                  {isFO ? `🎓 ${clean}` : clean}
+                                </span>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                });
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Interactive Popover Bubble */}
-      {popover && (
+      {/* Interactive Popover Bubble (for standard 7-column grid) */}
+      {!comfortMode && popover && (
         <>
           <div
             className="cal-popover-backdrop"
@@ -434,7 +570,6 @@ function getPopoverStyle(anchorRect?: DOMRect): React.CSSProperties {
   left = Math.max(16, Math.min(window.innerWidth - popoverW - 16, left));
 
   let top = anchorRect ? anchorRect.bottom + 8 : 120;
-  // If popover goes off the bottom of the viewport, position it above anchor
   if (anchorRect && top + 240 > window.innerHeight) {
     top = Math.max(16, anchorRect.top - 250);
   }
