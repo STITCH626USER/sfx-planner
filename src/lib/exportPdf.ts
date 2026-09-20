@@ -6,7 +6,6 @@ import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cl
 const NAVY:    [number,number,number] = [13,  20,  35];
 const AMBER:   [number,number,number] = [255, 176, 58];
 const AMBER2:  [number,number,number] = [232, 130, 30];
-const TEAL:    [number,number,number] = [0,   185, 158];
 const VIOLET:  [number,number,number] = [108, 92,  231];
 const WHITE:   [number,number,number] = [255, 255, 255];
 const INK:     [number,number,number] = [22,  28,  46];
@@ -118,54 +117,100 @@ function getLogoDataUrl(): Promise<string|null> {
   })();
 }
 
-/* ─── Premium Header ─── */
+/* ─── Premium Header (Clean SFX Planner Console Bar) ─── */
 function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number,
   title: string, subtitle: string, logo: string|null, rightLabel = 'SFX PLANNER', statsBadge?: string): number {
   const h = 20;
-  // Navy background
-  doc.setFillColor(...NAVY); doc.roundedRect(marginX, y, pageW-marginX*2, h, 2.5, 2.5, 'F');
-  // Amber bottom line
-  doc.setFillColor(...AMBER); doc.rect(marginX+3, y+h-0.7, pageW-marginX*2-6, 0.5, 'F');
-  // Teal right accent
-  doc.setFillColor(...TEAL); doc.rect(pageW-marginX-3, y+2, 0.5, h-4, 'F');
-  // Logo
-  let tx = marginX + 5;
-  if (logo) { try { const lx=marginX+3; const ly=y+3; const ls=14; doc.addImage(logo,'PNG',lx,ly,ls,ls); tx=lx+ls+4; } catch { /* ignore */ } }
-  // Title
-  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...WHITE);
-  doc.text(cleanText(title), tx, y+8.5);
-  // Subtitle
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(165,195,220);
-  doc.text(cleanText(subtitle), tx, y+14.2);
+  const innerW = pageW - marginX * 2;
 
-  // Stats badge if present
+  // Navy/Slate Console Background
+  doc.setFillColor(...NAVY);
+  doc.roundedRect(marginX, y, innerW, h, 2.0, 2.0, 'F');
+
+  // Subtle bottom accent line
+  doc.setFillColor(...AMBER);
+  doc.rect(marginX + 2, y + h - 0.7, innerW - 4, 0.7, 'F');
+
+  // Logo
+  let tx = marginX + 6;
+  if (logo) {
+    try {
+      const lx = marginX + 3.5;
+      const ly = y + 2.8;
+      const ls = 14.4;
+      doc.addImage(logo, 'PNG', lx, ly, ls, ls);
+      doc.setDrawColor(...AMBER);
+      doc.setLineWidth(0.3);
+      doc.circle(lx + ls / 2, ly + ls / 2, ls / 2 + 0.2, 'S');
+      tx = lx + ls + 4.5;
+    } catch { /* ignore */ }
+  }
+
+  // Title (Technician name in uppercase)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13.5);
+  doc.setTextColor(...WHITE);
+  doc.text(cleanText(title).toUpperCase(), tx, y + 8.2);
+
+  // Subtitle (Period readout)
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.2);
+  doc.setTextColor(165, 185, 210);
+  const cleanSub = cleanText(subtitle).replace(/\s*-\s*/, ' — ');
+  doc.text(cleanSub, tx, y + 14.0);
+
+  // Stats badge (clean readout)
   if (statsBadge) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     const badgeW = doc.getTextWidth(statsBadge) + 8;
-    const bx = pageW - marginX - 32 - badgeW;
-    const by = y + 5.5;
-    doc.setFillColor(24, 38, 58);
-    doc.setDrawColor(51, 65, 85);
-    doc.roundedRect(bx, by, badgeW, 9, 2, 2, 'FD');
-    doc.setTextColor(255, 185, 45);
-    doc.text(statsBadge, bx + badgeW / 2, by + 6, { align: 'center' });
+    const bx = pageW - marginX - 36 - badgeW;
+    const by = y + 5.0;
+    doc.setFillColor(26, 38, 56);
+    doc.setDrawColor(45, 62, 88);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(bx, by, badgeW, 8.5, 1.5, 1.5, 'FD');
+    doc.setTextColor(255, 191, 36);
+    doc.text(statsBadge, bx + badgeW / 2, by + 5.8, { align: 'center' });
   }
 
   // Right label
-  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...AMBER);
-  doc.text(rightLabel, pageW-marginX-5, y+11, {align:'right'});
+  const rightX = pageW - marginX - 5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...AMBER);
+  doc.text(rightLabel, rightX, y + 11.0, { align: 'right' });
+
   return y + h + 4;
 }
 
-/* ─── Premium Footer ─── */
+/* ─── Premium Footer (Clean Status Bar) ─── */
 function drawPremiumFooter(doc: jsPDF, pageW: number, pageH: number, marginX: number) {
-  const fy = pageH - 10;
-  // Amber line
-  doc.setDrawColor(...AMBER); doc.setLineWidth(0.3); doc.line(marginX, fy-2, pageW-marginX, fy-2);
-  // Warning text
-  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AMBER2);
-  doc.text("Contrôle obligatoire sur UKG personnel", pageW/2, fy+1.5, {align:'center'});
+  const fy = pageH - 9.0;
+  // Slate dividing line
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.line(marginX, fy - 2, pageW - marginX, fy - 2);
+
+  // Left status
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("SFX PLANNER", marginX + 1, fy + 2.5);
+
+  // Center UKG warning
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.0);
+  doc.setTextColor(...AMBER2);
+  doc.text("⚠  Contrôle obligatoire sur UKG personnel", pageW / 2, fy + 2.5, { align: 'center' });
+
+  // Right date
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.2);
+  doc.setTextColor(148, 163, 184);
+  const now = new Date();
+  const dStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+  doc.text(`Document officiel · Édité le ${dStr}`, pageW - marginX - 1, fy + 2.5, { align: 'right' });
 }
 
 /* ─── Avatar circle with initials ─── */
@@ -582,7 +627,21 @@ async function generateIndivPdf(opts: {
     const blockH = Math.min(23, (availableH - 6 * gapBlock) / 7);
     const cols = Math.min(4, Math.max(1, numWeeks));
     const gutter = 3.5;
-    const colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
+
+    // Adaptive column width and centering based on number of weeks (1 to 4)
+    let colW: number;
+    if (cols === 1) {
+      colW = 160;
+    } else if (cols === 2) {
+      colW = 130;
+    } else if (cols === 3) {
+      colW = (pageW - marginX * 2 - gutter * 2) / 3;
+    } else {
+      colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
+    }
+
+    const totalUsedWidth = cols * colW + (cols - 1) * gutter;
+    const baseStartX = (pageW - totalUsedWidth) / 2;
 
     let currentCol = 0;
     let currentY = startY;
@@ -604,7 +663,7 @@ async function generateIndivPdf(opts: {
         }
       }
 
-      const x = marginX + currentCol * (colW + gutter);
+      const x = baseStartX + currentCol * (colW + gutter);
       drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
       currentY += blockH + gapBlock;
     }
@@ -706,9 +765,9 @@ function drawIndivDayBlock(
   rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>,
   themeColorName?: string
 ) {
-  let dayName = 'LUN';
+  let dayName = 'LUN.';
   let dayNum = '01';
-  let monthName = 'sept.';
+  let monthName = 'SEPT.';
 
   if (dateStr) {
     const parts = dateStr.split('-');
@@ -717,17 +776,17 @@ function drawIndivDayBlock(
       const mo = parseInt(parts[1], 10) - 1;
       const da = parseInt(parts[2], 10);
       const dateObj = new Date(yr, mo, da);
-      const days = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
-      const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-      dayName = (days[dateObj.getDay()] || 'lun').toUpperCase();
+      const days = ['DIM.', 'LUN.', 'MAR.', 'MER.', 'JEU.', 'VEN.', 'SAM.'];
+      const months = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
+      dayName = days[dateObj.getDay()] || 'LUN.';
       dayNum = da.toString().padStart(2, '0');
-      monthName = months[mo] || 'sept.';
+      monthName = months[mo] || 'SEPT.';
     } else {
       const dateObj = new Date(dateStr);
       if (!isNaN(dateObj.getTime())) {
-        const days = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
-        const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-        dayName = (days[dateObj.getDay()] || 'lun').toUpperCase();
+        const days = ['DIM.', 'LUN.', 'MAR.', 'MER.', 'JEU.', 'VEN.', 'SAM.'];
+        const months = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
+        dayName = days[dateObj.getDay()] || 'LUN.';
         dayNum = dateObj.getDate().toString().padStart(2, '0');
         monthName = months[dateObj.getMonth()] || '';
       }
@@ -735,145 +794,186 @@ function drawIndivDayBlock(
   }
 
   const isOff = rows.length === 0 || rows.every(r => /^off$/i.test(r.time));
-  
-  // Date Picto badge dimensions
-  const pictoW = 15;
-  const pictoH = Math.min(h - 3, 17.5);
-  const padX = 1.5;
-  const py = y + (h - pictoH) / 2;
-  const px = x + padX + (isOff ? 0 : 2.5);
 
   if (isOff) {
-    // Soft feutré styling for OFF
+    // Soft, peaceful OFF card
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(x, y, w, h, 2, 2, 'FD');
+    doc.setLineWidth(0.25);
+    doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
 
-    // Date Badge
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(px, py, pictoW, pictoH, 1.8, 1.8, 'FD');
+    // Date header line
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`${dayName} ${dayNum} ${monthName}`, x + 4.5, y + 5.5);
 
-    // Picto texts
-    const cx = px + pictoW / 2;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(4.5); doc.setTextColor(148, 163, 184);
-    doc.text(dayName, cx, py + 4.2, { align: 'center' });
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(100, 116, 139);
-    doc.text(dayNum, cx, py + 10.5, { align: 'center' });
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(4.0); doc.setTextColor(148, 163, 184);
-    doc.text(monthName, cx, py + 14.5, { align: 'center' });
-
-    // Repos label
-    const rx = px + pictoW + 3;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(148, 163, 184);
-    doc.text('Repos / Congé', rx, y + h / 2 + 1.2);
-
-    // OFF pill on right
+    // Pill on right
     const pillW = 13;
-    const pillH = 6;
-    const pillX = x + w - pillW - 2.5;
-    const pillY = y + (h - pillH) / 2;
+    const pillH = 5.2;
+    const pillX = x + w - pillW - 3.5;
+    const pillY = y + 2.2;
     doc.setFillColor(241, 245, 249);
-    doc.setDrawColor(203, 213, 225);
+    doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.2);
-    doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, 'FD');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(148, 163, 184);
-    doc.text('OFF', pillX + pillW / 2, pillY + 4.2, { align: 'center' });
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.2);
+    doc.setTextColor(148, 163, 184);
+    doc.text('OFF', pillX + pillW / 2, pillY + 3.7, { align: 'center' });
+
+    // Body
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Repos / Congé', x + 4.5, y + h / 2 + 3.0);
     return;
   }
 
-  // Worked day card
+  // Working day: clean white card with crisp left accent stripe
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(x, y, w, h, 2, 2, 'FD');
+  doc.setLineWidth(0.3);
+  doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
 
-  // Left accent stripe
   const firstRow = rows[0];
-  const isFO = firstRow.isFO || isTrainingScene(firstRow.name);
-  const sc = getSceneColor(themeColorName || firstRow.name);
-  const stripeRgb: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
-  doc.setFillColor(...stripeRgb);
-  doc.roundedRect(x, y, 2.8, h, 0.8, 0.8, 'F');
+  const isFOFirst = firstRow.isFO || isTrainingScene(firstRow.name);
+  const scFirst = getSceneColor(themeColorName || firstRow.name);
+  const stripeRgb: [number, number, number] = isFOFirst ? VIOLET : scFirst.rgbAccent;
+  const isMulti = rows.length > 1;
 
-  // Date Badge for worked day
-  doc.setFillColor(241, 245, 249);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(px, py, pictoW, pictoH, 1.8, 1.8, 'FD');
+  // Left vertical accent stripe
+  if (isMulti) {
+    const secondRow = rows[1];
+    const isFOSecond = secondRow.isFO || isTrainingScene(secondRow.name);
+    const scSecond = getSceneColor(themeColorName || secondRow.name);
+    const secondRgb: [number, number, number] = isFOSecond ? VIOLET : scSecond.rgbAccent;
 
-  const cx = px + pictoW / 2;
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(5.0); doc.setTextColor(71, 85, 105);
-  doc.text(dayName, cx, py + 4.2, { align: 'center' });
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(15, 23, 42);
-  doc.text(dayNum, cx, py + 10.5, { align: 'center' });
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(4.2); doc.setTextColor(71, 85, 105);
-  doc.text(monthName, cx, py + 14.5, { align: 'center' });
+    doc.setFillColor(...stripeRgb);
+    doc.rect(x, y, 3.2, h * 0.5, 'F');
+    doc.setFillColor(...secondRgb);
+    doc.rect(x, y + h * 0.5, 3.2, h * 0.5, 'F');
+  } else {
+    doc.setFillColor(...stripeRgb);
+    doc.rect(x, y, 3.2, h, 'F');
+  }
 
-  // Rows content
-  const rx = px + pictoW + 3;
-  const rowCount = Math.max(1, rows.length);
-  const rH = (h - 2) / rowCount;
+  const cx = x + 5.5;
 
-  for (let idx = 0; idx < rows.length; idx++) {
-    const row = rows[idx];
-    const rY = y + 1 + idx * rH;
-    const timeStr = row.time || '';
+  if (!isMulti) {
+    const rawNm = cleanText(cleanSceneName(firstRow.name));
+    const matchRole = rawNm.match(/^(.*?)\s*\((.*?)\)$/);
+    const mainName = matchRole ? matchRole[1].trim() : rawNm;
+    const roleName = matchRole ? matchRole[2].trim() : (firstRow.subtext || '');
 
-    let pillW = 0;
-    if (timeStr) {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
-      const tw = doc.getTextWidth(timeStr);
-      pillW = tw + 5;
-      const pillH = Math.min(6.2, rH - 1.5);
-      const pillX = x + w - pillW - 2.5;
-      const pillY = rY + (rH - pillH) / 2;
+    // 1. Top row: Date on left
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.0);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`${dayName} ${dayNum} ${monthName}`, cx, y + 5.5);
 
-      // Color scheme for time pill matching scene
-      if (isFO) {
-        doc.setFillColor(245, 243, 255);
-        doc.setDrawColor(196, 181, 253);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(pillX, pillY, pillW, pillH, 1.2, 1.2, 'FD');
-        doc.setTextColor(109, 40, 217);
-      } else {
-        const rowSc = getSceneColor(themeColorName || row.name);
-        doc.setFillColor(rowSc.rgbBg[0], rowSc.rgbBg[1], rowSc.rgbBg[2]);
-        doc.setDrawColor(rowSc.rgbAccent[0], rowSc.rgbAccent[1], rowSc.rgbAccent[2]);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(pillX, pillY, pillW, pillH, 1.2, 1.2, 'FD');
-        doc.setTextColor(rowSc.rgbText[0], rowSc.rgbText[1], rowSc.rgbText[2]);
-      }
-      doc.text(timeStr, pillX + pillW / 2, pillY + pillH - 1.8, { align: 'center' });
-    }
+    // Time pill on right
+    const cleanTime = (firstRow.time || '').replace(/\s*-\s*/, ' - ');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.8);
+    const tw = doc.getTextWidth(cleanTime);
+    const pillW = tw + 5.5;
+    const pillH = 5.4;
+    const pillX = x + w - pillW - 3.5;
+    const pillY = y + 2.0;
 
-    const maxTextW = w - (rx - x) - (pillW > 0 ? pillW + 4 : 3);
-    let nm = cleanText(cleanSceneName(row.name));
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(row.subtext ? 6.5 : 7.2);
+    doc.setFillColor(scFirst.rgbBg[0], scFirst.rgbBg[1], scFirst.rgbBg[2]);
+    doc.setDrawColor(...stripeRgb);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
+
+    doc.setTextColor(...stripeRgb);
+    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.8, { align: 'center' });
+
+    // Subtle divider line
+    doc.setDrawColor(241, 245, 249);
+    doc.setLineWidth(0.2);
+    doc.line(cx, y + 8.2, x + w - 3.5, y + 8.2);
+
+    // 2. Scene Name (large, full width!)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.4);
     doc.setTextColor(15, 23, 42);
 
-    if (doc.getTextWidth(nm) > maxTextW) {
-      while (nm.length > 0 && doc.getTextWidth(nm + '...') > maxTextW) {
-        nm = nm.slice(0, -1);
+    let displayMain = mainName;
+    const maxMainW = w - 10;
+    if (doc.getTextWidth(displayMain) > maxMainW) {
+      while (displayMain.length > 0 && doc.getTextWidth(displayMain + '...') > maxMainW) {
+        displayMain = displayMain.slice(0, -1);
       }
-      nm = nm.trim() + '...';
+      displayMain = displayMain.trim() + '...';
     }
+    doc.text(displayMain, cx, y + 13.0);
 
-    if (row.subtext) {
-      doc.text(nm, rx, rY + 4.2);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(4.2);
+    // 3. Role / Subtext
+    if (roleName) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.8);
       doc.setTextColor(100, 116, 139);
-      let sub = row.subtext;
-      if (doc.getTextWidth(sub) > maxTextW) {
-        while (sub.length > 0 && doc.getTextWidth(sub + '...') > maxTextW) {
-          sub = sub.slice(0, -1);
+      let displayRole = roleName;
+      if (doc.getTextWidth(displayRole) > maxMainW) {
+        while (displayRole.length > 0 && doc.getTextWidth(displayRole + '...') > maxMainW) {
+          displayRole = displayRole.slice(0, -1);
         }
-        sub = sub.trim() + '...';
+        displayRole = displayRole.trim() + '...';
       }
-      doc.text(sub, rx, rY + 8.2);
-    } else {
-      doc.text(nm, rx, rY + rH / 2 + 1.8);
+      doc.text(displayRole, cx, y + 17.2);
+    }
+  } else {
+    // Multi-row day (Formation + Vacation)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`${dayName} ${dayNum} ${monthName}`, cx, y + 5.2);
+
+    // Subtle divider line
+    doc.setDrawColor(241, 245, 249);
+    doc.setLineWidth(0.2);
+    doc.line(cx, y + 6.8, x + w - 3.5, y + 6.8);
+
+    for (let idx = 0; idx < rows.length; idx++) {
+      const row = rows[idx];
+      const rY = y + 7.5 + idx * 6.5;
+      const isFO = row.isFO || isTrainingScene(row.name);
+      const rowSc = getSceneColor(themeColorName || row.name);
+      const rowColor: [number, number, number] = isFO ? VIOLET : rowSc.rgbAccent;
+      const rowBg: [number, number, number] = isFO ? [245, 243, 255] : rowSc.rgbBg;
+
+      let rNm = cleanText(cleanSceneName(row.name));
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.2);
+      doc.setTextColor(15, 23, 42);
+
+      const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(5.8);
+      const tw = doc.getTextWidth(cleanTime);
+      const pillW = tw + 4.5;
+      const pillH = 4.8;
+      const pillX = x + w - pillW - 3.0;
+      const pillY = rY + 0.6;
+
+      const maxTextW = w - 7 - pillW - 2;
+      if (doc.getTextWidth(rNm) > maxTextW) {
+        while (rNm.length > 0 && doc.getTextWidth(rNm + '...') > maxTextW) {
+          rNm = rNm.slice(0, -1);
+        }
+        rNm = rNm.trim() + '...';
+      }
+      doc.text(rNm, cx, rY + 4.0);
+
+      doc.setFillColor(...rowBg);
+      doc.setDrawColor(...rowColor);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
+
+      doc.setTextColor(...rowColor);
+      doc.text(cleanTime, pillX + pillW / 2, pillY + 3.4, { align: 'center' });
     }
   }
 }
