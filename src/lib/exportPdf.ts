@@ -621,9 +621,7 @@ async function generateIndivPdf(opts: {
   const bottomLimit = pageH - 14; // footer top
   const gutter = 3.0;
 
-  const numWeeks = Math.ceil(opts.allDates.length / 7);
-  const maxRowsPerDay = Math.max(0, ...opts.allDates.map(d => (opts.dateMap.get(d) || []).length));
-  const isDense = opts.filename.includes('scene') || maxRowsPerDay >= 3;
+  const isDense = opts.filename.includes('scene');
 
   if (!isDense) {
     // Standard individual employee schedule: strictly 1 column = 1 week (Sunday to Saturday, 7 days per column)
