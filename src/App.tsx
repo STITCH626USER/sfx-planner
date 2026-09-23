@@ -1183,14 +1183,48 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
     }
   };
 
+  const employeeDates = useMemo(() => {
+    const dSet = new Set<string>();
+    for (const r of records) {
+      if (r.date) dSet.add(r.date);
+    }
+    return Array.from(dSet).sort();
+  }, [records]);
+
   const teamForOpen = useMemo(() => {
     if (!openScene || !allRecords) return [];
+    if (!openScene.scene) return [];
     const dayRecs = allRecords.filter(r => r.date === openScene.date && r.time !== 'OFF');
     
     return dayRecs
       .filter(r => r.scene === openScene.scene)
       .sort((a, b) => prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr'));
   }, [openScene, allRecords]);
+
+  const openSceneDayState = useMemo(() => {
+    if (!openScene) return null;
+    const dayRecs = records.filter(r => r.date === openScene.date);
+    const isOff = dayRecs.length === 0 || dayRecs.every(r => r.time === 'OFF');
+    const dayWorkingScenes = Array.from(new Set(dayRecs.filter(r => r.time !== 'OFF').map(r => r.scene).filter(Boolean)));
+    return { isOff, dayWorkingScenes, dayRecs };
+  }, [openScene, records]);
+
+  const handleStepDay = (delta: number) => {
+    if (!openScene || employeeDates.length === 0) return;
+    const idx = employeeDates.indexOf(openScene.date);
+    const nextIdx = idx + delta;
+    if (nextIdx < 0 || nextIdx >= employeeDates.length) return;
+    const nextDate = employeeDates[nextIdx];
+    
+    // Find what the employee has on this date
+    const dayRecs = records.filter(r => r.date === nextDate);
+    const workingRecs = dayRecs.filter(r => r.time !== 'OFF');
+    if (workingRecs.length > 0) {
+      setOpenScene({ date: nextDate, scene: workingRecs[0].scene });
+    } else {
+      setOpenScene({ date: nextDate, scene: '' });
+    }
+  };
 
   if (openEmployee && allRecords) {
     return (
@@ -1204,11 +1238,22 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
   }
 
   if (openScene) {
+    const curIdx = employeeDates.indexOf(openScene.date);
+    const hasPrev = curIdx > 0;
+    const hasNext = curIdx >= 0 && curIdx < employeeDates.length - 1;
+    const isOff = !!openSceneDayState?.isOff;
+
     return (
       <SceneDetail
         scene={openScene.scene}
         date={openScene.date}
         team={teamForOpen}
+        isOff={isOff}
+        employeeName={name}
+        availableScenes={openSceneDayState?.dayWorkingScenes}
+        onSelectScene={(sc) => setOpenScene({ date: openScene.date, scene: sc })}
+        onPrevDay={hasPrev ? () => handleStepDay(-1) : undefined}
+        onNextDay={hasNext ? () => handleStepDay(1) : undefined}
         onBack={() => setOpenScene(null)}
         onViewEmployee={(emp) => setOpenEmployee(emp)}
       />
@@ -1596,43 +1641,245 @@ function DayCard({
   );
 }
 
-function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
-  scene: string; date: string; team: PlanningRecord[]; onBack: () => void; onViewEmployee: (employee: string) => void;
+function SceneDetail({
+  scene,
+  date,
+  team,
+  isOff = false,
+  employeeName,
+  availableScenes,
+  onSelectScene,
+  onPrevDay,
+  onNextDay,
+  onBack,
+  onViewEmployee
+}: {
+  scene: string;
+  date: string;
+  team: PlanningRecord[];
+  isOff?: boolean;
+  employeeName?: string;
+  availableScenes?: string[];
+  onSelectScene?: (scene: string) => void;
+  onPrevDay?: () => void;
+  onNextDay?: () => void;
+  onBack: () => void;
+  onViewEmployee: (employee: string) => void;
 }) {
   const cleanName = cleanSceneName(scene);
+  const color = getSceneColor(cleanName);
+
   return (
     <div data-testid="panel-scene-detail">
-      <button className="btn-back" onClick={onBack} data-testid="btn-back-scenes"><IconArrowLeft /> Retour</button>
-      <div className="card scene-detail-card" style={{ marginTop: 8, marginBottom: 16, padding: '16px 20px', borderLeft: `5px solid ${getSceneColor(cleanName).accent}` }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, color: 'var(--fg)', letterSpacing: '-0.01em', overflowWrap: 'anywhere' }}
-             data-testid="text-scene-name">
-          {cleanName}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
-          <span style={{
-            background: 'var(--on-bg)',
-            color: 'var(--on-fg)',
-            border: '1px solid var(--on-line)',
-            padding: '5px 12px',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: 700,
-            letterSpacing: '0.01em',
+      {/* Top action row with Back + Day Navigation */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        marginBottom: 10,
+        flexWrap: 'wrap'
+      }}>
+        <button className="btn-back" onClick={onBack} data-testid="btn-back-scenes">
+          <IconArrowLeft /> Retour
+        </button>
+
+        {(onPrevDay !== undefined || onNextDay !== undefined) && (
+          <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 6
+            gap: 6,
+            background: 'var(--bg-1)',
+            padding: '4px 6px',
+            borderRadius: 'var(--r-md)',
+            border: '1px solid var(--line)',
+            boxShadow: 'var(--shadow-soft)'
           }}>
-            📅 {formatDateLong(date)}
-          </span>
-          <span style={{ fontSize: 13.5, color: 'var(--fg-muted)', fontWeight: 600 }}>
-            · {team.length} technicien{team.length > 1 ? 's' : ''}
-          </span>
-        </div>
+            <button
+              type="button"
+              className="btn-back"
+              disabled={!onPrevDay}
+              onClick={onPrevDay}
+              data-testid="btn-prev-day"
+              title="Jour précédent"
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                opacity: onPrevDay ? 1 : 0.4,
+                cursor: onPrevDay ? 'pointer' : 'not-allowed',
+                boxShadow: 'none'
+              }}
+            >
+              <IconArrowLeft />
+              <span>Jour préc.</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-back"
+              disabled={!onNextDay}
+              onClick={onNextDay}
+              data-testid="btn-next-day"
+              title="Jour suivant"
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                opacity: onNextDay ? 1 : 0.4,
+                cursor: onNextDay ? 'pointer' : 'not-allowed',
+                boxShadow: 'none'
+              }}
+            >
+              <span>Jour suiv.</span>
+              <IconArrowRight />
+            </button>
+          </div>
+        )}
       </div>
 
-      {team.length === 0 ? (
-        <div className="empty"><div className="empty-title">Personne sur cette scène ce jour.</div></div>
+      {/* Main card */}
+      {isOff ? (
+        <div
+          className="card scene-detail-card"
+          data-testid="scene-detail-off"
+          style={{
+            marginTop: 4,
+            marginBottom: 16,
+            padding: '24px 20px',
+            borderLeft: '5px solid #475569',
+            background: 'var(--bg-soft)',
+            textAlign: 'center'
+          }}
+        >
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span style={{
+              background: 'var(--on-bg)',
+              color: 'var(--on-fg)',
+              border: '1px solid var(--on-line)',
+              padding: '6px 14px',
+              borderRadius: '999px',
+              fontSize: '14.5px',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              📅 {formatDateLong(date)}
+            </span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: '16px 0'
+          }}>
+            <span
+              className="time-pill off"
+              style={{
+                fontSize: '16px',
+                padding: '8px 22px',
+                borderRadius: '8px',
+                letterSpacing: '0.05em'
+              }}
+            >
+              OFF
+            </span>
+            <div style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '19px',
+              fontWeight: 700,
+              color: 'var(--fg)',
+              marginTop: 4
+            }}>
+              Repos / Congé
+            </div>
+            <div style={{ fontSize: '13.5px', color: 'var(--fg-muted)', maxWidth: 360, lineHeight: 1.4 }}>
+              {employeeName ? `${prettyName(employeeName)} n'a` : "Aucun"} service planifié ce jour.
+            </div>
+          </div>
+        </div>
       ) : (
+        <>
+          <div
+            className="card scene-detail-card"
+            style={{
+              marginTop: 4,
+              marginBottom: 16,
+              padding: '16px 20px',
+              borderLeft: `5px solid ${color.accent}`
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: 21,
+                color: 'var(--fg)',
+                letterSpacing: '-0.01em',
+                overflowWrap: 'anywhere'
+              }}
+              data-testid="text-scene-name"
+            >
+              {cleanName}
+            </div>
+
+            {/* Multiple scenes for technician on this day switcher if applicable */}
+            {availableScenes && availableScenes.length > 1 && onSelectScene && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                {availableScenes.map((sc) => {
+                  const isCurrent = sc === scene;
+                  const scCol = getSceneColor(cleanSceneName(sc));
+                  return (
+                    <button
+                      key={sc}
+                      type="button"
+                      onClick={() => onSelectScene(sc)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '12.5px',
+                        fontWeight: isCurrent ? 700 : 500,
+                        borderRadius: '6px',
+                        border: isCurrent ? `1.5px solid ${scCol.accent}` : '1px solid var(--line)',
+                        background: isCurrent ? `${scCol.accent}25` : 'var(--bg-2)',
+                        color: isCurrent ? 'var(--fg)' : 'var(--fg-muted)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {cleanSceneName(sc)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+              <span style={{
+                background: 'var(--on-bg)',
+                color: 'var(--on-fg)',
+                border: '1px solid var(--on-line)',
+                padding: '5px 12px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}>
+                📅 {formatDateLong(date)}
+              </span>
+              <span style={{ fontSize: 13.5, color: 'var(--fg-muted)', fontWeight: 600 }}>
+                · {team.length} technicien{team.length > 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+
+          {team.length === 0 ? (
+            <div className="empty"><div className="empty-title">Personne sur cette scène ce jour.</div></div>
+          ) : (
         <div className="list" data-testid="list-team">
           {team.map(rec => {
             const isFOVirtual = (rec as any).isFOVirtual;
@@ -1676,6 +1923,8 @@ function SceneDetail({ scene, date, team, onBack, onViewEmployee }: {
             );
           })}
         </div>
+      )}
+        </>
       )}
     </div>
   );
@@ -2240,6 +2489,13 @@ function IconArrowLeft() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="m15 18-6-6 6-6"/>
+    </svg>
+  );
+}
+function IconArrowRight() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m9 18 6-6-6-6"/>
     </svg>
   );
 }
