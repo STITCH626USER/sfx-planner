@@ -5,6 +5,7 @@ import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlob
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
+import { fetchDlpWeather, type DailyWeatherSummary } from './lib/weather';
 
 
 type Tab = 'recherche' | 'daily' | 'shows';
@@ -87,21 +88,27 @@ function ConsoleClock({ onClick, isActive }: { onClick: () => void; isActive?: b
 function DlpShowsPanel() {
   const [shows, setShows] = useState<DlpShow[]>([]);
   const [parkHours, setParkHours] = useState<DlpParkHours>({ disneyland: '09:30 - 23:00', adventureWorld: '09:30 - 21:00' });
+  const [weather, setWeather] = useState<DailyWeatherSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [isOffline, setIsOffline] = useState(false);
   const [parkFilter, setParkFilter] = useState<'ALL' | 'Disneyland Park' | 'Disney Adventure World'>('ALL');
   const [tabFilter, setTabFilter] = useState<'ALL' | 'OPERATING' | 'ENDED' | 'RELACHE'>('ALL');
   const [search, setSearch] = useState('');
+  const weatherScrollRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchDlpShows();
-      setShows(data.shows);
-      if (data.parkHours) setParkHours(data.parkHours);
-      setLastUpdated(data.lastUpdated);
-      setIsOffline(data.isOffline);
+      const [showsData, weatherData] = await Promise.all([
+        fetchDlpShows(),
+        fetchDlpWeather()
+      ]);
+      setShows(showsData.shows);
+      if (showsData.parkHours) setParkHours(showsData.parkHours);
+      setLastUpdated(showsData.lastUpdated);
+      setIsOffline(showsData.isOffline);
+      setWeather(weatherData);
     } finally {
       setLoading(false);
     }
@@ -110,6 +117,20 @@ function DlpShowsPanel() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Auto-scroll hourly weather bar to current hour after load
+  useEffect(() => {
+    if (!weather) return;
+    const timer = setTimeout(() => {
+      if (weatherScrollRef.current) {
+        const curEl = weatherScrollRef.current.querySelector('.dlp-hour-card.is-current');
+        if (curEl) {
+          curEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [weather]);
 
   const filteredShows = shows.filter(s => {
     if (parkFilter !== 'ALL' && s.park !== parkFilter) return false;
@@ -196,6 +217,75 @@ function DlpShowsPanel() {
             <span>{loading ? 'Chargement…' : 'Actualiser'}</span>
           </button>
         </div>
+
+        {/* Weather of the Day & Hourly Scroller Bar */}
+        {weather && (
+          <div className="dlp-weather-section" data-testid="dlp-weather-widget">
+            <div className="dlp-weather-hero">
+              <div className="dlp-weather-main">
+                <div className="dlp-weather-icon-bubble" aria-hidden="true">
+                  {weather.currentIcon}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span className="dlp-weather-temp-badge">{weather.currentTemp}°C</span>
+                    <span className="dlp-weather-condition">{weather.currentLabel}</span>
+                  </div>
+                  <div className="dlp-weather-loc">
+                    <span>📍 {weather.locationName}</span>
+                    <span style={{ opacity: 0.6 }}>·</span>
+                    <span>Min {weather.tempMin}° / Max {weather.tempMax}°</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dlp-weather-meta-pills">
+                <div className="dlp-weather-pill" title="Vent actuel">
+                  <span>💨 Vent</span>
+                  <strong>{weather.currentWind} km/h</strong>
+                </div>
+                <div className="dlp-weather-pill" title="Mise à jour">
+                  <span>🕒 Relevé</span>
+                  <strong>{weather.lastUpdated}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Hourly Weather Scroller */}
+            <div className="dlp-weather-scroll-container">
+              <div
+                ref={weatherScrollRef}
+                className="dlp-weather-hourly-track"
+                data-testid="dlp-weather-hourly-track"
+                role="region"
+                aria-label="Défilement météo heure par heure"
+              >
+                {weather.hourly.map((hItem) => (
+                  <div
+                    key={hItem.timeStr}
+                    className={`dlp-hour-card ${hItem.isCurrentHour ? 'is-current' : ''} ${hItem.isPast ? 'is-past' : ''}`}
+                    data-testid={`weather-hour-${hItem.timeStr.replace(':', '')}`}
+                  >
+                    <span className="dlp-hour-time">{hItem.timeStr}</span>
+                    {hItem.isCurrentHour && <span className="dlp-hour-now-badge">Actuel</span>}
+                    <span className="dlp-hour-icon" aria-hidden="true" title={hItem.weatherLabel}>
+                      {hItem.weatherIcon}
+                    </span>
+                    <span className="dlp-hour-temp">{hItem.temp}°</span>
+                    {hItem.pop > 0 && (
+                      <span className="dlp-hour-pop" title="Risque de pluie">
+                        💧{hItem.pop}%
+                      </span>
+                    )}
+                    <span className="dlp-hour-wind" title="Vitesse du vent">
+                      {hItem.windSpeed} km/h
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Park Hours of the Day Bar */}
         <div

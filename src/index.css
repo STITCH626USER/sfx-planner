@@ -5757,3 +5757,233 @@ nav.seg button[aria-selected="true"] {
   transform: scale(0.97);
 }
 
+/* 7. Disneyland Paris Weather Widget & Hourly Scroller */
+.dlp-weather-section {
+  padding: 14px 18px;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border-bottom: 1px solid var(--line-light, rgba(255, 255, 255, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+:root[data-theme="light"] .dlp-weather-section {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.dlp-weather-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.dlp-weather-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dlp-weather-icon-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+}
+
+:root[data-theme="light"] .dlp-weather-icon-bubble {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.dlp-weather-temp-badge {
+  font-family: var(--font-display, sans-serif);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.dlp-weather-condition {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-top: 3px;
+}
+
+.dlp-weather-loc {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dlp-weather-meta-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dlp-weather-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line-light, rgba(255, 255, 255, 0.08));
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+:root[data-theme="light"] .dlp-weather-pill {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #475569;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dlp-weather-pill strong {
+  color: var(--fg);
+}
+
+/* Hourly Scroller */
+.dlp-weather-scroll-container {
+  position: relative;
+  width: 100%;
+}
+
+.dlp-weather-hourly-track {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 2px 8px 2px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dlp-weather-hourly-track::-webkit-scrollbar {
+  height: 4px;
+}
+
+.dlp-weather-hourly-track::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.dlp-weather-hourly-track::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+:root[data-theme="light"] .dlp-weather-hourly-track::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dlp-hour-card {
+  flex: 0 0 68px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line-light, rgba(255, 255, 255, 0.07));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+
+:root[data-theme="light"] .dlp-hour-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dlp-hour-card.is-current {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  transform: translateY(-2px);
+}
+
+:root[data-theme="light"] .dlp-hour-card.is-current {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+.dlp-hour-card.is-past {
+  opacity: 0.55;
+}
+
+.dlp-hour-time {
+  font-family: 'JetBrains Mono', var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fg-muted);
+}
+
+.dlp-hour-card.is-current .dlp-hour-time {
+  color: var(--amber);
+}
+
+.dlp-hour-now-badge {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: var(--amber);
+  color: #0c0f15;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-top: -2px;
+}
+
+.dlp-hour-icon {
+  font-size: 20px;
+  line-height: 1.1;
+  margin: 2px 0;
+}
+
+.dlp-hour-temp {
+  font-family: var(--font-display, sans-serif);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--fg);
+}
+
+.dlp-hour-pop {
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+:root[data-theme="light"] .dlp-hour-pop {
+  color: #0284c7;
+}
+
+.dlp-hour-wind {
+  font-size: 9.5px;
+  color: var(--fg-muted);
+}
+
+
