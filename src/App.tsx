@@ -806,6 +806,9 @@ export default function App() {
 
           <div className="apple-legal-notice">
             <span>⚠️ Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.</span>
+            <div style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
+              <button onClick={() => setShowLegalMentions(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Mentions Légales</button>
+            </div>
           </div>
         </main>
 
