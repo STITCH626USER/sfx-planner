@@ -533,6 +533,7 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showLegalMentions, setShowLegalMentions] = useState(false);
   const [previousTab, setPreviousTab] = useState<Tab>('daily');
 
   // PWA Installation state and hooks
@@ -1022,6 +1023,9 @@ export default function App() {
               <strong style={{ color: 'var(--amber)', marginRight: '6px' }}>⚠️</strong>
               Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.
             </span>
+            <div style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
+              <button onClick={() => setShowLegalMentions(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Mentions Légales</button>
+            </div>
           </div>
         </footer>
         <ScrollToTop />
@@ -1056,6 +1060,42 @@ export default function App() {
               >
                 Tout effacer
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLegalMentions && (
+        <div className="export-overlay" data-testid="legal-mentions-overlay" onClick={() => setShowLegalMentions(false)}>
+          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="export-head">
+              <div className="export-title">Mentions Légales</div>
+              <button className="icon-btn" onClick={() => setShowLegalMentions(false)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div className="export-body" style={{ overflowY: 'auto', padding: '24px', fontSize: '14px', color: 'var(--fg-muted)', lineHeight: '1.6' }}>
+              <h3 style={{ color: 'var(--fg)', marginTop: 0, marginBottom: '8px' }}>1. Éditeur du site</h3>
+              <p>L'application web <strong>SFX Planner</strong> est un outil interne développé à titre privé pour faciliter la visualisation des plannings.</p>
+              
+              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>2. Hébergement</h3>
+              <p>Le site est hébergé par <strong>GitHub Pages</strong>.<br/>
+              GitHub Inc.<br/>
+              88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</p>
+              
+              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>3. Propriété intellectuelle</h3>
+              <p>L'ensemble du code source, des graphismes, textes, et autres éléments du site sont la propriété exclusive de leur auteur. Toute reproduction, même partielle, est strictement interdite sans accord préalable.</p>
+              
+              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>4. Données personnelles et Cookies</h3>
+              <p>Cette application fonctionne <strong>100% en local</strong> sur votre appareil (navigateur).<br/>
+              Aucune donnée personnelle n'est collectée, stockée sur un serveur distant, ni partagée à des tiers.<br/>
+              Aucun cookie de traçage n'est utilisé. Le stockage local est uniquement utilisé pour le fonctionnement de l'application (sauvegarde de vos paramètres et plannings importés).</p>
+
+              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>5. Responsabilité</h3>
+              <p>L'auteur décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations extraites de cette application. En cas de doute, seul le planning officiel (UKG) fait foi.</p>
+            </div>
+            <div className="export-foot" style={{ justifyContent: 'flex-end', padding: '16px 24px' }}>
+              <button className="btn btn-secondary" onClick={() => setShowLegalMentions(false)}>Fermer</button>
             </div>
           </div>
         </div>
