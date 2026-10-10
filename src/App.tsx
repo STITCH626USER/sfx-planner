@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
-import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
+import { exportEmployeePdf } from './lib/exportPdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
@@ -2125,7 +2125,6 @@ function DailyDateBar({ records, date, onDateChange }: {
 function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const scrollPos = useRef(0);
-  const [showExport, setShowExport] = useState(false);
 
   const handleSelectEmployee = (emp: string) => {
     scrollPos.current = window.scrollY;
@@ -2363,103 +2362,6 @@ function EmptyAllPanel() {
   return <div className="empty" data-testid="empty-root" />;
 }
 
-function ExportDialog({ records, date, onClose }: { records: PlanningRecord[]; date: string; onClose: () => void }) {
-  const [mode, setMode] = useState<'day' | 'scene' | 'global'>('day');
-  const scenes = useMemo(() => listScenes(records), [records]);
-  const [selectedScene, setSelectedScene] = useState<string>('ALL');
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const handleExport = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      if (mode === 'day') {
-        await exportDayPdf(date, records);
-      } else if (mode === 'scene' && selectedScene) {
-        if (selectedScene === 'ALL') {
-          for (const s of scenes) {
-            await exportScenePdf(s, records);
-            // small delay to prevent browser from blocking multiple downloads
-            await new Promise(r => setTimeout(r, 500));
-          }
-        } else {
-          await exportScenePdf(selectedScene, records);
-        }
-      } else if (mode === 'global') {
-        await exportGlobalRecapPdf(records);
-      }
-      onClose();
-    } catch (e) {
-      console.error('PDF export failed', e);
-      alert('Une erreur est survenue lors de l’export PDF. Veuillez vérifier les autorisations de votre navigateur.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-
-
-  return (
-    <div className="export-overlay" data-testid="export-overlay" onClick={onClose}>
-      <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="export-head">
-          <div className="export-title">Exporter en PDF</div>
-          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
-        </div>
-        <div className="export-body">
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'day' ? ' on' : '')}
-            onClick={() => setMode('day')}
-          >
-            <span className="export-opt-title">Journée du {formatDateLong(date)}</span>
-          </button>
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'scene' ? ' on' : '')}
-            onClick={() => setMode('scene')}
-          >
-            <span className="export-opt-title">Scène sur la période exportée</span>
-          </button>
-          <button
-            type="button"
-            className={'export-opt' + (mode === 'global' ? ' on' : '')}
-            onClick={() => setMode('global')}
-          >
-            <span className="export-opt-title">Vue globale</span>
-          </button>
-          {mode === 'scene' && (
-            <select
-              className="export-scene-select"
-              value={selectedScene}
-              onChange={e => setSelectedScene(e.target.value)}
-            >
-              <option value="ALL">Toutes les scènes (un fichier par scène)</option>
-              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-        </div>
-        <div className="export-foot">
-          <button type="button" className="btn-link" onClick={onClose}>Annuler</button>
-          <button
-            type="button"
-            className="btn"
-            disabled={busy || (mode === 'scene' && !selectedScene)}
-            onClick={handleExport}
-          >
-            {busy ? 'Génération…' : 'Exporter'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function IconSun() {
   return (
