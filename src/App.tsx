@@ -2124,7 +2124,6 @@ function DailyDateBar({ records, date, onDateChange }: {
 
 function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
-  const [openScenes, setOpenScenes] = useState<Set<string>>(new Set());
   const scrollPos = useRef(0);
   const [showExport, setShowExport] = useState(false);
 
@@ -2144,59 +2143,11 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
   const present = useMemo(() => {
     return records.filter(r => r.date === date && r.time !== 'OFF').sort((a, b) => {
-      const byScene = a.scene.localeCompare(b.scene, 'fr');
-      if (byScene !== 0) return byScene;
+      const byTime = a.time.localeCompare(b.time);
+      if (byTime !== 0) return byTime;
       return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
     });
   }, [records, date]);
-
-  const byScene = useMemo(() => {
-    const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
-    for (const r of records) {
-      if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
-        let clean = cleanSceneName(r.scene);
-        if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
-          if (!dateToScenes.has(r.date)) dateToScenes.set(r.date, []);
-          dateToScenes.get(r.date)!.push({time: r.time, clean});
-        }
-      }
-    }
-
-    const groups = new Map<string, Array<PlanningRecord & { assocScenes?: string[] }>>();
-    for (const rec of present) {
-      let groupName = cleanSceneName(rec.scene);
-      let displayName = prettyName(rec.employee);
-      
-      let assocScenes: string[] | undefined;
-      
-      if (isTrainingScene(rec.scene)) {
-        groupName = 'Formations';
-        if (rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
-          let detail = rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
-          detail = cleanSceneName(detail);
-          if (detail) displayName = `${displayName} (${detail})`;
-        }
-        const scenesOfDate = dateToScenes.get(rec.date) || [];
-        const matched = new Set<string>();
-        for (const sc of scenesOfDate) {
-          if (timesMatch(sc.time, rec.time, 5)) matched.add(sc.clean);
-        }
-        matched.add('Formation autre');
-        if (matched.size > 0) assocScenes = Array.from(matched).sort();
-      }
-      
-      if (!groups.has(groupName)) groups.set(groupName, []);
-      // We pass a cloned record with the updated display name so the UI shows it
-      groups.get(groupName)!.push({ ...rec, employee: displayName, assocScenes, originalEmployeeName: rec.employee } as any);
-    }
-    return Array.from(groups.entries()).sort((a, b) => {
-      const aFO = isTrainingScene(a[0]);
-      const bFO = isTrainingScene(b[0]);
-      if (aFO && !bFO) return 1;
-      if (!aFO && bFO) return -1;
-      return a[0].localeCompare(b[0], 'fr');
-    });
-  }, [present, records]);
 
   const uniqueTechs = useMemo(() => {
     return new Set(present.map(r => r.employee)).size;
@@ -2238,148 +2189,65 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
               <div className="section-title" style={{ textTransform: 'capitalize' }}>{formatDateLong(date)}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                type="button"
-                className="btn-export"
-                data-testid="btn-export-pdf"
-                aria-label="Exporter en PDF"
-                onClick={() => setShowExport(true)}
-              >
-                <IconDownload />
-                <span>Export PDF</span>
-              </button>
               <div className="section-count" data-testid="text-count-daily">{present.length}</div>
             </div>
           </div>
 
-          {showExport && (
-            <ExportDialog
-              records={records}
-              date={date}
-              onClose={() => setShowExport(false)}
-            />
-          )}
-
-          {byScene.length === 0 ? (
+          {present.length === 0 ? (
             <div className="empty" data-testid="empty-daily">
               <div className="empty-icon"><IconCalendar /></div>
               <div className="empty-title">Personne présent ce jour</div>
               <div className="empty-sub">Aucun technicien avec une scène planifiée sur cette date.</div>
             </div>
           ) : (
-            <div className="daily-groups" data-testid="list-daily-scenes">
-              {byScene.map(([scene, sceneRecords], sIndex) => {
-                const scColor = getSceneColor(cleanSceneName(scene));
-                return (
-                <section
-                  className="daily-scene-group animate-fade-in"
-                  key={scene}
-                  data-testid={`scene-group-${scene}`}
-                  style={{ 
-                    animationDelay: `${sIndex * 0.05}s`,
-                    borderLeft: `5px solid ${scColor.accent}`,
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="daily-group-head"
-                    data-testid={`scene-card-${scene}`}
-                    onClick={() => {
-                      setOpenScenes(prev => {
-                        const next = new Set(prev);
-                        if (next.has(scene)) next.delete(scene);
-                        else next.add(scene);
-                        return next;
-                      });
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      cursor: 'pointer', 
-                      background: `linear-gradient(90deg, ${scColor.accent}22, transparent)`,
-                      borderLeft: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      textAlign: 'left',
-                      borderRight: 'none',
-                      borderTop: 'none',
-                      borderBottom: openScenes.has(scene) ? '1px solid var(--line)' : 'none'
-                    }}
-                  >
-                    <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene" style={{ fontSize: '17px', fontWeight: 700 }}>{cleanSceneName(scene)}</div>
-                      {openScenes.has(scene) && (
-                        <div style={{ fontSize: '12.5px', color: 'var(--fg-muted)', marginTop: '4px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
-                          {formatDateLong(date)} · {sceneRecords.length} technicien(s)
-                        </div>
-                      )}
-                    </div>
-                    <span
-                      className="daily-group-count"
-                      style={{
-                        background: scColor.accent,
-                        color: '#ffffff',
-                        border: `1px solid ${scColor.accent}`,
-                        boxShadow: `0 2px 8px ${scColor.accent}45`,
-                        fontWeight: 800,
-                      }}
-                      aria-hidden="true"
+            <div className="daily-groups animate-fade-in" data-testid="list-daily-scenes">
+              <div className="compact-list" style={{ background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                {present.map(rec => {
+                  const isFO = isTrainingScene(rec.scene);
+                  let detailFO = '';
+                  if (isFO && rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
+                    detailFO = cleanSceneName(rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, ''));
+                  }
+                  
+                  return (
+                    <div
+                      className="compact-team-row"
+                      key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}
+                      data-testid={`scene-tech-all-${rec.employee}`}
                     >
-                      {sceneRecords.length}
-                    </span>
-                  </button>
-                  <div className={`compact-list-wrapper ${openScenes.has(scene) ? 'expanded' : ''}`}>
-                    <div className="compact-list" data-testid={`scene-team-${scene}`}>
-                    {sceneRecords.map(rec => {
-                      const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
-                      const isFOVirtual = extRec.isFOVirtual;
-                      const assocScenes = extRec.assocScenes;
-                      const originalScene = extRec.originalScene;
-                      const isFO = isTrainingScene(rec.scene) || isFOVirtual;
-                      return (
-                        <div
-                          className="compact-team-row"
-                          key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}
-                          data-testid={`scene-tech-${scene}-${rec.employee}`}
-                        >
-                          <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
-                          <div style={{ minWidth: 0 }}>
-                            <div className="team-name compact-name">
-                              {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
-                            </div>
-                            <div className="team-meta compact-meta">
-                              {rec.weekLabel}
-                              {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
-                              {rec.shiftTime && rec.shiftTime !== rec.time && (
-                                <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
-                                  · Journée {rec.shiftTime}
-                                </span>
-                              )}
-                              {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
-                                <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
-                                  (peut correspondre à {assocScenes.join(', ')})
-                                </div>
-                              )}
-                              {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
-                            </div>
-                          </div>
-                          <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
-                          <button
-                            type="button"
-                            className="btn-eye compact-eye"
-                            data-testid={`btn-view-tech-${rec.employee}`}
-                            onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
-                          >
-                            <IconEye />
-                          </button>
+                      <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="team-name compact-name">
+                          {prettyName(rec.employee)}
                         </div>
-                      );
-                    })}
-                  </div>
-                  </div>
-                </section>
-                );
-              })}
+                        <div className="team-meta compact-meta">
+                          {rec.weekLabel}
+                          {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
+                          {rec.shiftTime && rec.shiftTime !== rec.time && (
+                            <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
+                              · Journée {rec.shiftTime}
+                            </span>
+                          )}
+                          {isFO && (
+                            <span style={{ color: 'var(--muted)', fontSize: '0.9em', marginLeft: 6 }}>
+                              · Formation {detailFO ? `(${detailFO})` : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
+                      <button
+                        type="button"
+                        className="btn-eye compact-eye"
+                        data-testid={`btn-view-tech-${rec.employee}`}
+                        onClick={() => handleSelectEmployee(rec.employee)}
+                      >
+                        <IconEye />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </>
