@@ -2239,28 +2239,14 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   
                   const isNewTime = index === 0 || filteredPresent[index - 1].time !== rec.time;
                   
-                  const elements = [];
-                  if (isNewTime) {
-                    elements.push(
-                      <div key={`sep-${rec.time}-${index}`} style={{
-                        padding: '6px 12px',
-                        borderTop: index === 0 ? 'none' : '1px solid var(--border)',
-                        borderBottom: '1px solid var(--border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'var(--bg-1)',
-                      }}>
-                        <div style={{ width: '4px', height: '14px', borderRadius: '2px', background: getSceneColor(rec.time).accent }} />
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: getSceneColor(rec.time).accent }}>{rec.time}</span>
-                      </div>
-                    );
-                  }
-                  
-                  elements.push(
+                  return (
                     <div
                       className="compact-team-row"
-                      style={{ borderTop: isNewTime ? 'none' : undefined }}
+                      style={{ 
+                        background: `rgba(${getSceneColor(rec.time).rgbAccent.join(',')}, 0.08)`,
+                        borderLeft: `4px solid ${getSceneColor(rec.time).accent}`,
+                        borderTop: isNewTime && index !== 0 ? '4px solid var(--bg-1)' : undefined,
+                      }}
                       key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}
                       data-testid={`scene-tech-all-${rec.employee}`}
                     >
@@ -2295,7 +2281,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       </button>
                     </div>
                   );
-                  return elements;
                 })}
               </div>
             </div>
