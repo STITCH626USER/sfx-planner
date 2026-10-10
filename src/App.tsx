@@ -2243,7 +2243,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     <div
                       className="compact-team-row"
                       style={{ 
-                        background: `rgba(${getSceneColor(rec.time).rgbAccent.join(',')}, 0.08)`,
+                        background: `rgba(${getSceneColor(rec.time).rgbAccent.join(',')}, 0.15)`,
                         borderLeft: `4px solid ${getSceneColor(rec.time).accent}`,
                         borderTop: isNewTime && index !== 0 ? '4px solid var(--bg-1)' : undefined,
                       }}
