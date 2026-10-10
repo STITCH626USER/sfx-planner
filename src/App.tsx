@@ -2124,6 +2124,7 @@ function DailyDateBar({ records, date, onDateChange }: {
 
 function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [dailySearch, setDailySearch] = useState('');
   const scrollPos = useRef(0);
 
   const handleSelectEmployee = (emp: string) => {
@@ -2147,6 +2148,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
     });
   }, [records, date]);
+
+  const filteredPresent = useMemo(() => {
+    if (!dailySearch.trim()) return present;
+    const q = dailySearch.toLowerCase();
+    return present.filter(r => prettyName(r.employee).toLowerCase().includes(q));
+  }, [present, dailySearch]);
 
   const uniqueTechs = useMemo(() => {
     return new Set(present.map(r => r.employee)).size;
@@ -2192,25 +2199,68 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
             </div>
           </div>
 
-          {present.length === 0 ? (
+          <div style={{ margin: '0 0 16px 0', position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', display: 'flex', pointerEvents: 'none' }}>
+              <IconSearch />
+            </div>
+            <input
+              type="search"
+              placeholder="Rechercher un technicien ce jour..."
+              value={dailySearch}
+              onChange={e => setDailySearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px 10px 38px',
+                borderRadius: 'var(--r-md)',
+                border: '1px solid var(--border)',
+                background: 'var(--card-bg)',
+                color: 'var(--fg)',
+                fontSize: '14px',
+                boxShadow: 'var(--shadow-soft)'
+              }}
+            />
+          </div>
+
+          {filteredPresent.length === 0 ? (
             <div className="empty" data-testid="empty-daily">
               <div className="empty-icon"><IconCalendar /></div>
-              <div className="empty-title">Personne présent ce jour</div>
-              <div className="empty-sub">Aucun technicien avec une scène planifiée sur cette date.</div>
+              <div className="empty-title">Personne trouvé</div>
+              <div className="empty-sub">Aucun technicien ne correspond à votre recherche ce jour.</div>
             </div>
           ) : (
             <div className="daily-groups animate-fade-in" data-testid="list-daily-scenes">
               <div className="compact-list" style={{ background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                {present.map(rec => {
+                {filteredPresent.map((rec, index) => {
                   const isFO = isTrainingScene(rec.scene);
                   let detailFO = '';
                   if (isFO && rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
                     detailFO = cleanSceneName(rec.scene.replace(/^(formation|fo)\s*(-\s*)?/i, ''));
                   }
                   
-                  return (
+                  const isNewTime = index === 0 || filteredPresent[index - 1].time !== rec.time;
+                  
+                  const elements = [];
+                  if (isNewTime) {
+                    elements.push(
+                      <div key={`sep-${rec.time}-${index}`} style={{
+                        padding: '6px 12px',
+                        borderTop: index === 0 ? 'none' : '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'var(--bg-1)',
+                      }}>
+                        <div style={{ width: '4px', height: '14px', borderRadius: '2px', background: getSceneColor(rec.time).accent }} />
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: getSceneColor(rec.time).accent }}>{rec.time}</span>
+                      </div>
+                    );
+                  }
+                  
+                  elements.push(
                     <div
                       className="compact-team-row"
+                      style={{ borderTop: isNewTime ? 'none' : undefined }}
                       key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}
                       data-testid={`scene-tech-all-${rec.employee}`}
                     >
@@ -2245,6 +2295,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       </button>
                     </div>
                   );
+                  return elements;
                 })}
               </div>
             </div>
