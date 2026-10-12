@@ -2142,8 +2142,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
 
 
-  const present = useMemo(() => {
-    return records.filter(r => r.date === date && r.time !== 'OFF').sort((a, b) => {
+  const allForDate = useMemo(() => {
+    return records.filter(r => r.date === date).sort((a, b) => {
       const byScene = a.scene.localeCompare(b.scene, 'fr');
       if (byScene !== 0) return byScene;
       return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
@@ -2151,13 +2151,14 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [records, date]);
 
   const filteredPresent = useMemo(() => {
-    if (!dailySearch.trim()) return present;
+    if (!dailySearch.trim()) return allForDate.filter(r => r.time !== 'OFF');
     const q = dailySearch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    return present.filter(r => prettyName(r.employee).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(q));
-  }, [present, dailySearch]);
+    return allForDate.filter(r => prettyName(r.employee).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(q));
+  }, [allForDate, dailySearch]);
 
   const uniqueTechs = useMemo(() => {
-    return new Set(filteredPresent.map(r => r.employee)).size;
+    // Only count people actually working, even during search
+    return new Set(filteredPresent.filter(r => r.time !== 'OFF').map(r => r.employee)).size;
   }, [filteredPresent]);
 
   const byScene = useMemo(() => {
@@ -2206,7 +2207,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       if (!aFO && bFO) return -1;
       return a[0].localeCompare(b[0], 'fr');
     });
-  }, [present, records]);
+  }, [filteredPresent, records]);
 
 
 
@@ -2292,8 +2293,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           {byScene.length === 0 ? (
             <div className="empty" data-testid="empty-daily">
               <div className="empty-icon"><IconCalendar /></div>
-              <div className="empty-title">Personne présent ce jour</div>
-              <div className="empty-sub">Aucun technicien avec une scène planifiée sur cette date.</div>
+              <div className="empty-title">{dailySearch.trim() ? "Aucun technicien trouvé" : "Personne présent ce jour"}</div>
+              <div className="empty-sub">{dailySearch.trim() ? `Aucun technicien ne correspond à la recherche "${dailySearch}".` : "Aucun technicien avec une scène planifiée sur cette date."}</div>
             </div>
           ) : (
             <div className="daily-groups" data-testid="list-daily-scenes">
