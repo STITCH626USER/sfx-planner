@@ -2256,7 +2256,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
           <div style={{ padding: '0 16px', marginBottom: 24 }}>
             <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
-              <IconSearch style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5, width: 20, height: 20 }} />
+              <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5, width: 20, height: 20, display: 'flex', alignItems: 'center' }}>
+                <IconSearch />
+              </div>
               <input 
                 type="text"
                 placeholder="Rechercher un technicien ce jour..."
@@ -2387,7 +2389,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
               })}
             </div>
           )}
-        </>
       </div>
     </>
   );
