@@ -2124,9 +2124,9 @@ function DailyDateBar({ records, date, onDateChange }: {
 
 function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: PlanningRecord[]; date: string; onDateChange: (d: string) => void }) {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
-  const [openScenes, setOpenScenes] = useState<Set<string>>(new Set());
   const scrollPos = useRef(0);
   const [showExport, setShowExport] = useState(false);
+  const [dailySearch, setDailySearch] = useState('');
 
   const handleSelectEmployee = (emp: string) => {
     scrollPos.current = window.scrollY;
@@ -2150,6 +2150,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     });
   }, [records, date]);
 
+  const filteredPresent = useMemo(() => {
+    if (!dailySearch.trim()) return present;
+    const q = dailySearch.toLowerCase();
+    return present.filter(r => prettyName(r.employee).toLowerCase().includes(q));
+  }, [present, dailySearch]);
+
   const byScene = useMemo(() => {
     const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
     for (const r of records) {
@@ -2163,7 +2169,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     }
 
     const groups = new Map<string, Array<PlanningRecord & { assocScenes?: string[] }>>();
-    for (const rec of present) {
+    for (const rec of filteredPresent) {
       let groupName = cleanSceneName(rec.scene);
       let displayName = prettyName(rec.employee);
       
@@ -2226,29 +2232,38 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         />
       </div>
       <div data-testid="panel-daily">
-        <>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 16px', marginBottom: 16 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)' }}>{uniqueTechs}</span>
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>techniciens présents</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
+            <div className="section-title" style={{ textTransform: 'capitalize', fontSize: 18, marginBottom: 8 }}>{formatDateLong(date)}</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 16px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)' }}>{uniqueTechs}</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>techniciens présents</span>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <button
+              type="button"
+              className="btn-export"
+              data-testid="btn-export-pdf"
+              aria-label="Exporter en PDF"
+              onClick={() => setShowExport(true)}
+            >
+              <IconDownload />
+              <span>Export PDF</span>
+            </button>
           </div>
 
-          <div className="section-h" style={{ marginTop: 6 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="section-title" style={{ textTransform: 'capitalize' }}>{formatDateLong(date)}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                type="button"
-                className="btn-export"
-                data-testid="btn-export-pdf"
-                aria-label="Exporter en PDF"
-                onClick={() => setShowExport(true)}
-              >
-                <IconDownload />
-                <span>Export PDF</span>
-              </button>
-              <div className="section-count" data-testid="text-count-daily">{present.length}</div>
+          <div style={{ padding: '0 16px', marginBottom: 24 }}>
+            <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
+              <IconSearch style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5, width: 20, height: 20 }} />
+              <input 
+                type="text"
+                placeholder="Rechercher un technicien ce jour..."
+                value={dailySearch}
+                onChange={(e) => setDailySearch(e.target.value)}
+                style={{ width: '100%', padding: '12px 16px 12px 44px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--fg)', fontSize: 15 }}
+              />
             </div>
           </div>
 
@@ -2280,21 +2295,11 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     borderLeft: `5px solid ${scColor.accent}`,
                   }}
                 >
-                  <button
-                    type="button"
+                  <div
                     className="daily-group-head"
                     data-testid={`scene-card-${scene}`}
-                    onClick={() => {
-                      setOpenScenes(prev => {
-                        const next = new Set(prev);
-                        if (next.has(scene)) next.delete(scene);
-                        else next.add(scene);
-                        return next;
-                      });
-                    }}
                     style={{ 
                       width: '100%', 
-                      cursor: 'pointer', 
                       background: `linear-gradient(90deg, ${scColor.accent}22, transparent)`,
                       borderLeft: 'none',
                       display: 'flex',
@@ -2303,16 +2308,15 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       textAlign: 'left',
                       borderRight: 'none',
                       borderTop: 'none',
-                      borderBottom: openScenes.has(scene) ? '1px solid var(--line)' : 'none'
+                      borderBottom: '1px solid var(--line)',
+                      padding: '10px 16px'
                     }}
                   >
                     <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene" style={{ fontSize: '17px', fontWeight: 700 }}>{cleanSceneName(scene)}</div>
-                      {openScenes.has(scene) && (
-                        <div style={{ fontSize: '12.5px', color: 'var(--fg-muted)', marginTop: '4px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
-                          {formatDateLong(date)} · {sceneRecords.length} technicien(s)
-                        </div>
-                      )}
+                      <div className="daily-group-scene" style={{ fontSize: '15px', fontWeight: 600 }}>{cleanSceneName(scene)}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--fg-muted)', marginTop: '2px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
+                        {sceneRecords.length} technicien(s)
+                      </div>
                     </div>
                     <span
                       className="daily-group-count"
@@ -2322,13 +2326,14 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                         border: `1px solid ${scColor.accent}`,
                         boxShadow: `0 2px 8px ${scColor.accent}45`,
                         fontWeight: 800,
+                        transform: 'scale(0.85)'
                       }}
                       aria-hidden="true"
                     >
                       {sceneRecords.length}
                     </span>
-                  </button>
-                  <div className={`compact-list-wrapper ${openScenes.has(scene) ? 'expanded' : ''}`}>
+                  </div>
+                  <div className="compact-list-wrapper expanded">
                     <div className="compact-list" data-testid={`scene-team-${scene}`}>
                     {sceneRecords.map(rec => {
                       const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
