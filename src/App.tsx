@@ -2152,9 +2152,13 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
   const filteredPresent = useMemo(() => {
     if (!dailySearch.trim()) return present;
-    const q = dailySearch.toLowerCase();
-    return present.filter(r => prettyName(r.employee).toLowerCase().includes(q));
+    const q = dailySearch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return present.filter(r => prettyName(r.employee).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(q));
   }, [present, dailySearch]);
+
+  const uniqueTechs = useMemo(() => {
+    return new Set(filteredPresent.map(r => r.employee)).size;
+  }, [filteredPresent]);
 
   const byScene = useMemo(() => {
     const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
@@ -2204,9 +2208,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     });
   }, [present, records]);
 
-  const uniqueTechs = useMemo(() => {
-    return new Set(present.map(r => r.employee)).size;
-  }, [present]);
+
 
 
 
