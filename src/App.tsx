@@ -2255,16 +2255,26 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           </div>
 
           <div style={{ padding: '0 16px', marginBottom: 24 }}>
-            <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
-              <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.5, width: 20, height: 20, display: 'flex', alignItems: 'center' }}>
+            <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto', display: 'flex' }}>
+              <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.7, width: 20, height: 20, display: 'flex', alignItems: 'center' }}>
                 <IconSearch />
               </div>
               <input 
                 type="text"
-                placeholder="Rechercher un technicien ce jour..."
+                placeholder="Rechercher un technicien..."
                 value={dailySearch}
                 onChange={(e) => setDailySearch(e.target.value)}
-                style={{ width: '100%', padding: '12px 16px 12px 44px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--card-bg)', color: 'var(--fg)', fontSize: 15 }}
+                style={{ 
+                  width: '100%', 
+                  padding: '12px 16px 12px 44px', 
+                  borderRadius: 24, 
+                  border: '1px solid rgba(255,255,255,0.15)', 
+                  background: 'rgba(0,0,0,0.2)', 
+                  color: 'var(--fg)', 
+                  fontSize: 15,
+                  outline: 'none',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                }}
               />
             </div>
           </div>
@@ -2289,51 +2299,31 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 const scColor = getSceneColor(cleanSceneName(scene));
                 return (
                 <section
-                  className="daily-scene-group animate-fade-in"
+                  className="animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
                   style={{ 
                     animationDelay: `${sIndex * 0.05}s`,
-                    borderLeft: `5px solid ${scColor.accent}`,
+                    marginBottom: 24
                   }}
                 >
                   <div
-                    className="daily-group-head"
-                    data-testid={`scene-card-${scene}`}
-                    style={{ 
-                      width: '100%', 
-                      background: `linear-gradient(90deg, ${scColor.accent}22, transparent)`,
-                      borderLeft: 'none',
+                    style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      textAlign: 'left',
-                      borderRight: 'none',
-                      borderTop: 'none',
-                      borderBottom: '1px solid var(--line)',
-                      padding: '10px 16px'
+                      gap: 8,
+                      marginBottom: 12,
+                      padding: '0 16px'
                     }}
                   >
-                    <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene" style={{ fontSize: '15px', fontWeight: 600 }}>{cleanSceneName(scene)}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--fg-muted)', marginTop: '2px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
-                        {sceneRecords.length} technicien(s)
-                      </div>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: scColor.accent, flexShrink: 0 }} />
+                    <div style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', color: scColor.accent, letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                      {cleanSceneName(scene)}
                     </div>
-                    <span
-                      className="daily-group-count"
-                      style={{
-                        background: scColor.accent,
-                        color: '#ffffff',
-                        border: `1px solid ${scColor.accent}`,
-                        boxShadow: `0 2px 8px ${scColor.accent}45`,
-                        fontWeight: 800,
-                        transform: 'scale(0.85)'
-                      }}
-                      aria-hidden="true"
-                    >
+                    <div style={{ fontSize: '11px', color: 'var(--muted)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: 10, fontWeight: 600 }}>
                       {sceneRecords.length}
-                    </span>
+                    </div>
+                    <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${scColor.accent}44, transparent)`, marginLeft: 4 }} />
                   </div>
                   <div className="compact-list-wrapper expanded">
                     <div className="compact-list" data-testid={`scene-team-${scene}`}>
