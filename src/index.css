@@ -1731,50 +1731,12 @@ input:focus, select:focus {
     padding: 0;
   }
 
-  /* Option 3: Full-width compact scenes with responsive technician chips grid on desktop */
+  /* Desktop daily groups grid layout */
   .daily-groups {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-
-  .daily-scene-group {
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
-    overflow: hidden;
-    box-shadow: var(--shadow-soft);
-  }
-
-  .compact-list {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-    gap: 8px !important;
-    padding: 12px 14px !important;
-    background: rgba(0, 0, 0, 0.08) !important;
-  }
-
-  :root[data-theme="light"] .compact-list {
-    background: rgba(0, 0, 0, 0.02) !important;
-  }
-
-  .compact-team-row {
-    border: 1px solid var(--line) !important;
-    border-radius: var(--r-sm) !important;
-    background: var(--card-bg) !important;
-    padding: 8px 12px !important;
-    gap: 10px !important;
-  }
-
-  .compact-team-row + .compact-team-row {
-    border-top: 1px solid var(--line) !important;
-  }
-
-  .compact-team-row:hover {
-    background: var(--bg-2) !important;
-    border-color: var(--line-strong) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
+    gap: 20px !important;
+    align-items: start !important;
   }
 }
 

@@ -2205,6 +2205,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       const bFO = isTrainingScene(b[0]);
       if (aFO && !bFO) return 1;
       if (!aFO && bFO) return -1;
+      // Sort by team size descending (biggest teams first)
+      const countDiff = b[1].length - a[1].length;
+      if (countDiff !== 0) return countDiff;
       return a[0].localeCompare(b[0], 'fr');
     });
   }, [filteredPresent, records]);
