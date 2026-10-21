@@ -2408,9 +2408,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                           >
                             <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
                             <div style={{ minWidth: 0 }}>
-                              <div className="team-name compact-name" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                <span>{isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}</span>
-                                {rec.role && <span className="role-pill">{rec.role}</span>}
+                              <div className="team-name compact-name">
+                                {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                               </div>
                               <div className="team-meta compact-meta">
                                 <span>{rec.weekLabel}</span>
@@ -2426,6 +2425,13 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                                 )}
                                 {isFOVirtual && originalScene && <span style={{ color: 'var(--muted)' }}> · En formation ({originalScene})</span>}
                               </div>
+                            </div>
+                            <div className="compact-role-cell">
+                              {rec.role ? (
+                                <span className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}>
+                                  {rec.role}
+                                </span>
+                              ) : null}
                             </div>
                             <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
                             <button
