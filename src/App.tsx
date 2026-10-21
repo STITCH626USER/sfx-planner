@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus, parseRange } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
 import { fetchDlpWeather, type DailyWeatherSummary } from './lib/weather';
@@ -2200,6 +2200,34 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       // We pass a cloned record with the updated display name so the UI shows it
       groups.get(groupName)!.push({ ...rec, employee: displayName, assocScenes, originalEmployeeName: rec.employee } as any);
     }
+
+    // Sort technicians inside each scene group:
+    // 1. Day shift first (start < 18:00), Night shift next (start >= 18:00)
+    // 2. Earliest start time to latest
+    // 3. Name alphabetical
+    for (const [, teamList] of groups.entries()) {
+      teamList.sort((a, b) => {
+        const rangeA = parseRange(a.time);
+        const rangeB = parseRange(b.time);
+        const startA = rangeA ? rangeA.start : 9999;
+        const startB = rangeB ? rangeB.start : 9999;
+
+        // Define night shift: starts at or after 18:00 (1080 min)
+        const isNightA = startA >= 18 * 60;
+        const isNightB = startB >= 18 * 60;
+
+        if (isNightA !== isNightB) {
+          return isNightA ? 1 : -1; // Day shifts first, night shifts after
+        }
+
+        if (startA !== startB) {
+          return startA - startB; // Earliest to latest
+        }
+
+        return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
+      });
+    }
+
     return Array.from(groups.entries()).sort((a, b) => {
       const aFO = isTrainingScene(a[0]);
       const bFO = isTrainingScene(b[0]);
@@ -2354,48 +2382,61 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   </div>
                   <div className="compact-list-wrapper expanded">
                     <div className="compact-list" data-testid={`scene-team-${scene}`}>
-                    {sceneRecords.map(rec => {
+                    {sceneRecords.map((rec, rIdx) => {
                       const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
                       const isFOVirtual = extRec.isFOVirtual;
                       const assocScenes = extRec.assocScenes;
                       const originalScene = extRec.originalScene;
                       const isFO = isTrainingScene(rec.scene) || isFOVirtual;
+
+                      const range = parseRange(rec.time);
+                      const isNight = range ? range.start >= 18 * 60 : false;
+                      const prevRange = rIdx > 0 ? parseRange(sceneRecords[rIdx - 1].time) : null;
+                      const prevIsNight = prevRange ? prevRange.start >= 18 * 60 : false;
+                      const showNightHeader = isNight && !prevIsNight && rIdx > 0;
+
                       return (
-                        <div
-                          className="compact-team-row"
-                          key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}
-                          data-testid={`scene-tech-${scene}-${rec.employee}`}
-                        >
-                          <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
-                          <div style={{ minWidth: 0 }}>
-                            <div className="team-name compact-name">
-                              {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
+                        <div key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}>
+                          {showNightHeader && (
+                            <div className="night-shift-divider">
+                              <span>🌙 Équipe de nuit</span>
                             </div>
-                            <div className="team-meta compact-meta">
-                              {rec.weekLabel}
-                              {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
-                              {rec.shiftTime && rec.shiftTime !== rec.time && (
-                                <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
-                                  · Journée {rec.shiftTime}
-                                </span>
-                              )}
-                              {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
-                                <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
-                                  (peut correspondre à {assocScenes.join(', ')})
-                                </div>
-                              )}
-                              {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
-                            </div>
-                          </div>
-                          <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
-                          <button
-                            type="button"
-                            className="btn-eye compact-eye"
-                            data-testid={`btn-view-tech-${rec.employee}`}
-                            onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
+                          )}
+                          <div
+                            className="compact-team-row"
+                            data-testid={`scene-tech-${scene}-${rec.employee}`}
                           >
-                            <IconEye />
-                          </button>
+                            <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
+                            <div style={{ minWidth: 0 }}>
+                              <div className="team-name compact-name">
+                                {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
+                              </div>
+                              <div className="team-meta compact-meta">
+                                <span>{rec.weekLabel}</span>
+                                {rec.role && <span className="role-pill">{rec.role}</span>}
+                                {rec.shiftTime && rec.shiftTime !== rec.time && (
+                                  <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em' }}>
+                                    · Journée {rec.shiftTime}
+                                  </span>
+                                )}
+                                {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.9em', width: '100%' }}>
+                                    (peut correspondre à {assocScenes.join(', ')})
+                                  </div>
+                                )}
+                                {isFOVirtual && originalScene && <span style={{ color: 'var(--muted)' }}> · En formation ({originalScene})</span>}
+                              </div>
+                            </div>
+                            <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
+                            <button
+                              type="button"
+                              className="btn-eye compact-eye"
+                              data-testid={`btn-view-tech-${rec.employee}`}
+                              onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
+                            >
+                              <IconEye />
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
