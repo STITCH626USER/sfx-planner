@@ -2265,32 +2265,31 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           onDateChange={_onDateChange}
         />
       </div>
-      <div data-testid="panel-daily">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
-            <div className="section-title" style={{ textTransform: 'capitalize', fontSize: 18, marginBottom: 8 }}>{formatDateLong(date)}</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 16px' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)' }}>{uniqueTechs}</span>
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted)' }}>techniciens présents</span>
+      <div data-testid="panel-daily" className="modern-daily-panel">
+          <div className="modern-daily-header">
+            <div className="modern-daily-title-row">
+              <h1 className="modern-daily-date">{formatDateLong(date)}</h1>
+              <div className="modern-header-actions">
+                <div className="modern-presence-chip" title="Techniciens présents aujourd'hui">
+                  <span className="modern-pulse-dot" />
+                  <span className="modern-presence-count">{uniqueTechs}</span>
+                  <span className="modern-presence-label">présents</span>
+                </div>
+                <button
+                  type="button"
+                  className="modern-btn-export"
+                  data-testid="btn-export-pdf"
+                  aria-label="Exporter en PDF"
+                  onClick={() => setShowExport(true)}
+                >
+                  <IconDownload />
+                  <span>PDF</span>
+                </button>
+              </div>
             </div>
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <button
-              type="button"
-              className="btn-export"
-              data-testid="btn-export-pdf"
-              aria-label="Exporter en PDF"
-              onClick={() => setShowExport(true)}
-            >
-              <IconDownload />
-              <span>Export PDF</span>
-            </button>
-          </div>
 
-          <div style={{ padding: '0 16px', marginBottom: 24 }}>
-            <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto', display: 'flex' }}>
-              <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: 0.7, width: 20, height: 20, display: 'flex', alignItems: 'center' }}>
+            <div className="modern-search-wrapper">
+              <div className="modern-search-icon" aria-hidden="true">
                 <IconSearch />
               </div>
               <input 
@@ -2298,18 +2297,18 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 placeholder="Rechercher un technicien..."
                 value={dailySearch}
                 onChange={(e) => setDailySearch(e.target.value)}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px 16px 12px 44px', 
-                  borderRadius: 24, 
-                  border: '1px solid rgba(255,255,255,0.15)', 
-                  background: 'rgba(0,0,0,0.2)', 
-                  color: 'var(--fg)', 
-                  fontSize: 15,
-                  outline: 'none',
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
-                }}
+                className="modern-search-input"
               />
+              {dailySearch && (
+                <button 
+                  type="button" 
+                  className="modern-search-clear" 
+                  onClick={() => setDailySearch('')}
+                  aria-label="Effacer la recherche"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
 
@@ -2333,47 +2332,30 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 const scColor = getSceneColor(cleanSceneName(scene));
                 return (
                 <section
-                  className="daily-scene-group animate-fade-in"
+                  className="modern-scene-card animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
                   style={{ 
-                    animationDelay: `${sIndex * 0.05}s`,
-                    borderLeft: `5px solid ${scColor.accent}`,
-                    marginBottom: 16
-                  }}
+                    animationDelay: `${sIndex * 0.04}s`,
+                    '--scene-accent': scColor.accent
+                  } as React.CSSProperties}
                 >
                   <div
-                    className="daily-group-head"
+                    className="modern-scene-head"
                     data-testid={`scene-card-${scene}`}
-                    style={{ 
-                      width: '100%', 
-                      background: `linear-gradient(90deg, ${scColor.accent}22, transparent)`,
-                      borderLeft: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      textAlign: 'left',
-                      borderRight: 'none',
-                      borderTop: 'none',
-                      borderBottom: '1px solid var(--line)',
-                      padding: '10px 16px'
-                    }}
                   >
-                    <div style={{ textAlign: 'left' }}>
-                      <div className="daily-group-scene" style={{ fontSize: '15px', fontWeight: 600 }}>{cleanSceneName(scene)}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--fg-muted)', marginTop: '2px', fontFamily: 'var(--font-sans)', fontWeight: 400 }}>
-                        {sceneRecords.length} technicien(s)
+                    <div className="modern-scene-info">
+                      <div className="modern-scene-name">{cleanSceneName(scene)}</div>
+                      <div className="modern-scene-sub">
+                        {sceneRecords.length} technicien{sceneRecords.length > 1 ? 's' : ''}
                       </div>
                     </div>
                     <span
-                      className="daily-group-count"
+                      className="modern-scene-badge"
                       style={{
-                        background: scColor.accent,
-                        color: '#ffffff',
-                        border: `1px solid ${scColor.accent}`,
-                        boxShadow: `0 2px 8px ${scColor.accent}45`,
-                        fontWeight: 800,
-                        transform: 'scale(0.85)'
+                        background: `${scColor.accent}20`,
+                        color: scColor.accent,
+                        borderColor: `${scColor.accent}40`
                       }}
                       aria-hidden="true"
                     >
@@ -2486,7 +2468,7 @@ function DatePicker({ dates, date, records, onChange }: {
       width: '100%', minWidth: 0
     }}>
       <button
-        className="date-pill ma3-btn-today-live"
+        className="date-pill ma3-btn-today-live modern-today-btn"
         onClick={() => {
           const today = new Date().toISOString().split('T')[0];
           let targetDate = dates.includes(today) ? today : null;
@@ -2510,29 +2492,17 @@ function DatePicker({ dates, date, records, onChange }: {
           }
         }}
         title="Aller à aujourd'hui"
-        style={{
-          flex: '0 0 auto',
-          padding: '8px 12px',
-          minWidth: 'auto',
-          justifyContent: 'center',
-          marginRight: 10,
-          boxShadow: '4px 0 12px var(--shadow-color, rgba(0,0,0,0.15))',
-          border: '1px solid var(--line-strong)'
-        }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 3 }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
-          <path d="M9 16l2 2 4-4"></path>
         </svg>
-        <span style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase' }}>Aujourd'hui</span>
+        <span>Auj.</span>
       </button>
 
-      <div ref={scrollRef} className="date-row" role="tablist" data-testid="date-row" style={{
-        position: 'static', margin: 0, padding: '8px 4px 8px 4px', background: 'none', flex: 1, alignItems: 'center'
-      }}>
+      <div ref={scrollRef} className="date-row modern-date-row" role="tablist" data-testid="date-row">
       {dates.map(d => {
         const sel = d === date;
         const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -2544,7 +2514,7 @@ function DatePicker({ dates, date, records, onChange }: {
             key={d}
             role="tab"
             aria-selected={sel}
-            className="date-pill"
+            className="date-pill modern-date-pill"
             data-testid={`date-pill-${d}`}
             onClick={() => onChange(d)}
           >
