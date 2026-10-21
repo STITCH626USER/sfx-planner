@@ -2408,12 +2408,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                           >
                             <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
                             <div style={{ minWidth: 0 }}>
-                              <div className="team-name compact-name">
-                                {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
+                              <div className="team-name compact-name" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <span>{isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}</span>
+                                {rec.role && <span className="role-pill">{rec.role}</span>}
                               </div>
                               <div className="team-meta compact-meta">
                                 <span>{rec.weekLabel}</span>
-                                {rec.role && <span className="role-pill">{rec.role}</span>}
                                 {rec.shiftTime && rec.shiftTime !== rec.time && (
                                   <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em' }}>
                                     · Journée {rec.shiftTime}
