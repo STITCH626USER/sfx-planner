@@ -42,6 +42,24 @@ function formatDateLong(iso: string): string {
 }
 
 
+function cleanRoleLabel(role: string): string {
+  if (!role) return '';
+  const r = role.trim();
+  // If it's a generic "Tech Sfx", shorten to "Tech" so technician names have plenty of room
+  if (r.toLowerCase() === 'tech sfx') return 'Tech';
+  // "Tech Sfx SecuPhare" -> "SecuPhare"
+  if (/^tech\s+sfx\s+/i.test(r)) {
+    return r.replace(/^tech\s+sfx\s+/i, '').trim();
+  }
+  // "Tech SecuPhare" -> "SecuPhare"
+  if (/^tech\s+(secu|ponton|bassin)/i.test(r)) {
+    return r.replace(/^tech\s+/i, '').trim();
+  }
+  // "AsstCoordinateur" -> "Asst Coord"
+  if (/^asstcoordinateur$/i.test(r)) return 'Asst Coord';
+  return r;
+}
+
 function timePillClass(time: string, scene: string, isFO?: boolean): string {
   if (time === 'OFF') return 'time-pill off';
   if (isFO || isTrainingScene(scene)) {
@@ -2105,8 +2123,11 @@ function SceneDetail({
                         🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
                       </span>
                     ) : rec.role ? (
-                      <span className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}>
-                        {rec.role}
+                      <span
+                        className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                        title={rec.role}
+                      >
+                        {cleanRoleLabel(rec.role)}
                       </span>
                     ) : null}
                   </div>
@@ -2449,8 +2470,11 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                                   🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
                                 </span>
                               ) : rec.role ? (
-                                <span className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}>
-                                  {rec.role}
+                                <span
+                                  className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                                  title={rec.role}
+                                >
+                                  {cleanRoleLabel(rec.role)}
                                 </span>
                               ) : null}
                             </div>
