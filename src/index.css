@@ -6109,10 +6109,11 @@ nav.seg button[aria-selected="true"] {
 
 .modern-date-row {
   display: flex !important;
-  gap: 6px !important;
+  gap: 8px !important;
   overflow-x: auto !important;
   scrollbar-width: none !important;
-  padding: 0 !important;
+  padding: 6px 4px !important;
+  align-items: center !important;
 }
 .modern-date-row::-webkit-scrollbar {
   display: none !important;

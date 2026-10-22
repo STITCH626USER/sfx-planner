@@ -2510,7 +2510,7 @@ function DatePicker({ dates, date, records, onChange }: {
             key={d}
             role="tab"
             aria-selected={sel}
-            className="date-pill modern-date-pill"
+            className="modern-date-pill"
             data-testid={`date-pill-${d}`}
             onClick={() => onChange(d)}
           >
