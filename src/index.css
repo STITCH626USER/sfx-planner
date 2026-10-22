@@ -6361,13 +6361,13 @@ nav.seg button[aria-selected="true"] {
   border: 1px solid transparent;
 }
 
-/* Lignes de techniciens élégantes */
+/* Lignes de techniciens élégantes et ultra-compactes */
 .compact-team-row {
   display: grid !important;
-  grid-template-columns: 32px minmax(0, 1fr) auto auto 34px !important;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto 30px !important;
   align-items: center !important;
-  gap: 12px !important;
-  padding: 9px 16px !important;
+  gap: 8px !important;
+  padding: 6px 12px !important;
   border-top: 1px solid rgba(255, 255, 255, 0.035) !important;
   transition: background 0.15s ease !important;
 }
@@ -6375,17 +6375,17 @@ nav.seg button[aria-selected="true"] {
   background: rgba(255, 255, 255, 0.025) !important;
 }
 :root[data-theme="light"] .compact-team-row {
-  border-top-color: #f8fafc !important;
+  border-top-color: #f1f5f9 !important;
 }
 :root[data-theme="light"] .compact-team-row:hover {
   background: #f8fafc !important;
 }
 
 .compact-avatar {
-  width: 30px !important;
-  height: 30px !important;
+  width: 28px !important;
+  height: 28px !important;
   border-radius: 6px !important;
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: 800 !important;
   background: rgba(255, 255, 255, 0.06) !important;
   color: var(--fg) !important;
@@ -6401,13 +6401,17 @@ nav.seg button[aria-selected="true"] {
 .compact-name {
   font-family: var(--font-name) !important;
   font-weight: 600 !important;
-  font-size: 15px !important;
+  font-size: 14.5px !important;
+  line-height: 1.25 !important;
   color: var(--fg) !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
 }
 .compact-meta {
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   color: var(--fg-dim) !important;
   margin-top: 1px !important;
+  line-height: 1.2 !important;
 }
 
 /* Typographie Monospace épurée pour les heures (plus de bloc jaune massif) */

@@ -2084,21 +2084,22 @@ function SceneDetail({
                     <div className="team-name compact-name">
                       {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                     </div>
-                    <div className="team-meta compact-meta">
-                      <span>{rec.weekLabel}</span>
-                      {rec.shiftTime && rec.shiftTime !== rec.time && (
-                        <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em' }}>
-                          · Journée {rec.shiftTime}
-                        </span>
-                      )}
-                      {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
-                        <div style={{ color: 'var(--muted)', fontSize: '0.9em', width: '100%' }}>
-                          (peut correspondre à {assocScenes.join(', ')})
+                      {((rec.shiftTime && rec.shiftTime !== rec.time) || (isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0) || (isFOVirtual && originalScene)) && (
+                        <div className="team-meta compact-meta">
+                          {rec.shiftTime && rec.shiftTime !== rec.time && (
+                            <span style={{ color: 'var(--fg-muted)', fontSize: '0.95em' }}>
+                              Journée {rec.shiftTime}
+                            </span>
+                          )}
+                          {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
+                            <div style={{ color: 'var(--muted)', fontSize: '0.9em', width: '100%' }}>
+                              (peut correspondre à {assocScenes.join(', ')})
+                            </div>
+                          )}
+                          {isFOVirtual && originalScene && `En formation (${originalScene})`}
                         </div>
                       )}
-                      {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
                     </div>
-                  </div>
                   <div className="compact-role-cell">
                     {rec.role ? (
                       <span className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}>
@@ -2422,20 +2423,21 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                               <div className="team-name compact-name">
                                 {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                               </div>
-                              <div className="team-meta compact-meta">
-                                <span>{rec.weekLabel}</span>
-                                {rec.shiftTime && rec.shiftTime !== rec.time && (
-                                  <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em' }}>
-                                    · Journée {rec.shiftTime}
-                                  </span>
-                                )}
-                                {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
-                                  <div style={{ color: 'var(--muted)', fontSize: '0.9em', width: '100%' }}>
-                                    (peut correspondre à {assocScenes.join(', ')})
-                                  </div>
-                                )}
-                                {isFOVirtual && originalScene && <span style={{ color: 'var(--muted)' }}> · En formation ({originalScene})</span>}
-                              </div>
+                              {((rec.shiftTime && rec.shiftTime !== rec.time) || (isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0) || (isFOVirtual && originalScene)) && (
+                                <div className="team-meta compact-meta">
+                                  {rec.shiftTime && rec.shiftTime !== rec.time && (
+                                    <span style={{ color: 'var(--fg-muted)', fontSize: '0.95em' }}>
+                                      Journée {rec.shiftTime}
+                                    </span>
+                                  )}
+                                  {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
+                                    <div style={{ color: 'var(--muted)', fontSize: '0.9em', width: '100%' }}>
+                                      (peut correspondre à {assocScenes.join(', ')})
+                                    </div>
+                                  )}
+                                  {isFOVirtual && originalScene && <span style={{ color: 'var(--muted)' }}>En formation ({originalScene})</span>}
+                                </div>
+                              )}
                             </div>
                             <div className="compact-role-cell">
                               {rec.role ? (
