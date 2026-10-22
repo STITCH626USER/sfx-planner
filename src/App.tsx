@@ -1972,31 +1972,43 @@ function SceneDetail({
       ) : (
         <>
           <div
-            className="card scene-detail-card"
+            className="modern-scene-card"
             style={{
               marginTop: 4,
               marginBottom: 16,
-              padding: '16px 20px',
-              borderLeft: `5px solid ${color.accent}`
-            }}
+              '--scene-accent': color.accent
+            } as React.CSSProperties}
           >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 21,
-                color: 'var(--fg)',
-                letterSpacing: '-0.01em',
-                overflowWrap: 'anywhere'
-              }}
-              data-testid="text-scene-name"
-            >
-              {cleanName}
+            <div className="modern-scene-head" style={{ padding: '14px 18px' }}>
+              <div>
+                <div
+                  className="modern-scene-name"
+                  style={{ fontSize: 19 }}
+                  data-testid="text-scene-name"
+                >
+                  {cleanName}
+                </div>
+                <div className="modern-scene-sub" style={{ fontSize: 13, marginTop: 4 }}>
+                  {formatDateLong(date)} · {team.length} technicien{team.length > 1 ? 's' : ''}
+                </div>
+              </div>
+              <span
+                className="modern-scene-badge"
+                style={{
+                  background: `${color.accent}20`,
+                  color: color.accent,
+                  borderColor: `${color.accent}40`,
+                  fontSize: 13,
+                  padding: '3px 10px'
+                }}
+              >
+                {team.length}
+              </span>
             </div>
 
             {/* Multiple scenes for technician on this day switcher if applicable */}
             {availableScenes && availableScenes.length > 1 && onSelectScene && (
-              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 6, padding: '10px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                 {availableScenes.map((sc) => {
                   const isCurrent = sc === scene;
                   const scCol = getSceneColor(cleanSceneName(sc));
@@ -2023,65 +2035,50 @@ function SceneDetail({
                 })}
               </div>
             )}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-              <span style={{
-                background: 'var(--on-bg)',
-                color: 'var(--on-fg)',
-                border: '1px solid var(--on-line)',
-                padding: '5px 12px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-                letterSpacing: '0.01em',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6
-              }}>
-                📅 {formatDateLong(date)}
-              </span>
-              <span style={{ fontSize: 13.5, color: 'var(--fg-muted)', fontWeight: 600 }}>
-                · {team.length} technicien{team.length > 1 ? 's' : ''}
-              </span>
-            </div>
           </div>
 
           {team.length === 0 ? (
             <div className="empty"><div className="empty-title">Personne sur cette scène ce jour.</div></div>
           ) : (
-        <div className="list" data-testid="list-team">
+        <div className="modern-scene-card" data-testid="list-team">
           {team.map(rec => {
             const isFOVirtual = (rec as any).isFOVirtual;
             const assocScenes = (rec as any).assocScenes;
             const originalScene = (rec as any).originalScene;
             const isFO = isTrainingScene(rec.scene) || isFOVirtual;
             return (
-              <div className="team-row" key={`${rec.employee}-${rec.time}-${rec.scene}`} data-testid={`team-${rec.employee}`}>
-                <div className="avatar" aria-hidden>{dayInitials(rec.employee)}</div>
+              <div className="compact-team-row" key={`${rec.employee}-${rec.time}-${rec.scene}`} data-testid={`team-${rec.employee}`}>
+                <div className="avatar compact-avatar" aria-hidden>{dayInitials(rec.employee)}</div>
                 <div style={{ minWidth: 0 }}>
-                  <div className="team-name">
+                  <div className="team-name compact-name">
                     {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                   </div>
-                  <div className="team-meta">
-                    {rec.weekLabel}
-                    {rec.role && <span style={{ color: 'var(--accent)', fontWeight: 600 }}> · {rec.role}</span>}
+                  <div className="team-meta compact-meta">
+                    <span>{rec.weekLabel}</span>
                     {rec.shiftTime && rec.shiftTime !== rec.time && (
-                      <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em', marginLeft: 6 }}>
+                      <span style={{ color: 'var(--fg-muted)', fontSize: '0.9em' }}>
                         · Journée {rec.shiftTime}
                       </span>
                     )}
                     {isTrainingScene(rec.scene) && assocScenes && assocScenes.length > 0 && (
-                      <div style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: 2 }}>
+                      <div style={{ color: 'var(--muted)', fontSize: '0.9em', width: '100%' }}>
                         (peut correspondre à {assocScenes.join(', ')})
                       </div>
                     )}
                     {isFOVirtual && originalScene && ` · En formation (${originalScene})`}
                   </div>
                 </div>
+                <div className="compact-role-cell">
+                  {rec.role ? (
+                    <span className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}>
+                      {rec.role}
+                    </span>
+                  ) : null}
+                </div>
                 <span className={timePillClass(rec.time, rec.scene, isFO)}>{rec.time}</span>
                 <button
                   type="button"
-                  className="btn-eye"
+                  className="btn-eye compact-eye"
                   aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
                   data-testid={`btn-view-employee-${rec.employee}`}
                   onClick={() => onViewEmployee((rec as any).originalEmployeeName || rec.employee)}
@@ -2507,7 +2504,6 @@ function DatePicker({ dates, date, records, onChange }: {
         const sel = d === date;
         const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
         const dn = m ? m[3] : d;
-        const mo = m ? (MONTH_FR[m[2]] ?? m[2]) : '';
         const day = records.find(r => r.date === d)?.day ?? '';
         return (
           <button
@@ -2518,9 +2514,7 @@ function DatePicker({ dates, date, records, onChange }: {
             data-testid={`date-pill-${d}`}
             onClick={() => onChange(d)}
           >
-            <span className="dpd">{DAY_FR_SHORT[day] ?? ''}</span>
-            <span className="dpn">{dn}</span>
-            <span className="dpm">{mo}</span>
+            <span className="modern-dp-label">{DAY_FR_SHORT[day] ?? ''} {dn}</span>
           </button>
         );
       })}
