@@ -6600,37 +6600,79 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Cartes de journées (DayCard) épurées */
+/* En-tête de semaine épuré */
+.week-block {
+  margin-bottom: 18px;
+}
+.week-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 6px 4px 8px 4px !important;
+}
+.week-name {
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  font-size: 13.5px !important;
+  letter-spacing: 0.02em !important;
+  color: var(--fg) !important;
+  text-transform: none !important;
+}
+.week-range {
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--fg-muted) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+}
+:root[data-theme="light"] .week-range {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* Cartes de journées (DayCard) épurées et compactes */
 .day-card {
   background: rgba(18, 24, 35, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
-  transition: all 0.2s ease !important;
-  padding: 12px 16px !important;
+  transition: all 0.15s ease !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 6px !important;
 }
 .day-card:hover {
   background: rgba(255, 255, 255, 0.035) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
 }
 :root[data-theme="light"] .day-card {
   background: #ffffff !important;
   border-color: #e2e8f0 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
 }
 .day-card.is-today {
   border-color: rgba(245, 158, 11, 0.5) !important;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.15) !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.12) !important;
 }
 
 .day-tag {
   background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  border-radius: 8px !important;
-  padding: 6px 10px !important;
-  min-width: 54px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+  min-width: 44px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   box-shadow: none !important;
 }
 :root[data-theme="light"] .day-tag {
@@ -6638,20 +6680,20 @@ nav.seg button[aria-selected="true"] {
   border-color: #e2e8f0 !important;
 }
 .day-tag .d {
-  font-size: 10.5px !important;
+  font-size: 10px !important;
   color: var(--fg-muted) !important;
   font-weight: 700 !important;
   letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  line-height: 1 !important;
 }
 .day-tag .n {
   font-family: var(--font-display) !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
   color: var(--fg) !important;
-}
-.day-tag .day-date {
-  font-size: 10px !important;
-  color: var(--fg-dim) !important;
+  line-height: 1.1 !important;
+  margin-top: 2px !important;
 }
 
 /* Harmonisation de la liste des techniciens (Planning Individuel) */

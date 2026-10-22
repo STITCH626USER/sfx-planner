@@ -1591,13 +1591,12 @@ function DayCard({
         <div className="day-tag">
           <span className="d">{DAY_FR_SHORT[dayName] ?? dayName.slice(0, 3).toUpperCase()}</span>
           <span className="n">{dayPart}</span>
-          <div className="day-date">{date.split('-').length === 3 ? `${date.split('-')[2]}/${date.split('-')[1]}` : date}</div>
         </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ minWidth: 0, flex: 1, paddingLeft: 4 }}>
           <div className="day-scene off" data-testid={`scene-${date}`}>
             Repos / congé {isToday && <span className="badge-today">Aujourd'hui</span>}
           </div>
-          <div className="row-meta" style={{ marginTop: 2 }}>
+          <div className="row-meta" style={{ marginTop: 2, fontSize: '11px', color: 'var(--fg-dim)' }}>
             {formatDateLong(date)}
           </div>
         </div>
@@ -1627,6 +1626,8 @@ function DayCard({
       if (scenesOfDay.size > 0) assocScenes = Array.from(scenesOfDay).sort();
     }
 
+    const scColor = getSceneColor(cleanSceneName(rec.scene));
+
     return (
       <div
         className={`day-card ${isToday ? 'is-today' : ''}`}
@@ -1638,28 +1639,26 @@ function DayCard({
         aria-label={interactive ? `Voir l'équipe de ${cleanSceneName(rec.scene)} le ${formatDateLong(rec.date)}` : undefined}
         onClick={interactive ? () => onOpenScene!(rec.scene) : undefined}
         style={{
-          borderLeft: `5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`,
+          borderLeft: `4px solid ${scColor.accent}`,
           cursor: interactive ? 'pointer' : undefined,
         }}
       >
-        <div className="day-tag">
-          <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
+        <div className="day-tag" style={{ borderColor: `${scColor.accent}30` }}>
+          <span className="d" style={{ color: scColor.accent }}>{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
           <span className="n">{dayPart}</span>
-          <div className="day-date">{rec.date.split('-').length === 3 ? `${rec.date.split('-')[2]}/${rec.date.split('-')[1]}` : rec.date}</div>
         </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div
-            className="day-scene"
-            data-testid={`scene-${rec.date}`}
-            style={{ borderLeft: `3.5px solid ${getSceneColor(cleanSceneName(rec.scene)).accent}`, paddingLeft: 8, borderRadius: '2px 0 0 2px' }}
-          >
+        <div style={{ minWidth: 0, flex: 1, paddingLeft: 4 }}>
+          <div className="day-scene" data-testid={`scene-${rec.date}`}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <span className="day-scene-name" style={{ fontWeight: 700, fontSize: '15.5px' }}>
+              <span className="day-scene-name" style={{ fontWeight: 700, fontSize: '15px' }}>
                 {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
               </span>
               {rec.role && (
-                <span className="role-tag">
-                  {rec.role}
+                <span
+                  className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                  title={rec.role}
+                >
+                  {cleanRoleLabel(rec.role)}
                 </span>
               )}
               {isToday && <span className="badge-today">Aujourd'hui</span>}
@@ -1688,12 +1687,12 @@ function DayCard({
               );
             })()}
             {assocScenes && assocScenes.length > 0 && (
-              <div style={{ fontSize: '0.85em', color: 'var(--muted)', marginTop: 4, fontWeight: 'normal' }}>
+              <div style={{ fontSize: '0.82em', color: 'var(--muted)', marginTop: 2, fontWeight: 'normal' }}>
                 Peut correspondre à {assocScenes.join(', ')}
               </div>
             )}
           </div>
-          <div className="row-meta" style={{ marginTop: 2 }}>
+          <div className="row-meta" style={{ marginTop: 2, fontSize: '11px', color: 'var(--fg-dim)' }}>
             {formatDateLong(rec.date)}
           </div>
         </div>
@@ -1821,11 +1820,16 @@ function DayCard({
               }}
             >
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--fg)' }}>
-                  {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--fg)' }}>
+                    {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
+                  </span>
                   {rec.role && (
-                    <span style={{ fontSize: '0.85em', color: 'var(--accent)', marginLeft: 8, fontWeight: 600 }}>
-                      · {rec.role}
+                    <span
+                      className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                      title={rec.role}
+                    >
+                      {cleanRoleLabel(rec.role)}
                     </span>
                   )}
                 </div>
