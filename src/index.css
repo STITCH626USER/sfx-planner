@@ -6454,14 +6454,125 @@ nav.seg button[aria-selected="true"] {
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 /* Fiche Individuelle (EmployeeDetail) épurée */
+.employee-hero-card {
+  background: rgba(18, 24, 35, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  padding: 16px 20px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+:root[data-theme="light"] .employee-hero-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+}
+
+.employee-hero-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--fg) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .employee-hero-avatar {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.employee-hero-name {
+  font-family: var(--font-display) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: var(--fg) !important;
+  letter-spacing: -0.01em !important;
+}
+
+.hero-stat-pill {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  border-radius: 999px !important;
+  padding: 2px 9px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+}
+:root[data-theme="light"] .hero-stat-pill {
+  background: #fffbeb !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
+}
+
+.btn-export-apple {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  color: var(--fg) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.btn-export-apple:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: var(--amber) !important;
+  color: var(--amber) !important;
+  transform: none !important;
+}
+:root[data-theme="light"] .btn-export-apple {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* Bascule Calendrier / Liste épurée */
+.employee-view-toggle {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  padding: 3px !important;
+}
+:root[data-theme="light"] .employee-view-toggle {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+.view-toggle-btn {
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+.view-toggle-btn.active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--fg) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+:root[data-theme="light"] .view-toggle-btn.active {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Cartes de journées (DayCard) épurées */
 .day-card {
   background: rgba(18, 24, 35, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   transition: all 0.2s ease !important;
+  padding: 12px 16px !important;
 }
 .day-card:hover {
   background: rgba(255, 255, 255, 0.035) !important;
@@ -6473,8 +6584,37 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
 }
 .day-card.is-today {
-  border-color: rgba(245, 158, 11, 0.4) !important;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.15) !important;
+}
+
+.day-tag {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  min-width: 54px !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .day-tag {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+.day-tag .d {
+  font-size: 10.5px !important;
+  color: var(--fg-muted) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+.day-tag .n {
+  font-family: var(--font-display) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: var(--fg) !important;
+}
+.day-tag .day-date {
+  font-size: 10px !important;
+  color: var(--fg-dim) !important;
 }
 
 /* Boutons Retour et Nav épurés */
