@@ -112,7 +112,6 @@ function DlpShowsPanel() {
   const [isOffline, setIsOffline] = useState(false);
   const [parkFilter, setParkFilter] = useState<'ALL' | 'Disneyland Park' | 'Disney Adventure World'>('ALL');
   const [tabFilter, setTabFilter] = useState<'ALL' | 'OPERATING' | 'ENDED' | 'RELACHE'>('ALL');
-  const [search, setSearch] = useState('');
   const weatherScrollRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
@@ -155,10 +154,6 @@ function DlpShowsPanel() {
     if (tabFilter === 'OPERATING' && (s.isRelache || s.isEnded)) return false;
     if (tabFilter === 'ENDED' && !s.isEnded) return false;
     if (tabFilter === 'RELACHE' && !s.isRelache) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      return s.name.toLowerCase().includes(q) || s.times.some(t => t.includes(q));
-    }
     return true;
   });
 
@@ -332,15 +327,15 @@ function DlpShowsPanel() {
           </div>
         </div>
 
-        {/* Filters and search bar */}
-        <div className="dlp-filter-row" style={{ padding: '12px 18px' }}>
+        {/* Filtres par statut épurés */}
+        <div className="dlp-filter-row" style={{ padding: '10px 16px' }}>
           <div className="dlp-pill-group">
             <button
               type="button"
               className={`dlp-filter-pill ${parkFilter === 'ALL' ? 'active' : ''}`}
               onClick={() => setParkFilter('ALL')}
             >
-              Tous les Parcs
+              Tous
             </button>
             <button
               type="button"
@@ -354,7 +349,7 @@ function DlpShowsPanel() {
               className={`dlp-filter-pill ${parkFilter === 'Disney Adventure World' ? 'active' : ''}`}
               onClick={() => setParkFilter('Disney Adventure World')}
             >
-              Disney Adventure World
+              Adventure World
             </button>
           </div>
 
@@ -390,16 +385,6 @@ function DlpShowsPanel() {
               Relâches ({relacheCount})
             </button>
           </div>
-        </div>
-
-        <div style={{ padding: '0 18px 14px 18px' }}>
-          <input
-            type="text"
-            className="dlp-search-input"
-            placeholder="Rechercher un spectacle, un théâtre, un horaire (ex: Together, Roi Lion, 17:30)…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
         </div>
       </div>
 
