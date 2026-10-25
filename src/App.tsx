@@ -2950,8 +2950,6 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                 cursor: 'pointer',
                 border: '2px solid var(--border)',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
-                transform: clickCount > 0 ? `scale(${1 + clickCount * 0.04})` : 'scale(1)',
-                transition: 'transform 0.15s ease',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
                 display: 'flex',
@@ -2972,11 +2970,6 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                 }}
               />
             </div>
-            {clickCount > 0 && clickCount < 5 && (
-              <span style={{ fontSize: '11px', color: 'var(--fg-dim)', marginTop: '4px' }}>
-                {clickCount} / 5
-              </span>
-            )}
           </div>
 
           {showBugList ? (
