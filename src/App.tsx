@@ -537,6 +537,7 @@ export default function App() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLegalMentions, setShowLegalMentions] = useState(false);
+  const [showBugModal, setShowBugModal] = useState(false);
   const [previousTab, setPreviousTab] = useState<Tab>('daily');
 
   // PWA Installation state and hooks
@@ -811,6 +812,8 @@ export default function App() {
             <span>⚠️ Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.</span>
             <div style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
               <button onClick={() => setShowLegalMentions(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Mentions Légales</button>
+              <span style={{ color: 'var(--fg-dim)', margin: '0 8px' }}>·</span>
+              <button onClick={() => setShowBugModal(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Signaler un bug</button>
             </div>
           </div>
         </main>
@@ -866,6 +869,8 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {showBugModal && <BugReportModal onClose={() => setShowBugModal(false)} />}
 
       </div>
     );
@@ -1067,6 +1072,8 @@ export default function App() {
             </span>
             <div style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
               <button onClick={() => setShowLegalMentions(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Mentions Légales</button>
+              <span style={{ color: 'var(--fg-dim)', margin: '0 8px' }}>·</span>
+              <button onClick={() => setShowBugModal(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Signaler un bug</button>
             </div>
           </div>
         </footer>
@@ -1142,6 +1149,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showBugModal && <BugReportModal onClose={() => setShowBugModal(false)} />}
 
       {showPwaBanner && (
         <div className="pwa-install-banner animate-slide-up">
@@ -2819,6 +2828,334 @@ function Logo() {
   const logoSrc = `${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`;
   return (
     <img className="logo-img" src={logoSrc} alt="" width="56" height="56" decoding="async" aria-hidden="true" />
+  );
+}
+
+interface ReportedBug {
+  id: string;
+  date: string;
+  description: string;
+  contact?: string;
+  device?: string;
+}
+
+function BugReportModal({ onClose }: { onClose: () => void }) {
+  const [description, setDescription] = useState('');
+  const [contact, setContact] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [showBugList, setShowBugList] = useState(false);
+  const [bugs, setBugs] = useState<ReportedBug[]>(() => {
+    try {
+      const saved = localStorage.getItem('sfx_reported_bugs');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleLogoClick = () => {
+    const next = clickCount + 1;
+    setClickCount(next);
+    if (next >= 5) {
+      setShowBugList(prev => !prev);
+      setClickCount(0);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!description.trim()) return;
+
+    const newBug: ReportedBug = {
+      id: Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+      date: new Date().toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      description: description.trim(),
+      contact: contact.trim() || undefined,
+      device: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('iPad') ? 'iPad' : navigator.userAgent.includes('Android') ? 'Android' : 'Desktop/Autre') : undefined,
+    };
+
+    const updated = [newBug, ...bugs];
+    setBugs(updated);
+    try {
+      localStorage.setItem('sfx_reported_bugs', JSON.stringify(updated));
+    } catch (err) {
+      console.error('Failed to save bug report', err);
+    }
+
+    setSubmitted(true);
+    setDescription('');
+    setContact('');
+    setTimeout(() => {
+      setSubmitted(false);
+    }, 3500);
+  };
+
+  const handleDeleteBug = (id: string) => {
+    const updated = bugs.filter(b => b.id !== id);
+    setBugs(updated);
+    try {
+      localStorage.setItem('sfx_reported_bugs', JSON.stringify(updated));
+    } catch (err) {
+      console.error('Failed to update bugs', err);
+    }
+  };
+
+  const handleClearAllBugs = () => {
+    if (window.confirm('Supprimer définitivement tous les bugs signalés ?')) {
+      setBugs([]);
+      try {
+        localStorage.removeItem('sfx_reported_bugs');
+      } catch (err) {
+        console.error('Failed to clear bugs', err);
+      }
+    }
+  };
+
+  return (
+    <div className="export-overlay" data-testid="bug-report-overlay" onClick={onClose}>
+      <div
+        className="export-modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: showBugList ? '640px' : '480px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+      >
+        <div className="export-head">
+          <div className="export-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>{showBugList ? '🛠️ Bugs signalés (Admin)' : 'Signaler un bug'}</span>
+            {showBugList && (
+              <span style={{ fontSize: '11px', background: 'var(--amber)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                {bugs.length}
+              </span>
+            )}
+          </div>
+          <button className="icon-btn" onClick={onClose} aria-label="Fermer">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div className="export-body" style={{ overflowY: 'auto', padding: '20px 24px', fontSize: '14px', lineHeight: '1.5' }}>
+          {/* Top Logo acting as easter egg */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
+            <div
+              onClick={handleLogoClick}
+              style={{
+                cursor: 'pointer',
+                transform: clickCount > 0 ? `scale(${1 + clickCount * 0.05})` : 'scale(1)',
+                transition: 'transform 0.15s ease',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                display: 'inline-block',
+                borderRadius: '50%',
+                padding: '4px',
+              }}
+              title="SFX Dragon"
+            >
+              <Logo />
+            </div>
+            {clickCount > 0 && clickCount < 5 && (
+              <span style={{ fontSize: '11px', color: 'var(--fg-dim)', marginTop: '4px' }}>
+                {clickCount} / 5
+              </span>
+            )}
+          </div>
+
+          {showBugList ? (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--fg-muted)' }}>
+                  Bugs stockés localement sur cet appareil :
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {bugs.length > 0 && (
+                    <button
+                      onClick={handleClearAllBugs}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#f87171',
+                        borderRadius: '6px',
+                        padding: '4px 10px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Tout effacer
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowBugList(false)}
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--fg)',
+                      borderRadius: '6px',
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Retour au formulaire
+                  </button>
+                </div>
+              </div>
+
+              {bugs.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--fg-dim)', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  Aucun bug signalé pour le moment.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {bugs.map((b) => (
+                    <div
+                      key={b.id}
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        padding: '12px 14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--fg-muted)' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--fg)' }}>{b.date}</span>
+                          {b.device && (
+                            <span style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>
+                              {b.device}
+                            </span>
+                          )}
+                          {b.contact && (
+                            <span style={{ color: 'var(--blue)', fontSize: '12px' }}>
+                              👤 {b.contact}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleDeleteBug(b.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--fg-dim)',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            padding: '2px 6px',
+                          }}
+                          title="Supprimer ce bug"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div style={{ whiteSpace: 'pre-wrap', color: 'var(--fg)', fontSize: '13px' }}>
+                        {b.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ margin: 0, color: 'var(--fg-muted)', fontSize: '13px', textAlign: 'center' }}>
+                Un problème d'affichage, un bug ou une idée d'amélioration ? Décrivez-le ci-dessous.
+              </p>
+
+              {submitted && (
+                <div
+                  style={{
+                    background: 'rgba(34, 197, 94, 0.15)',
+                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                    color: '#4ade80',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    textAlign: 'center',
+                  }}
+                >
+                  ✓ Merci ! Votre signalement a bien été enregistré.
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--fg-muted)', marginBottom: '6px' }}>
+                  Description du bug ou remarque *
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Ex : Le titre du show déborde sur mobile, ou impossible d'importer tel PDF..."
+                  rows={4}
+                  required
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: 'var(--bg-input, var(--bg-card))',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    color: 'var(--fg)',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--fg-muted)', marginBottom: '6px' }}>
+                  Votre nom / prénom (optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                  placeholder="Pour vous recontacter si besoin"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: 'var(--bg-input, var(--bg-card))',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    color: 'var(--fg)',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={onClose}
+                  style={{ fontSize: '13px', padding: '8px 16px' }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={!description.trim()}
+                  style={{ fontSize: '13px', padding: '8px 20px', opacity: !description.trim() ? 0.6 : 1 }}
+                >
+                  Envoyer le signalement
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
