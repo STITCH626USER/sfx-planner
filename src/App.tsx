@@ -2453,31 +2453,33 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                                 </div>
                               )}
                             </div>
-                            <div className="compact-role-cell">
-                              {isFO ? (
-                                <span className="role-pill role-special" title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}>
-                                  🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
-                                </span>
-                              ) : rec.role ? (
-                                <span
-                                  className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
-                                  title={rec.role}
-                                >
-                                  {cleanRoleLabel(rec.role)}
-                                </span>
-                              ) : null}
+                            <div className="compact-right-group">
+                              <div className="compact-role-cell">
+                                {isFO ? (
+                                  <span className="role-pill role-special" title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}>
+                                    🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
+                                  </span>
+                                ) : rec.role ? (
+                                  <span
+                                    className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                                    title={rec.role}
+                                  >
+                                    {cleanRoleLabel(rec.role)}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
+                                {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn-eye compact-eye"
+                                data-testid={`btn-view-tech-${rec.employee}`}
+                                onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
+                              >
+                                <IconEye />
+                              </button>
                             </div>
-                            <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
-                              {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
-                            </span>
-                            <button
-                              type="button"
-                              className="btn-eye compact-eye"
-                              data-testid={`btn-view-tech-${rec.employee}`}
-                              onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
-                            >
-                              <IconEye />
-                            </button>
                           </div>
                         </div>
                       );
