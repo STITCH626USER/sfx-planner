@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus, parseRange } from './lib/utils';
+import { isTrainingScene, getSceneColor, getAvatarColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus, parseRange } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
 import { fetchDlpWeather, type DailyWeatherSummary } from './lib/weather';
@@ -58,6 +58,24 @@ function cleanRoleLabel(role: string): string {
   // "AsstCoordinateur" -> "Asst Coord"
   if (/^asstcoordinateur$/i.test(r)) return 'Asst Coord';
   return r;
+}
+
+function getRoleBadgeStyle(role: string): { bg: string; color: string; border: string } {
+  const r = (role || '').toLowerCase();
+  if (r.includes('regie')) {
+    return { bg: 'rgba(245, 158, 11, 0.16)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' }; // Amber gold
+  }
+  if (r.includes('coord') || r.includes('lead')) {
+    return { bg: 'rgba(244, 63, 94, 0.16)', color: '#fb7185', border: 'rgba(244, 63, 94, 0.4)' }; // Rose Coral
+  }
+  if (r.includes('secu') || r.includes('ponton') || r.includes('bassin')) {
+    return { bg: 'rgba(20, 184, 166, 0.16)', color: '#2dd4bf', border: 'rgba(20, 184, 166, 0.4)' }; // Teal / Cyan
+  }
+  if (r.includes('maint') || r.includes('matmops')) {
+    return { bg: 'rgba(168, 85, 247, 0.16)', color: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' }; // Purple
+  }
+  // Default Tech role: Crisp glacier slate
+  return { bg: 'rgba(56, 189, 248, 0.10)', color: '#7dd3fc', border: 'rgba(56, 189, 248, 0.25)' };
 }
 
 function timePillClass(time: string, scene: string, isFO?: boolean): string {
@@ -2020,7 +2038,19 @@ function SceneDetail({
                   style={{ fontSize: 19 }}
                   data-testid="text-scene-name"
                 >
-                  {cleanName}
+                  <span
+                    style={{
+                      width: '9px',
+                      height: '9px',
+                      borderRadius: '50%',
+                      background: color.accent,
+                      boxShadow: `0 0 9px ${color.accent}`,
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                    aria-hidden="true"
+                  />
+                  <span>{cleanName}</span>
                 </div>
                 <div className="modern-scene-sub" style={{ fontSize: 13, marginTop: 4 }}>
                   {formatDateLong(date)} · {team.length} technicien{team.length > 1 ? 's' : ''}
@@ -2099,8 +2129,9 @@ function SceneDetail({
                     className="avatar compact-avatar"
                     aria-hidden
                     style={{
-                      borderColor: `${color.accent}40`,
-                      color: color.accent
+                      background: getAvatarColor(rec.employee).bg,
+                      color: getAvatarColor(rec.employee).fg,
+                      borderColor: getAvatarColor(rec.employee).border,
                     }}
                   >
                     {dayInitials(rec.employee)}
@@ -2117,12 +2148,25 @@ function SceneDetail({
                     </div>
                   <div className="compact-role-cell">
                     {isFO ? (
-                      <span className="role-pill role-special" title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}>
+                      <span
+                        className="role-pill"
+                        style={{
+                          background: 'rgba(168, 85, 247, 0.16)',
+                          color: '#c084fc',
+                          borderColor: 'rgba(168, 85, 247, 0.4)',
+                        }}
+                        title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
+                      >
                         🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
                       </span>
                     ) : rec.role ? (
                       <span
-                        className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                        className="role-pill"
+                        style={{
+                          background: getRoleBadgeStyle(rec.role).bg,
+                          color: getRoleBadgeStyle(rec.role).color,
+                          borderColor: getRoleBadgeStyle(rec.role).border,
+                        }}
                         title={rec.role}
                       >
                         {cleanRoleLabel(rec.role)}
@@ -2321,25 +2365,25 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       </div>
       <div data-testid="panel-daily" className="modern-daily-panel">
           <div className="modern-daily-header">
-            <div className="modern-daily-title-row">
-              <h1 className="modern-daily-date">{formatDateLong(date)}</h1>
-              <div className="modern-header-actions">
+            <div className="modern-daily-compact-bar">
+              <div className="modern-daily-date-group">
+                <h1 className="modern-daily-date">{formatDateLong(date)}</h1>
                 <div className="modern-presence-chip" title="Techniciens présents aujourd'hui">
                   <span className="modern-pulse-dot" />
                   <span className="modern-presence-count">{uniqueTechs}</span>
                   <span className="modern-presence-label">présents</span>
                 </div>
-                <button
-                  type="button"
-                  className="modern-btn-export"
-                  data-testid="btn-export-pdf"
-                  aria-label="Exporter en PDF"
-                  onClick={() => setShowExport(true)}
-                >
-                  <IconDownload />
-                  <span>PDF</span>
-                </button>
               </div>
+              <button
+                type="button"
+                className="modern-btn-export"
+                data-testid="btn-export-pdf"
+                aria-label="Exporter en PDF"
+                onClick={() => setShowExport(true)}
+              >
+                <IconDownload />
+                <span>PDF</span>
+              </button>
             </div>
 
             <div className="modern-search-wrapper">
@@ -2399,7 +2443,21 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     data-testid={`scene-card-${scene}`}
                   >
                     <div className="modern-scene-info">
-                      <div className="modern-scene-name">{cleanSceneName(scene)}</div>
+                      <div className="modern-scene-name">
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: scColor.accent,
+                            boxShadow: `0 0 8px ${scColor.accent}`,
+                            display: 'inline-block',
+                            flexShrink: 0,
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span>{cleanSceneName(scene)}</span>
+                      </div>
                       <div className="modern-scene-sub">
                         {sceneRecords.length} technicien{sceneRecords.length > 1 ? 's' : ''}
                       </div>
@@ -2446,8 +2504,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                               className="avatar compact-avatar"
                               aria-hidden
                               style={{
-                                borderColor: `${scColor.accent}40`,
-                                color: scColor.accent
+                                background: getAvatarColor(rec.employee).bg,
+                                color: getAvatarColor(rec.employee).fg,
+                                borderColor: getAvatarColor(rec.employee).border,
                               }}
                             >
                               {dayInitials(rec.employee)}
@@ -2465,12 +2524,25 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             <div className="compact-right-group">
                               <div className="compact-role-cell">
                                 {isFO ? (
-                                  <span className="role-pill role-special" title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}>
+                                  <span
+                                    className="role-pill"
+                                    style={{
+                                      background: 'rgba(168, 85, 247, 0.16)',
+                                      color: '#c084fc',
+                                      borderColor: 'rgba(168, 85, 247, 0.4)',
+                                    }}
+                                    title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
+                                  >
                                     🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
                                   </span>
                                 ) : rec.role ? (
                                   <span
-                                    className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
+                                    className="role-pill"
+                                    style={{
+                                      background: getRoleBadgeStyle(rec.role).bg,
+                                      color: getRoleBadgeStyle(rec.role).color,
+                                      borderColor: getRoleBadgeStyle(rec.role).border,
+                                    }}
                                     title={rec.role}
                                   >
                                     {cleanRoleLabel(rec.role)}

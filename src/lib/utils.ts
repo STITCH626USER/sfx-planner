@@ -176,6 +176,28 @@ export function dayInitials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+export function getAvatarColor(name: string): { bg: string; fg: string; border: string } {
+  const clean = (name || '').toLowerCase().trim();
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = clean.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  hash = Math.abs(hash);
+
+  const palettes = [
+    { bg: 'rgba(56, 189, 248, 0.16)', fg: '#38bdf8', border: 'rgba(56, 189, 248, 0.35)' }, // Sky Cyan
+    { bg: 'rgba(168, 85, 247, 0.16)', fg: '#c084fc', border: 'rgba(168, 85, 247, 0.35)' }, // Purple
+    { bg: 'rgba(251, 146, 60, 0.16)', fg: '#fb923c', border: 'rgba(251, 146, 60, 0.35)' }, // Orange
+    { bg: 'rgba(52, 211, 153, 0.16)', fg: '#34d399', border: 'rgba(52, 211, 153, 0.35)' }, // Emerald
+    { bg: 'rgba(244, 114, 182, 0.16)', fg: '#f472b6', border: 'rgba(244, 114, 182, 0.35)' }, // Pink Rose
+    { bg: 'rgba(250, 204, 21, 0.16)', fg: '#facc15', border: 'rgba(250, 204, 21, 0.35)' }, // Amber Yellow
+    { bg: 'rgba(129, 140, 248, 0.16)', fg: '#818cf8', border: 'rgba(129, 140, 248, 0.35)' }, // Indigo Blue
+    { bg: 'rgba(45, 212, 191, 0.16)', fg: '#2dd4bf', border: 'rgba(45, 212, 191, 0.35)' }, // Teal
+  ];
+
+  return palettes[hash % palettes.length];
+}
+
 
 
 export interface SceneColor {
