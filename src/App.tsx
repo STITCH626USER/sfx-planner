@@ -922,6 +922,17 @@ export default function App() {
           </div>
 
           <div className="app-header-actions">
+            <ConsoleClock
+              isActive={tab === 'shows'}
+              onClick={() => {
+                if (tab !== 'shows') {
+                  setPreviousTab(tab);
+                  setTab('shows');
+                } else {
+                  setTab(previousTab);
+                }
+              }}
+            />
             <button
               type="button"
               className="btn-header-theme"
@@ -953,21 +964,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Dedicated live widget banner row under the header */}
-        <div className="sidebar-clock-banner" style={{ margin: '8px 0 10px 0' }}>
-          <ConsoleClock
-            isActive={tab === 'shows'}
-            onClick={() => {
-              if (tab !== 'shows') {
-                setPreviousTab(tab);
-                setTab('shows');
-              } else {
-                setTab(previousTab);
-              }
-            }}
-          />
-        </div>
-
         {drag && (
           <div className="drag-drop-hint animate-fade-in" onDrop={onDrop} onDragLeave={() => setDrag(false)}>
             Déposez vos fichiers PDF Chronos ici…
@@ -984,25 +980,8 @@ export default function App() {
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
 
-        {sources.length > 0 && (
-          <div className="sources-strip" data-testid="sources-strip">
-            {sources.map(s => (
-              <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
-                <span className="dot" />
-                <span title={s.name}>{shortName(s.name)}</span>
-                <span style={{ color: 'var(--fg-dim)' }}>· {s.recordCount}</span>
-                <button
-                  aria-label={`Retirer ${s.name}`}
-                  data-testid={`btn-remove-${s.name}`}
-                  onClick={() => removeSource(s.name)}
-                >×</button>
-              </span>
-            ))}
-          </div>
-        )}
-
         {tab !== 'shows' ? (
-          <div className="sidebar-nav-block">
+          <div className="sidebar-nav-block" style={{ marginTop: 10, marginBottom: 8 }}>
             <nav className="seg" role="tablist" aria-label="Catégories">
               <button
                 role="tab"
@@ -1014,7 +993,7 @@ export default function App() {
               >
                 <IconUser />
                 <span className="tab-label-full">Planning individuel</span>
-                <span className="tab-label-short">Planning indiv.</span>
+                <span className="tab-label-short">Individuel</span>
               </button>
               <button
                 role="tab"
@@ -1029,8 +1008,8 @@ export default function App() {
             </nav>
           </div>
         ) : (
-          <div className="sidebar-nav-block">
-            <div style={{ padding: '4px 8px' }}>
+          <div className="sidebar-nav-block" style={{ marginTop: 10, marginBottom: 8 }}>
+            <div style={{ padding: '2px 4px' }}>
               <button
                 type="button"
                 className="btn-back"
@@ -1040,6 +1019,23 @@ export default function App() {
                 <IconArrowLeft /> Retour planning
               </button>
             </div>
+          </div>
+        )}
+
+        {sources.length > 0 && (
+          <div className="sources-strip" data-testid="sources-strip">
+            {sources.map(s => (
+              <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
+                <span className="dot" />
+                <span title={s.name}>{shortName(s.name)}</span>
+                <span style={{ color: 'var(--fg-dim)' }}>· {s.recordCount}</span>
+                <button
+                  aria-label={`Retirer ${s.name}`}
+                  data-testid={`btn-remove-${s.name}`}
+                  onClick={() => removeSource(s.name)}
+                >×</button>
+              </span>
+            ))}
           </div>
         )}
       </aside>
