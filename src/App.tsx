@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, getAvatarColor, timesMatch, prettyName, dayInitials, cleanSceneName, getShiftLiveStatus, parseRange } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, cleanSceneName, getShiftLiveStatus, parseRange } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
 import { fetchDlpWeather, type DailyWeatherSummary } from './lib/weather';
@@ -1295,7 +1295,6 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
               onClick={() => setSelected(name)}
               data-testid={`row-employee-${name}`}
             >
-              <div className="avatar" aria-hidden>{dayInitials(name)}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="row-title">{prettyName(name)}</div>
                 <div className="row-meta">
@@ -1486,7 +1485,6 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
       </button>
       <div className="employee-hero-card" style={{ marginTop: 8, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <div className="avatar employee-hero-avatar">{dayInitials(name)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="employee-hero-name" data-testid="text-employee-name">
               {prettyName(name)}
@@ -2125,17 +2123,6 @@ function SceneDetail({
                   </div>
                 )}
                 <div className="compact-team-row" data-testid={`team-${rec.employee}`}>
-                  <div
-                    className="avatar compact-avatar"
-                    aria-hidden
-                    style={{
-                      background: getAvatarColor(rec.employee).bg,
-                      color: getAvatarColor(rec.employee).fg,
-                      borderColor: getAvatarColor(rec.employee).border,
-                    }}
-                  >
-                    {dayInitials(rec.employee)}
-                  </div>
                   <div style={{ minWidth: 0 }}>
                     <div className="team-name compact-name">
                       {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
@@ -2500,17 +2487,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             className="compact-team-row"
                             data-testid={`scene-tech-${scene}-${rec.employee}`}
                           >
-                            <div
-                              className="avatar compact-avatar"
-                              aria-hidden
-                              style={{
-                                background: getAvatarColor(rec.employee).bg,
-                                color: getAvatarColor(rec.employee).fg,
-                                borderColor: getAvatarColor(rec.employee).border,
-                              }}
-                            >
-                              {dayInitials(rec.employee)}
-                            </div>
                             <div style={{ minWidth: 0 }}>
                               <div className="team-name compact-name">
                                 {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}

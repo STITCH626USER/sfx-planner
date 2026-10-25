@@ -6393,13 +6393,13 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Lignes de techniciens élégantes et ultra-compactes */
+/* Lignes de techniciens élégantes et ultra-compactes (sans bulle avatar inutile) */
 .compact-team-row {
   display: grid !important;
-  grid-template-columns: 28px minmax(0, 1fr) auto !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
-  gap: 10px !important;
-  padding: 7px 12px !important;
+  gap: 12px !important;
+  padding: 8px 14px !important;
   border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
   transition: background 0.15s ease !important;
 }
