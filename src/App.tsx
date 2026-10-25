@@ -2835,14 +2835,18 @@ interface ReportedBug {
   id: string;
   date: string;
   description: string;
+  screenshot?: string; // base64 data url
   device?: string;
 }
 
 function BugReportModal({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState('');
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [showBugList, setShowBugList] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [bugs, setBugs] = useState<ReportedBug[]>(() => {
     try {
       const saved = localStorage.getItem('sfx_reported_bugs');
@@ -2861,6 +2865,44 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Rescale image if needed to keep localStorage light (max 1000px)
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1000;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          setScreenshot(dataUrl);
+        }
+      };
+      if (typeof event.target?.result === 'string') {
+        img.src = event.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) return;
@@ -2875,6 +2917,7 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
         minute: '2-digit',
       }),
       description: description.trim(),
+      screenshot: screenshot || undefined,
       device: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('iPad') ? 'iPad' : navigator.userAgent.includes('Android') ? 'Android' : 'Desktop/Autre') : undefined,
     };
 
@@ -2888,6 +2931,8 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
 
     setSubmitted(true);
     setDescription('');
+    setScreenshot(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setTimeout(() => {
       setSubmitted(false);
     }, 3500);
@@ -3028,7 +3073,7 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                         padding: '12px 14px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '6px',
+                        gap: '8px',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--fg-muted)' }}>
@@ -3056,9 +3101,30 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                           Supprimer
                         </button>
                       </div>
+
                       <div style={{ whiteSpace: 'pre-wrap', color: 'var(--fg)', fontSize: '13px', lineHeight: '1.45' }}>
                         {b.description}
                       </div>
+
+                      {b.screenshot && (
+                        <div style={{ marginTop: '4px' }}>
+                          <img
+                            src={b.screenshot}
+                            alt="Capture d'écran"
+                            onClick={() => setPreviewImage(b.screenshot!)}
+                            style={{
+                              maxWidth: '120px',
+                              maxHeight: '80px',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border)',
+                              cursor: 'pointer',
+                              display: 'block',
+                              objectFit: 'cover',
+                            }}
+                            title="Cliquer pour agrandir"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -3088,7 +3154,7 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Écrivez votre commentaire, remarque ou bug ici..."
-                  rows={5}
+                  rows={4}
                   required
                   autoFocus
                   style={{
@@ -3107,7 +3173,71 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              {/* Input fichier caché pour joindre capture */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+              />
+
+              {/* Zone prévisualisation capture jointe */}
+              {screenshot ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <img
+                    src={screenshot}
+                    alt="Aperçu"
+                    style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }}
+                  />
+                  <div style={{ flex: 1, fontSize: '12px', color: 'var(--fg-muted)' }}>
+                    Capture jointe ✓
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScreenshot(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--fg-dim)',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      padding: '4px',
+                    }}
+                    title="Retirer la capture"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'var(--bg-card)',
+                      border: '1px dashed var(--border)',
+                      borderRadius: '8px',
+                      color: 'var(--fg-muted)',
+                      padding: '8px 14px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                    }}
+                  >
+                    <span>📷</span>
+                    <span>Joindre une capture d'écran</span>
+                  </button>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -3129,6 +3259,33 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
+
+      {/* Modal zoom capture d'écran */}
+      {previewImage && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setPreviewImage(null);
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            cursor: 'zoom-out',
+          }}
+        >
+          <img
+            src={previewImage}
+            alt="Capture plein écran"
+            style={{ maxWidth: '95vw', maxHeight: '95vh', borderRadius: '8px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', objectFit: 'contain' }}
+          />
+        </div>
+      )}
     </div>
   );
 }
