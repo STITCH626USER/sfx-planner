@@ -2835,13 +2835,11 @@ interface ReportedBug {
   id: string;
   date: string;
   description: string;
-  contact?: string;
   device?: string;
 }
 
 function BugReportModal({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState('');
-  const [contact, setContact] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [showBugList, setShowBugList] = useState(false);
@@ -2877,7 +2875,6 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
         minute: '2-digit',
       }),
       description: description.trim(),
-      contact: contact.trim() || undefined,
       device: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('iPad') ? 'iPad' : navigator.userAgent.includes('Android') ? 'Android' : 'Desktop/Autre') : undefined,
     };
 
@@ -2891,7 +2888,6 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
 
     setSubmitted(true);
     setDescription('');
-    setContact('');
     setTimeout(() => {
       setSubmitted(false);
     }, 3500);
@@ -2925,13 +2921,13 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: showBugList ? '640px' : '480px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+        style={{ maxWidth: showBugList ? '580px' : '440px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
       >
         <div className="export-head">
           <div className="export-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{showBugList ? '🛠️ Bugs signalés (Admin)' : 'Signaler un bug'}</span>
             {showBugList && (
-              <span style={{ fontSize: '11px', background: 'var(--amber)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', background: 'var(--amber)', color: '#000', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                 {bugs.length}
               </span>
             )}
@@ -2941,24 +2937,40 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="export-body" style={{ overflowY: 'auto', padding: '20px 24px', fontSize: '14px', lineHeight: '1.5' }}>
-          {/* Top Logo acting as easter egg */}
+        <div className="export-body" style={{ overflowY: 'auto', padding: '20px', fontSize: '14px', lineHeight: '1.5' }}>
+          {/* Logo compact, parfaitement rond et cliquable comme bouton caché */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
             <div
               onClick={handleLogoClick}
               style={{
+                width: '68px',
+                height: '68px',
+                borderRadius: '50%',
+                overflow: 'hidden',
                 cursor: 'pointer',
-                transform: clickCount > 0 ? `scale(${1 + clickCount * 0.05})` : 'scale(1)',
+                border: '2px solid var(--border)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+                transform: clickCount > 0 ? `scale(${1 + clickCount * 0.04})` : 'scale(1)',
                 transition: 'transform 0.15s ease',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
-                display: 'inline-block',
-                borderRadius: '50%',
-                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#000',
               }}
               title="SFX Dragon"
             >
-              <Logo />
+              <img
+                src={`${import.meta.env.BASE_URL}sfx-dragon-logo.jpg`}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
             </div>
             {clickCount > 0 && clickCount < 5 && (
               <span style={{ fontSize: '11px', color: 'var(--fg-dim)', marginTop: '4px' }}>
@@ -2969,9 +2981,9 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
 
           {showBugList ? (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--fg-muted)' }}>
-                  Bugs stockés localement sur cet appareil :
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--fg-muted)', fontWeight: 500 }}>
+                  Commentaires enregistrés ({bugs.length}) :
                 </span>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {bugs.length > 0 && (
@@ -3002,17 +3014,17 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                       cursor: 'pointer',
                     }}
                   >
-                    Retour au formulaire
+                    ← Formulaire
                   </button>
                 </div>
               </div>
 
               {bugs.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--fg-dim)', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                  Aucun bug signalé pour le moment.
+                  Aucun bug ou commentaire pour le moment.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {bugs.map((b) => (
                     <div
                       key={b.id}
@@ -3034,28 +3046,24 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                               {b.device}
                             </span>
                           )}
-                          {b.contact && (
-                            <span style={{ color: 'var(--blue)', fontSize: '12px' }}>
-                              👤 {b.contact}
-                            </span>
-                          )}
                         </div>
                         <button
                           onClick={() => handleDeleteBug(b.id)}
                           style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--fg-dim)',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            color: '#f87171',
                             cursor: 'pointer',
-                            fontSize: '14px',
-                            padding: '2px 6px',
+                            fontSize: '12px',
+                            borderRadius: '4px',
+                            padding: '2px 8px',
                           }}
-                          title="Supprimer ce bug"
+                          title="Supprimer ce commentaire"
                         >
-                          ✕
+                          Supprimer
                         </button>
                       </div>
-                      <div style={{ whiteSpace: 'pre-wrap', color: 'var(--fg)', fontSize: '13px' }}>
+                      <div style={{ whiteSpace: 'pre-wrap', color: 'var(--fg)', fontSize: '13px', lineHeight: '1.45' }}>
                         {b.description}
                       </div>
                     </div>
@@ -3064,11 +3072,7 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
               )}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{ margin: 0, color: 'var(--fg-muted)', fontSize: '13px', textAlign: 'center' }}>
-                Un problème d'affichage, un bug ou une idée d'amélioration ? Décrivez-le ci-dessous.
-              </p>
-
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {submitted && (
                 <div
                   style={{
@@ -3079,61 +3083,38 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                     borderRadius: '8px',
                     fontSize: '13px',
                     textAlign: 'center',
+                    fontWeight: 500,
                   }}
                 >
-                  ✓ Merci ! Votre signalement a bien été enregistré.
+                  ✓ Merci ! Votre commentaire a bien été envoyé.
                 </div>
               )}
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--fg-muted)', marginBottom: '6px' }}>
-                  Description du bug ou remarque *
-                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex : Le titre du show déborde sur mobile, ou impossible d'importer tel PDF..."
-                  rows={4}
+                  placeholder="Écrivez votre commentaire, remarque ou bug ici..."
+                  rows={5}
                   required
+                  autoFocus
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
                     background: 'var(--bg-input, var(--bg-card))',
                     border: '1px solid var(--border)',
                     borderRadius: '8px',
-                    padding: '10px 12px',
+                    padding: '12px',
                     color: 'var(--fg)',
                     fontSize: '13px',
                     fontFamily: 'inherit',
                     resize: 'vertical',
+                    lineHeight: '1.5',
                   }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--fg-muted)', marginBottom: '6px' }}>
-                  Votre nom / prénom (optionnel)
-                </label>
-                <input
-                  type="text"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  placeholder="Pour vous recontacter si besoin"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    background: 'var(--bg-input, var(--bg-card))',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: 'var(--fg)',
-                    fontSize: '13px',
-                    fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -3148,7 +3129,7 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
                   disabled={!description.trim()}
                   style={{ fontSize: '13px', padding: '8px 20px', opacity: !description.trim() ? 0.6 : 1 }}
                 >
-                  Envoyer le signalement
+                  Envoyer
                 </button>
               </div>
             </form>
