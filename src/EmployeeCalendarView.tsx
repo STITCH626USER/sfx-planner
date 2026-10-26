@@ -367,7 +367,7 @@ export function EmployeeCalendarView({
                             <div className="cal-popover-slot-identity">
                               <span
                                 className="cal-popover-scene-indicator"
-                                style={{ backgroundColor: color.accent }}
+                                style={{ backgroundColor: color.accent, color: color.accent }}
                                 aria-hidden="true"
                               />
                               <span className="cal-popover-slot-name">
@@ -377,27 +377,29 @@ export function EmployeeCalendarView({
                             <span className="time-pill">{r.time}</span>
                           </div>
 
-                          {r.role && (
-                            <div className="cal-popover-role-row">
-                              <span className="cal-popover-role-label">Rôle</span>
-                              <span
-                                className="role-pill"
-                                style={{
-                                  background: roleStyle?.bg,
-                                  color: roleStyle?.color,
-                                  borderColor: roleStyle?.border,
-                                }}
-                              >
-                                {cleanRoleLabel(r.role)}
-                              </span>
-                            </div>
-                          )}
+                          <div className="cal-popover-slot-meta-row">
+                            {r.role && (
+                              <div className="cal-popover-role-row">
+                                <span className="cal-popover-role-label">Rôle</span>
+                                <span
+                                  className="role-pill"
+                                  style={{
+                                    background: roleStyle?.bg,
+                                    color: roleStyle?.color,
+                                    borderColor: roleStyle?.border,
+                                  }}
+                                >
+                                  {cleanRoleLabel(r.role)}
+                                </span>
+                              </div>
+                            )}
 
-                          {assocScenes && assocScenes.length > 0 && (
-                            <div className="cal-popover-slot-assoc">
-                              <span>Associé à :</span> {assocScenes.join(', ')}
-                            </div>
-                          )}
+                            {assocScenes && assocScenes.length > 0 && (
+                              <div className="cal-popover-slot-assoc">
+                                <span>Associé à :</span> {assocScenes.join(', ')}
+                              </div>
+                            )}
+                          </div>
 
                           {onOpenScene && !isFO && (
                             <button

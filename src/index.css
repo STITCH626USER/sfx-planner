@@ -4647,27 +4647,27 @@ nav.seg button[aria-selected="true"] {
    INTERACTIVE POPOVER BUBBLE (HORAIRES SANS NOUVELLE FENETRE)
    ========================================================================== */
 .cal-popover-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: calFadeIn 0.15s ease-out;
-  box-sizing: border-box;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.68) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 2000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  animation: calFadeIn 0.15s ease-out !important;
+  box-sizing: border-box !important;
   will-change: opacity;
   transform: translateZ(0);
 }
 
 @media (max-width: 639px) {
   .cal-popover-overlay {
-    align-items: flex-end;
-    padding: 12px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
   }
 }
 
@@ -4676,47 +4676,47 @@ nav.seg button[aria-selected="true"] {
   to { opacity: 1; }
 }
 
-@keyframes calPopoverSlide {
+@keyframes calPopoverZoom {
   from {
     opacity: 0;
-    transform: translateY(8px) translateZ(0);
+    transform: scale(0.95) translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) translateZ(0);
+    transform: scale(1) translateY(0);
   }
 }
 
 .cal-popover-bubble {
-  position: relative;
-  width: 100%;
-  max-width: 440px;
-  max-height: 85vh;
-  background: #111622;
-  border: 1.5px solid #2a3649;
-  border-top: 3px solid var(--amber);
-  border-radius: 8px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: calPopoverSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  max-height: 85vh !important;
+  background: #111622 !important;
+  border: 1.5px solid #2a3649 !important;
+  border-top: 3px solid var(--amber) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: calPopoverZoom 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   will-change: transform, opacity;
-  transform: translateZ(0);
+  margin: auto !important;
 }
 
 :root[data-theme="light"] .cal-popover-bubble {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  border-top: 3px solid var(--amber);
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  border-top: 3px solid var(--amber) !important;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.2), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 
 .cal-popover-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 13px 18px;
   background: linear-gradient(180deg, #1b2434 0%, #131b28 100%);
   border-bottom: 1.5px solid #263346;
 }
@@ -4729,17 +4729,17 @@ nav.seg button[aria-selected="true"] {
 .cal-popover-date-wrap {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
 .cal-popover-calendar-icon {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .cal-popover-date {
   font-family: var(--font-display);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--fg);
   text-transform: uppercase;
@@ -4766,9 +4766,9 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-close-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
   border: 1px solid #36465e;
   background: linear-gradient(180deg, #242e40 0%, #161e2b 100%);
   color: var(--fg-muted);
@@ -4800,9 +4800,9 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-body {
-  padding: 14px 16px;
+  padding: 16px 18px;
   overflow-y: auto;
-  max-height: calc(85vh - 56px);
+  max-height: calc(85vh - 58px);
 }
 
 /* Off state in popover */
@@ -4810,9 +4810,9 @@ nav.seg button[aria-selected="true"] {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   background: #141a26;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px dashed #283448;
 }
 
@@ -4822,7 +4822,7 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-off-icon {
-  font-size: 26px;
+  font-size: 28px;
 }
 
 .cal-popover-off-text {
@@ -4892,19 +4892,19 @@ nav.seg button[aria-selected="true"] {
   border: 1px solid #283548;
   border-left-width: 4.5px;
   border-left-style: solid;
-  border-radius: 6px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 13px 15px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  gap: 11px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 :root[data-theme="light"] .cal-popover-slot-card {
   background: #ffffff;
   border-color: #e2e8f0;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
 }
 
 .cal-popover-slot-header {
@@ -4917,27 +4917,34 @@ nav.seg button[aria-selected="true"] {
 .cal-popover-slot-identity {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
 }
 
 .cal-popover-scene-indicator {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 8px currentColor;
+  box-shadow: 0 0 10px currentColor;
 }
 
 .cal-popover-slot-name {
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 800;
   color: var(--fg);
   letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cal-popover-slot-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .cal-popover-role-row {
@@ -4973,9 +4980,9 @@ nav.seg button[aria-selected="true"] {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 2px;
-  padding: 8px 12px;
-  border-radius: 5px;
+  margin-top: 3px;
+  padding: 9px 14px;
+  border-radius: 6px;
   border: 1px solid #36465e;
   background: linear-gradient(180deg, #222b3b 0%, #161e2b 100%);
   color: var(--fg);
@@ -5063,8 +5070,8 @@ nav.seg button[aria-selected="true"] {
   }
 
   .cal-popover-bubble {
-    border-radius: 20px 20px 16px 16px;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
   }
 }
 
