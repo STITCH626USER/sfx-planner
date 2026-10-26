@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import type { PlanningRecord } from './lib/parsePdf';
-import { isTrainingScene, getSceneColor, cleanSceneName, timesMatch, getRoleBadgeStyle, cleanRoleLabel } from './lib/utils';
+import { isTrainingScene, getSceneColor, cleanSceneName, getSceneShowLabel, timesMatch, getRoleBadgeStyle, cleanRoleLabel } from './lib/utils';
 
 const DAY_COLS = [
   { key: 'dim', label: 'DIM', full: 'Dimanche' },
@@ -243,6 +243,9 @@ export function EmployeeCalendarView({
                           const clean = cleanSceneName(scene);
                           const color = getSceneColor(clean);
 
+                          const showLabel = getSceneShowLabel(clean);
+                          const displayPillName = isFO ? `🎓 ${clean}` : (showLabel || clean);
+
                           return (
                             <div
                               key={scene}
@@ -252,10 +255,10 @@ export function EmployeeCalendarView({
                                 '--scene-bg': color.bg,
                                 '--scene-text': color.text,
                               } as React.CSSProperties}
-                              title={isFO ? `Formation (${clean})` : clean}
+                              title={isFO ? `Formation (${clean})` : (showLabel ? `${showLabel} (${clean})` : clean)}
                             >
                               <span className="cal-scene-name">
-                                {isFO ? `🎓 ${clean}` : clean}
+                                {displayPillName}
                               </span>
                             </div>
                           );
@@ -370,9 +373,16 @@ export function EmployeeCalendarView({
                                 style={{ backgroundColor: color.accent, color: color.accent }}
                                 aria-hidden="true"
                               />
-                              <span className="cal-popover-slot-name">
-                                {isFO ? `🎓 ${clean}` : clean}
-                              </span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                <span className="cal-popover-slot-name">
+                                  {isFO ? `🎓 ${clean}` : (getSceneShowLabel(clean) || clean)}
+                                </span>
+                                {getSceneShowLabel(clean) && !isFO && getSceneShowLabel(clean) !== clean && (
+                                  <span style={{ fontSize: '11px', color: 'var(--fg-dim)', fontWeight: 600 }}>
+                                    {clean}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <span className="time-pill">{r.time}</span>
                           </div>

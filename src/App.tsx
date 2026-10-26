@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parsePdfFile } from './lib/parsePdf';
 import type { PlanningRecord } from './lib/parsePdf';
 import { exportDayPdf, exportEmployeePdf, exportScenePdf, listScenes, exportGlobalRecapPdf } from './lib/exportPdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, cleanSceneName, getShiftLiveStatus, parseRange } from './lib/utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, cleanSceneName, getSceneShowLabel, getShiftLiveStatus, parseRange } from './lib/utils';
 import { EmployeeCalendarView } from './EmployeeCalendarView';
 import { fetchDlpShows, type DlpShow, type DlpParkHours } from './lib/dlpShows';
 import { fetchDlpWeather, type DailyWeatherSummary } from './lib/weather';
@@ -1657,8 +1657,15 @@ function DayCard({
           <div className="day-scene" data-testid={`scene-${rec.date}`}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span className="day-scene-name" style={{ fontWeight: 700, fontSize: '15px' }}>
-                {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
+                {isTrainingScene(rec.scene)
+                  ? `🎓 ${cleanSceneName(rec.scene)}`
+                  : (getSceneShowLabel(cleanSceneName(rec.scene)) || cleanSceneName(rec.scene))}
               </span>
+              {getSceneShowLabel(cleanSceneName(rec.scene)) && !isTrainingScene(rec.scene) && getSceneShowLabel(cleanSceneName(rec.scene)) !== cleanSceneName(rec.scene) && (
+                <span style={{ fontSize: '12px', color: 'var(--fg-dim)', fontWeight: 600 }}>
+                  ({cleanSceneName(rec.scene)})
+                </span>
+              )}
               {rec.role && (
                 <span
                   className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
@@ -1828,8 +1835,15 @@ function DayCard({
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--fg)' }}>
-                    {isTrainingScene(rec.scene) ? `🎓 ${cleanSceneName(rec.scene)}` : cleanSceneName(rec.scene)}
+                    {isTrainingScene(rec.scene)
+                      ? `🎓 ${cleanSceneName(rec.scene)}`
+                      : (getSceneShowLabel(cleanSceneName(rec.scene)) || cleanSceneName(rec.scene))}
                   </span>
+                  {getSceneShowLabel(cleanSceneName(rec.scene)) && !isTrainingScene(rec.scene) && getSceneShowLabel(cleanSceneName(rec.scene)) !== cleanSceneName(rec.scene) && (
+                    <span style={{ fontSize: '11.5px', color: 'var(--fg-dim)', fontWeight: 600 }}>
+                      ({cleanSceneName(rec.scene)})
+                    </span>
+                  )}
                   {rec.role && (
                     <span
                       className={`role-pill ${rec.role.toLowerCase().includes('tech sfx') ? 'role-tech' : 'role-special'}`}
@@ -2044,9 +2058,12 @@ function SceneDetail({
                     }}
                     aria-hidden="true"
                   />
-                  <span>{cleanName}</span>
+                  <span>{getSceneShowLabel(cleanName) || cleanName}</span>
                 </div>
                 <div className="modern-scene-sub" style={{ fontSize: 13, marginTop: 4 }}>
+                  {getSceneShowLabel(cleanName) && getSceneShowLabel(cleanName) !== cleanName && (
+                    <span style={{ fontWeight: 600, opacity: 0.9 }}>{cleanName} · </span>
+                  )}
                   {formatDateLong(date)} · {team.length} technicien{team.length > 1 ? 's' : ''}
                 </div>
               </div>
@@ -2087,7 +2104,7 @@ function SceneDetail({
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      {cleanSceneName(sc)}
+                      {getSceneShowLabel(cleanSceneName(sc)) || cleanSceneName(sc)}
                     </button>
                   );
                 })}
@@ -2441,9 +2458,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                           }}
                           aria-hidden="true"
                         />
-                        <span>{cleanSceneName(scene)}</span>
+                        <span>{getSceneShowLabel(cleanSceneName(scene)) || cleanSceneName(scene)}</span>
                       </div>
                       <div className="modern-scene-sub">
+                        {getSceneShowLabel(cleanSceneName(scene)) && getSceneShowLabel(cleanSceneName(scene)) !== cleanSceneName(scene) && (
+                          <span style={{ fontWeight: 600, opacity: 0.9 }}>{cleanSceneName(scene)} · </span>
+                        )}
                         {sceneRecords.length} technicien{sceneRecords.length > 1 ? 's' : ''}
                       </div>
                     </div>

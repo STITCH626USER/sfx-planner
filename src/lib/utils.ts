@@ -100,6 +100,59 @@ export function cleanSceneName(scene: string): string {
   return s || scene;
 }
 
+/**
+ * Mappage des scènes / codes techniques du planning vers les véritables
+ * spectacles & lieux Disney (ex: matm -> Mickey et le Magicien, dfact -> Dream Factory, etc.)
+ */
+export function getSceneShowLabel(scene: string): string | null {
+  if (!scene) return null;
+  const s = cleanSceneName(scene).toLowerCase();
+
+  // Support / Pool technique
+  if (s.includes('pooltechn') || s.includes('pool techn') || s.includes('support')) {
+    return 'Support Technique';
+  }
+  // Mickey et le Magicien (MATM / Animagique Theater)
+  if (s.includes('matm') || s.includes('magicien') || s.includes('animagique')) {
+    return 'Mickey et le Magicien';
+  }
+  // Disney Junior Dream Factory / La Fabrique des Rêves (DFACT / Studio D)
+  if (s.includes('dfact') || s.includes('dream factory') || s.includes('fabrique')) {
+    return 'Dream Factory (Minnie)';
+  }
+  // Disney Tales of Magic / Illuminations (Château)
+  if (s.includes('illumination') || s.includes('tales of magic') || s.includes('castle')) {
+    return 'Disney Tales of Magic';
+  }
+  // Disney Cascade of Lights (Lac Adventure Way)
+  if (s.includes('cascade')) {
+    return 'Cascade of Lights';
+  }
+  // Le Roi Lion (Frontierland Theater)
+  if (s.includes('lionking') || s.includes('roi lion') || s.includes('frontierland')) {
+    return 'Le Roi Lion';
+  }
+  // TOGETHER : Une Aventure Musicale Pixar (Studio Theater)
+  if (s.includes('together') || s.includes('studiotsh')) {
+    return 'Together Pixar';
+  }
+  // Reine des Neiges (Arendelle / Animation Celebration)
+  if (s.includes('arendelle') || s.includes('frozen') || s.includes('neiges')) {
+    return 'La Reine des Neiges';
+  }
+  // Avengers Campus / Marvel
+  if (s.includes('marvel') || s.includes('avengers')) {
+    return 'Avengers Campus';
+  }
+  // Videopolis
+  if (s.includes('videopolis')) {
+    return 'Vidéopolis';
+  }
+
+  return null;
+}
+
+
 const KNOWN_FIRST_NAMES = new Set([
   'alexandre', 'anne sophie', 'anne-sophie', 'antoine', 'armand', 'arnaud',
   'arthur', 'aurelien', 'aurélien', 'balthazar', 'cedric', 'cédric', 'cedrick',
