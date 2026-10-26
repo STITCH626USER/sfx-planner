@@ -1844,6 +1844,7 @@ input:focus, select:focus {
 
   .app-header-actions {
     display: flex !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
     gap: 8px !important;
     width: 100% !important;
@@ -1853,6 +1854,7 @@ input:focus, select:focus {
     flex: 1 1 auto !important;
     justify-content: center !important;
     height: 38px !important;
+    min-width: 0 !important;
   }
 
   .app-header-actions .btn-header-theme {
@@ -1864,8 +1866,13 @@ input:focus, select:focus {
     border-radius: var(--r-md) !important;
   }
 
+  .app-header-actions .btn-header-theme .theme-btn-text {
+    display: none !important;
+  }
+
   .app-header-actions .btn-header-add {
-    flex: 1.2 1 auto !important;
+    flex: 1 0 100% !important;
+    width: 100% !important;
     height: 38px !important;
     padding: 0 14px !important;
     font-size: 13px !important;
@@ -7083,53 +7090,53 @@ nav.seg button[aria-selected="true"] {
     padding-bottom: 10px !important;
     overflow: visible !important;
   }
-}
 
-.app-header-left {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  min-width: 0 !important;
-  flex: 1 1 auto !important;
-  overflow: visible !important;
-}
+  .app-header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: visible !important;
+  }
 
-.app-logo {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
-  max-width: 44px !important;
-  max-height: 44px !important;
-  flex: 0 0 44px !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-}
+  .app-logo {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    max-width: 44px !important;
+    max-height: 44px !important;
+    flex: 0 0 44px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
 
-.app-logo .logo-img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-}
+  .app-logo .logo-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
 
-.app-title-wrap {
-  min-width: 0 !important;
-  flex: 1 1 auto !important;
-}
+  .app-title-wrap {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
 
-.app-title {
-  font-size: 16.5px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  line-height: 1.2 !important;
+  .app-title {
+    font-size: 16.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+  }
 }
 
 @media (max-width: 420px) {
