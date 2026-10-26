@@ -2123,51 +2123,53 @@ function SceneDetail({
                     <div className="team-name compact-name">
                       {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                     </div>
-                      {isFOVirtual && originalScene && (
-                        <div className="team-meta compact-meta">
-                          `En formation (${originalScene})`
-                        </div>
-                      )}
-                    </div>
-                  <div className="compact-role-cell">
-                    {isFO ? (
-                      <span
-                        className="role-pill"
-                        style={{
-                          background: 'rgba(168, 85, 247, 0.16)',
-                          color: '#c084fc',
-                          borderColor: 'rgba(168, 85, 247, 0.4)',
-                        }}
-                        title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
-                      >
-                        🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
-                      </span>
-                    ) : rec.role ? (
-                      <span
-                        className="role-pill"
-                        style={{
-                          background: getRoleBadgeStyle(rec.role).bg,
-                          color: getRoleBadgeStyle(rec.role).color,
-                          borderColor: getRoleBadgeStyle(rec.role).border,
-                        }}
-                        title={rec.role}
-                      >
-                        {cleanRoleLabel(rec.role)}
-                      </span>
-                    ) : null}
+                    {isFOVirtual && originalScene && (
+                      <div className="team-meta compact-meta">
+                        `En formation (${originalScene})`
+                      </div>
+                    )}
                   </div>
-                  <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
-                    {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn-eye compact-eye"
-                    aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
-                    data-testid={`btn-view-employee-${rec.employee}`}
-                    onClick={() => onViewEmployee((rec as any).originalEmployeeName || rec.employee)}
-                  >
-                    <IconEye />
-                  </button>
+                  <div className="compact-right-group">
+                    <div className="compact-role-cell">
+                      {isFO ? (
+                        <span
+                          className="role-pill"
+                          style={{
+                            background: 'rgba(168, 85, 247, 0.16)',
+                            color: '#c084fc',
+                            borderColor: 'rgba(168, 85, 247, 0.4)',
+                          }}
+                          title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
+                        >
+                          🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
+                        </span>
+                      ) : rec.role ? (
+                        <span
+                          className="role-pill"
+                          style={{
+                            background: getRoleBadgeStyle(rec.role).bg,
+                            color: getRoleBadgeStyle(rec.role).color,
+                            borderColor: getRoleBadgeStyle(rec.role).border,
+                          }}
+                          title={rec.role}
+                        >
+                          {cleanRoleLabel(rec.role)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
+                      {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-eye compact-eye"
+                      aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
+                      data-testid={`btn-view-employee-${rec.employee}`}
+                      onClick={() => onViewEmployee((rec as any).originalEmployeeName || rec.employee)}
+                    >
+                      <IconEye />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
