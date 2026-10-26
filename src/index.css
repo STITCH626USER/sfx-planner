@@ -4693,46 +4693,53 @@ nav.seg button[aria-selected="true"] {
   max-width: 440px;
   max-height: 85vh;
   background: #111622;
-  border: 1.5px solid #2d3b50;
+  border: 1.5px solid #2a3649;
   border-top: 3px solid var(--amber);
-  border-radius: 6px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: calPopoverSlide 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: calPopoverSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 :root[data-theme="light"] .cal-popover-bubble {
   background: #ffffff;
   border-color: #cbd5e1;
   border-top: 3px solid var(--amber);
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .cal-popover-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  background: linear-gradient(180deg, #1f2a3c 0%, #151d2a 100%);
-  border-bottom: 1.5px solid #283448;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #1b2434 0%, #131b28 100%);
+  border-bottom: 1.5px solid #263346;
 }
 
 :root[data-theme="light"] .cal-popover-head {
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom-color: #cbd5e1;
+  border-bottom-color: #e2e8f0;
+}
+
+.cal-popover-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cal-popover-calendar-icon {
+  font-size: 15px;
+  line-height: 1;
 }
 
 .cal-popover-date {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 800;
   color: var(--fg);
   text-transform: uppercase;
@@ -4744,12 +4751,12 @@ nav.seg button[aria-selected="true"] {
   font-size: 10px;
   font-weight: 800;
   color: #ffd066;
-  background: #252f40;
-  padding: 2px 6px;
-  border-radius: 3px;
+  background: rgba(255, 176, 32, 0.12);
+  padding: 2.5px 7px;
+  border-radius: 4px;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 176, 32, 0.35);
-  letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 176, 32, 0.4);
+  letter-spacing: 0.05em;
 }
 
 :root[data-theme="light"] .cal-popover-today-badge {
@@ -4759,19 +4766,19 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-close-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: 1px solid #36465e;
   background: linear-gradient(180deg, #242e40 0%, #161e2b 100%);
   color: var(--fg-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: all 0.15s ease;
 }
 
@@ -4787,20 +4794,25 @@ nav.seg button[aria-selected="true"] {
   color: #475569;
 }
 
+:root[data-theme="light"] .cal-popover-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 .cal-popover-body {
   padding: 14px 16px;
   overflow-y: auto;
-  max-height: calc(85vh - 54px);
+  max-height: calc(85vh - 56px);
 }
 
 /* Off state in popover */
 .cal-popover-off {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 14px;
+  padding: 14px 16px;
   background: #141a26;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px dashed #283448;
 }
 
@@ -4810,13 +4822,13 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-off-icon {
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .cal-popover-off-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .cal-popover-off-text strong {
@@ -4829,7 +4841,7 @@ nav.seg button[aria-selected="true"] {
 }
 
 .cal-popover-off-text span {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--fg-muted);
 }
 
@@ -4837,18 +4849,18 @@ nav.seg button[aria-selected="true"] {
 .cal-popover-slots {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .cal-popover-shift-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 11px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   background: #18202d;
   border: 1px solid rgba(255, 176, 32, 0.35);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 :root[data-theme="light"] .cal-popover-shift-banner {
@@ -4874,45 +4886,72 @@ nav.seg button[aria-selected="true"] {
   color: #b45309;
 }
 
+/* Slot Card - GrandMA3 Style */
 .cal-popover-slot-card {
   background: #161c28;
   border: 1px solid #283548;
-  border-radius: 4px;
-  padding: 10px 12px;
+  border-left-width: 4.5px;
+  border-left-style: solid;
+  border-radius: 6px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 :root[data-theme="light"] .cal-popover-slot-card {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-.cal-popover-slot-top {
+.cal-popover-slot-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+}
+
+.cal-popover-slot-identity {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+.cal-popover-scene-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .cal-popover-slot-name {
   font-family: var(--font-display);
-  font-size: 14.5px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: var(--fg);
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cal-popover-slot-role {
-  font-size: 12px;
-  color: var(--fg-muted);
+.cal-popover-role-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.cal-popover-slot-role strong {
-  color: var(--fg);
+.cal-popover-role-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  letter-spacing: 0.05em;
   font-weight: 700;
 }
 
@@ -4920,45 +4959,70 @@ nav.seg button[aria-selected="true"] {
   font-size: 11.5px;
   color: var(--fg-muted);
   font-style: italic;
+  padding-left: 2px;
 }
 
+.cal-popover-slot-assoc span {
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* GrandMA3 Action Button - Embedded Tab Style */
 .cal-popover-team-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 4px;
-  padding: 6px 12px;
-  border-radius: 4px;
+  margin-top: 2px;
+  padding: 8px 12px;
+  border-radius: 5px;
   border: 1px solid #36465e;
-  background: linear-gradient(180deg, #242e40 0%, #161e2b 100%);
+  background: linear-gradient(180deg, #222b3b 0%, #161e2b 100%);
   color: var(--fg);
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: all 0.15s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cal-popover-team-btn:hover {
-  background: linear-gradient(180deg, #2c384e 0%, #1b2536 100%);
+  background: linear-gradient(180deg, #2b374a 0%, #1c2637 100%);
   border-color: var(--amber);
   color: #ffd066;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 12px rgba(255, 176, 32, 0.25);
+}
+
+.cal-popover-team-btn:active {
+  transform: translateY(1px);
+}
+
+.cal-popover-team-btn-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-popover-team-icon {
+  font-size: 13px;
+  line-height: 1;
 }
 
 :root[data-theme="light"] .cal-popover-team-btn {
-  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-color: #cbd5e1;
-  color: #0f172a;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 :root[data-theme="light"] .cal-popover-team-btn:hover {
   background: #fef3c7;
-  border-color: #fcd34d;
+  border-color: #f59e0b;
   color: #b45309;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15);
 }
 
 /* ==========================================================================

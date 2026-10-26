@@ -305,3 +305,35 @@ export function getSceneColor(scene: string): SceneColor {
     rgbAccent
   };
 }
+
+export function cleanRoleLabel(role: string): string {
+  if (!role) return '';
+  const r = role.trim();
+  if (r.toLowerCase() === 'tech sfx') return 'Tech';
+  if (/^tech\s+sfx\s+/i.test(r)) {
+    return r.replace(/^tech\s+sfx\s+/i, '').trim();
+  }
+  if (/^tech\s+(secu|ponton|bassin)/i.test(r)) {
+    return r.replace(/^tech\s+/i, '').trim();
+  }
+  if (/^asstcoordinateur$/i.test(r)) return 'Asst Coord';
+  return r;
+}
+
+export function getRoleBadgeStyle(role: string): { bg: string; color: string; border: string } {
+  const r = (role || '').toLowerCase();
+  if (r.includes('regie')) {
+    return { bg: 'rgba(245, 158, 11, 0.16)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' }; // Amber gold
+  }
+  if (r.includes('coord') || r.includes('lead')) {
+    return { bg: 'rgba(244, 63, 94, 0.16)', color: '#fb7185', border: 'rgba(244, 63, 94, 0.4)' }; // Rose Coral
+  }
+  if (r.includes('secu') || r.includes('ponton') || r.includes('bassin')) {
+    return { bg: 'rgba(20, 184, 166, 0.16)', color: '#2dd4bf', border: 'rgba(20, 184, 166, 0.4)' }; // Teal / Cyan
+  }
+  if (r.includes('maint') || r.includes('matmops')) {
+    return { bg: 'rgba(168, 85, 247, 0.16)', color: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' }; // Purple
+  }
+  return { bg: 'rgba(56, 189, 248, 0.10)', color: '#7dd3fc', border: 'rgba(56, 189, 248, 0.25)' };
+}
+

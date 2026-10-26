@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import type { PlanningRecord } from './lib/parsePdf';
-import { isTrainingScene, getSceneColor, cleanSceneName, timesMatch } from './lib/utils';
+import { isTrainingScene, getSceneColor, cleanSceneName, timesMatch, getRoleBadgeStyle, cleanRoleLabel } from './lib/utils';
 
 const DAY_COLS = [
   { key: 'dim', label: 'DIM', full: 'Dimanche' },
@@ -285,8 +285,9 @@ export function EmployeeCalendarView({
             onClick={e => e.stopPropagation()}
           >
             <div className="cal-popover-head">
-              <div className="cal-popover-date">
-                <span>{formatFullDate(popover.date)}</span>
+              <div className="cal-popover-date-wrap">
+                <span className="cal-popover-calendar-icon" aria-hidden="true">📅</span>
+                <span className="cal-popover-date">{formatFullDate(popover.date)}</span>
                 {popover.date === todayIso && (
                   <span className="cal-popover-today-badge">Aujourd'hui</span>
                 )}
@@ -309,7 +310,7 @@ export function EmployeeCalendarView({
                     <div className="cal-popover-off">
                       <div className="cal-popover-off-icon">🏖️</div>
                       <div className="cal-popover-off-text">
-                        <strong>Repos / Congé</strong>
+                        <strong>Journée de repos</strong>
                         <span>Aucun poste ni formation planifié ce jour.</span>
                       </div>
                     </div>
@@ -325,7 +326,7 @@ export function EmployeeCalendarView({
                   <div className="cal-popover-slots">
                     {hasMultipleSlots && dayShift && (
                       <div className="cal-popover-shift-banner">
-                        <span className="shift-label">🕒 Amplitude journée :</span>
+                        <span className="shift-label">🕒 Amplitude totale :</span>
                         <strong className="shift-time">{dayShift}</strong>
                       </div>
                     )}
@@ -334,6 +335,7 @@ export function EmployeeCalendarView({
                       const isFO = isTrainingScene(r.scene);
                       const clean = cleanSceneName(r.scene);
                       const color = getSceneColor(clean);
+                      const roleStyle = r.role ? getRoleBadgeStyle(r.role) : null;
 
                       // Detect associated scenes if formation
                       let assocScenes: string[] | undefined;
@@ -358,26 +360,42 @@ export function EmployeeCalendarView({
                           key={idx}
                           className="cal-popover-slot-card"
                           style={{
-                            borderLeft: `4.5px solid ${color.accent}`,
-                            background: `linear-gradient(90deg, ${color.accent}18, transparent)`,
+                            borderLeftColor: color.accent,
                           }}
                         >
-                          <div className="cal-popover-slot-top">
-                            <div className="cal-popover-slot-name">
-                              {isFO ? `🎓 ${clean}` : clean}
+                          <div className="cal-popover-slot-header">
+                            <div className="cal-popover-slot-identity">
+                              <span
+                                className="cal-popover-scene-indicator"
+                                style={{ backgroundColor: color.accent }}
+                                aria-hidden="true"
+                              />
+                              <span className="cal-popover-slot-name">
+                                {isFO ? `🎓 ${clean}` : clean}
+                              </span>
                             </div>
                             <span className="time-pill">{r.time}</span>
                           </div>
 
                           {r.role && (
-                            <div className="cal-popover-slot-role">
-                              Rôle : <strong>{r.role}</strong>
+                            <div className="cal-popover-role-row">
+                              <span className="cal-popover-role-label">Rôle</span>
+                              <span
+                                className="role-pill"
+                                style={{
+                                  background: roleStyle?.bg,
+                                  color: roleStyle?.color,
+                                  borderColor: roleStyle?.border,
+                                }}
+                              >
+                                {cleanRoleLabel(r.role)}
+                              </span>
                             </div>
                           )}
 
                           {assocScenes && assocScenes.length > 0 && (
                             <div className="cal-popover-slot-assoc">
-                              Associé à : {assocScenes.join(', ')}
+                              <span>Associé à :</span> {assocScenes.join(', ')}
                             </div>
                           )}
 
@@ -390,8 +408,11 @@ export function EmployeeCalendarView({
                                 onOpenScene(r.scene, r.date);
                               }}
                             >
-                              <span>Voir l'équipe du jour</span>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <span className="cal-popover-team-btn-text">
+                                <span className="cal-popover-team-icon">👥</span>
+                                Voir l'équipe du jour
+                              </span>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M5 12h14M12 5l7 7-7 7" />
                               </svg>
                             </button>
