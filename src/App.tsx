@@ -1192,6 +1192,202 @@ export default function App() {
 
 
 
+interface SparkParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  alpha: number;
+  decay: number;
+  size: number;
+  flicker: number;
+}
+
+interface ShellRocket {
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  vx: number;
+  vy: number;
+  color: string;
+  trail: Array<{ x: number; y: number; alpha: number }>;
+}
+
+const SFX_SHOW_COLORS = [
+  '#ff2a5f', // Rose néon pyrotechnique
+  '#ff9500', // Or incandescent Disney
+  '#ffd60a', // Étoile dorée
+  '#00f0ff', // Cyan électrique
+  '#bf5af2', // Violet majestueux
+  '#30d158', // Émeraude vive
+  '#ff3b30', // Rouge pétillant
+  '#ffffff', // Blanc phosphorescent
+];
+
+function RealisticHeaderFireworks() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let particles: SparkParticle[] = [];
+    let rockets: ShellRocket[] = [];
+    let lastLaunch = 0;
+    let isMounted = true;
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(rect.width * dpr, 300);
+      canvas.height = Math.max(rect.height * dpr, 150);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const createExplosion = (x: number, y: number, color: string) => {
+      const count = 35 + Math.floor(Math.random() * 25);
+      const isGoldCrackle = Math.random() < 0.25;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = (0.8 + Math.random() * 3.5) * (canvas.width / 400);
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.4,
+          color: isGoldCrackle ? (Math.random() < 0.5 ? '#ffe066' : '#ffffff') : color,
+          alpha: 1,
+          decay: 0.014 + Math.random() * 0.016,
+          size: 1.2 + Math.random() * 1.8,
+          flicker: Math.random() * 0.4,
+        });
+      }
+    };
+
+    const launchRocket = () => {
+      const w = canvas.width;
+      const h = canvas.height;
+      const tx = w * (0.15 + Math.random() * 0.7);
+      const ty = h * (0.15 + Math.random() * 0.45);
+      const x = tx + (Math.random() - 0.5) * (w * 0.2);
+      const y = h + 10;
+      const duration = 28 + Math.random() * 14;
+      rockets.push({
+        x,
+        y,
+        tx,
+        ty,
+        vx: (tx - x) / duration,
+        vy: (ty - y) / duration,
+        color: SFX_SHOW_COLORS[Math.floor(Math.random() * SFX_SHOW_COLORS.length)],
+        trail: [],
+      });
+    };
+
+    const loop = (time: number) => {
+      if (!isMounted) return;
+
+      // Boucle continue : tir toutes les 700ms à 1400ms
+      if (time - lastLaunch > 750 + Math.random() * 650) {
+        launchRocket();
+        if (Math.random() < 0.35) {
+          setTimeout(launchRocket, 180);
+        }
+        lastLaunch = time;
+      }
+
+      // Effet fondu de traînée lumineuse subtil (lueur sombre)
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'lighter';
+
+      // Rendu des fusées montantes avec comète
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i];
+        r.trail.push({ x: r.x, y: r.y, alpha: 0.85 });
+        if (r.trail.length > 5) r.trail.shift();
+
+        // Dessin de la traînée dorée/étincelle
+        for (const t of r.trail) {
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 215, 100, ' + t.alpha + ')';
+          ctx.fill();
+          t.alpha *= 0.7;
+        }
+
+        r.x += r.vx;
+        r.y += r.vy;
+
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = r.color;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (r.y <= r.ty || r.vy >= 0) {
+          createExplosion(r.x, r.y, r.color);
+          rockets.splice(i, 1);
+        }
+      }
+
+      // Rendu des étincelles avec gravité et scintillement
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.045; // Gravité réaliste
+        p.vx *= 0.985;
+        p.vy *= 0.985;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        const renderAlpha = Math.max(0, Math.min(1, p.alpha + (Math.random() - 0.5) * p.flicker));
+        ctx.save();
+        ctx.globalAlpha = renderAlpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 6;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      animId = requestAnimationFrame(loop);
+    };
+
+    animId = requestAnimationFrame(loop);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="recherche-fireworks-canvas"
+      aria-hidden="true"
+    />
+  );
+}
+
 function shortName(n: string): string {
   let name = n.replace(/\.pdf$/i, '');
   name = name.replace(/planning/i, '');
@@ -1243,6 +1439,7 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
   return (
     <div data-testid="panel-recherche" className={`recherche-panel-container ${query.trim() ? 'has-query' : ''}`}>
       <div className="recherche-header">
+        <RealisticHeaderFireworks />
         <h2 className="recherche-title">Planning Individuel</h2>
         <p className="recherche-subtitle">Recherchez un technicien pour afficher son planning complet ou l'exporter en PDF.</p>
       </div>
