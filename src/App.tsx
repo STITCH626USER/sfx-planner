@@ -1250,18 +1250,20 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
       <div className="search-wrap" role="search">
         <span className="search-icon"><IconSearch /></span>
         <input
-          id="search-input"
-          name="search"
-          type="search"
-          inputMode="search"
+          id="technician-search-filter"
+          name="technician_filter_query"
+          type="text"
+          inputMode="text"
           autoComplete="off"
           autoCorrect="off"
-          autoCapitalize="none"
+          autoCapitalize="words"
           spellCheck={false}
           data-lpignore="true"
           data-1p-ignore="true"
           data-bwignore="true"
           data-form-type="other"
+          data-dashlane-ignore="true"
+          data-private="true"
           placeholder="Rechercher (ex: Tom)..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -2376,7 +2378,20 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 <IconSearch />
               </div>
               <input 
+                id="daily-technician-filter"
+                name="daily_technician_query"
                 type="text"
+                inputMode="text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="words"
+                spellCheck={false}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+                data-dashlane-ignore="true"
+                data-private="true"
                 placeholder="Rechercher un technicien..."
                 value={dailySearch}
                 onChange={(e) => setDailySearch(e.target.value)}
