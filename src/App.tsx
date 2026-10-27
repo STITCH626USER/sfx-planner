@@ -2535,8 +2535,8 @@ interface FogParticle {
   radius: number;
   alpha: number;
   maxAlpha: number;
-  growth: number;
   tint: string;
+  phase: number;
 }
 
 function LowFogEffect() {
@@ -2556,35 +2556,34 @@ function LowFogEffect() {
       const rect = canvas.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(rect.width * dpr, 300);
-      canvas.height = Math.max(rect.height * dpr, 100);
+      canvas.height = Math.max(rect.height * dpr, 60);
     };
     resize();
     window.addEventListener('resize', resize);
 
     const tints = [
-      '200, 220, 255', // Vapeur froide bleutée cryogénique
-      '255, 235, 200', // Lueur ambrée chaude
-      '180, 240, 230', // Vapeur turquoise SFX
-      '240, 245, 255', // Blanc brume pure
+      '220, 235, 255', // Vapeur cryogénique blanche bleutée
+      '245, 248, 255', // Brume blanche pure
+      '255, 225, 175', // Micro-reflet or / ambre
+      '195, 240, 235', // Nuance givrée
     ];
 
-    // Création initiale d'un banc de fumée lourde
-    const count = 38;
+    const count = 32;
     for (let i = 0; i < count; i++) {
       particles.push({
-        x: Math.random() * (canvas.width || 800),
-        y: (canvas.height || 140) * (0.45 + Math.random() * 0.55), // Au ras du sol
-        vx: (Math.random() - 0.5) * 0.45,
-        vy: (Math.random() - 0.5) * 0.08,
-        radius: 40 + Math.random() * 55,
-        alpha: 0.01 + Math.random() * 0.08,
-        maxAlpha: 0.07 + Math.random() * 0.12,
-        growth: 0.02 + Math.random() * 0.04,
+        x: Math.random() * (canvas.width || 600),
+        y: (canvas.height || 60) * (0.45 + Math.random() * 0.45),
+        vx: (Math.random() - 0.48) * 0.45,
+        vy: (Math.random() - 0.5) * 0.04,
+        radius: 35 + Math.random() * 45,
+        alpha: 0.05 + Math.random() * 0.1,
+        maxAlpha: 0.12 + Math.random() * 0.18,
         tint: tints[Math.floor(Math.random() * tints.length)],
+        phase: Math.random() * Math.PI * 2,
       });
     }
 
-    const loop = () => {
+    const loop = (t: number) => {
       if (!isMounted) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2592,20 +2591,20 @@ function LowFogEffect() {
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
-        p.y += p.vy;
-        p.radius += p.growth * 0.2;
+        p.y += p.vy + Math.sin(t * 0.0015 + p.phase) * 0.08;
 
-        // Effet de va-et-vient vaporeux doux
         if (p.x < -p.radius) p.x = canvas.width + p.radius;
         if (p.x > canvas.width + p.radius) p.x = -p.radius;
 
-        // Reste collé au bas du conteneur (effet lourd)
-        if (p.y < canvas.height * 0.3) p.vy += 0.01;
-        if (p.y > canvas.height * 0.95) p.vy -= 0.01;
+        // Force la brume à rester juste au ras
+        if (p.y < canvas.height * 0.25) p.vy += 0.015;
+        if (p.y > canvas.height * 0.85) p.vy -= 0.015;
+
+        const currentAlpha = p.maxAlpha * (0.8 + 0.2 * Math.sin(t * 0.001 + p.phase));
 
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-        grad.addColorStop(0, `rgba(${p.tint}, ${p.maxAlpha})`);
-        grad.addColorStop(0.5, `rgba(${p.tint}, ${p.maxAlpha * 0.5})`);
+        grad.addColorStop(0, `rgba(${p.tint}, ${currentAlpha})`);
+        grad.addColorStop(0.45, `rgba(${p.tint}, ${currentAlpha * 0.55})`);
         grad.addColorStop(1, `rgba(${p.tint}, 0)`);
 
         ctx.fillStyle = grad;
@@ -2656,7 +2655,6 @@ function LowFogEffect() {
         />
       </div>
       <div data-testid="panel-daily" className="modern-daily-panel">
-          <LowFogEffect />
           <div className="modern-daily-header">
             <div className="modern-daily-compact-bar">
               <div className="modern-daily-date-group">
@@ -2680,6 +2678,7 @@ function LowFogEffect() {
             </div>
 
             <div className="modern-search-wrapper">
+              <LowFogEffect />
               <div className="modern-search-icon" aria-hidden="true">
                 <IconSearch />
               </div>
