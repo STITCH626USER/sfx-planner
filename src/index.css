@@ -6387,30 +6387,7 @@ nav.seg button[aria-selected="true"] {
 }
 
 /* En-tête de page moderne & compact */
-.modern-daily-panel {
-  position: relative;
-}
-
-.low-fog-canvas {
-  position: absolute;
-  bottom: calc(100% - 14px);
-  left: 5%;
-  width: 90%;
-  height: 52px;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.95;
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 95%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 95%);
-}
-
-:root[data-theme="light"] .low-fog-canvas {
-  opacity: 0.55;
-}
-
 .modern-daily-header {
-  position: relative;
-  z-index: 1;
   margin-bottom: 20px;
 }
 .modern-daily-compact-bar {

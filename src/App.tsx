@@ -2527,113 +2527,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
 
 
-interface FogParticle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  alpha: number;
-  maxAlpha: number;
-  tint: string;
-  phase: number;
-}
-
-function LowFogEffect() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let particles: FogParticle[] = [];
-    let isMounted = true;
-
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(rect.width * dpr, 300);
-      canvas.height = Math.max(rect.height * dpr, 60);
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const tints = [
-      '220, 235, 255', // Vapeur cryogénique blanche bleutée
-      '245, 248, 255', // Brume blanche pure
-      '255, 225, 175', // Micro-reflet or / ambre
-      '195, 240, 235', // Nuance givrée
-    ];
-
-    const count = 32;
-    for (let i = 0; i < count; i++) {
-      particles.push({
-        x: Math.random() * (canvas.width || 600),
-        y: (canvas.height || 60) * (0.45 + Math.random() * 0.45),
-        vx: (Math.random() - 0.48) * 0.45,
-        vy: (Math.random() - 0.5) * 0.04,
-        radius: 35 + Math.random() * 45,
-        alpha: 0.05 + Math.random() * 0.1,
-        maxAlpha: 0.12 + Math.random() * 0.18,
-        tint: tints[Math.floor(Math.random() * tints.length)],
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-
-    const loop = (t: number) => {
-      if (!isMounted) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy + Math.sin(t * 0.0015 + p.phase) * 0.08;
-
-        if (p.x < -p.radius) p.x = canvas.width + p.radius;
-        if (p.x > canvas.width + p.radius) p.x = -p.radius;
-
-        // Force la brume à rester juste au ras
-        if (p.y < canvas.height * 0.25) p.vy += 0.015;
-        if (p.y > canvas.height * 0.85) p.vy -= 0.015;
-
-        const currentAlpha = p.maxAlpha * (0.8 + 0.2 * Math.sin(t * 0.001 + p.phase));
-
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-        grad.addColorStop(0, `rgba(${p.tint}, ${currentAlpha})`);
-        grad.addColorStop(0.45, `rgba(${p.tint}, ${currentAlpha * 0.55})`);
-        grad.addColorStop(1, `rgba(${p.tint}, 0)`);
-
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      animId = requestAnimationFrame(loop);
-    };
-
-    animId = requestAnimationFrame(loop);
-
-    return () => {
-      isMounted = false;
-      window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animId);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="low-fog-canvas"
-      aria-hidden="true"
-    />
-  );
-}
-
   if (selectedEmployee) {
     return (
       <EmployeeDetail
@@ -2678,7 +2571,6 @@ function LowFogEffect() {
             </div>
 
             <div className="modern-search-wrapper">
-              <LowFogEffect />
               <div className="modern-search-icon" aria-hidden="true">
                 <IconSearch />
               </div>
