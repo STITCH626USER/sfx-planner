@@ -7397,3 +7397,167 @@ nav.seg button[aria-selected="true"] {
   scroll-margin-top: 130px;
   scroll-margin-bottom: 175px;
 }
+
+/* ─── Métrage Horaire / Timecode Ruler (Vue Globale) ─── */
+.daily-timecode-ruler {
+  margin-top: 8px;
+  padding: 8px 12px 10px 12px;
+  border-radius: 12px;
+  background: rgba(11, 16, 27, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 14px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+:root[data-theme="light"] .daily-timecode-ruler {
+  background: rgba(248, 250, 252, 0.9);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.timecode-scale-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 16px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.tc-bound {
+  color: var(--amber, #f59e0b);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.2;
+  z-index: 2;
+}
+
+:root[data-theme="light"] .tc-bound {
+  color: #b45309;
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.25);
+}
+
+.tc-ticks-area {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tc-tick-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--fg-dim);
+  font-size: 9.5px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.timecode-tracks-box {
+  position: relative;
+  width: 100%;
+  padding: 3px 0;
+}
+
+.tc-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+:root[data-theme="light"] .tc-grid-line {
+  background: rgba(15, 23, 42, 0.07);
+}
+
+.tc-tracks-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.tc-track-row {
+  position: relative;
+  width: 100%;
+  height: 4.5px;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+:root[data-theme="light"] .tc-track-row {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.tc-track-row:hover {
+  transform: scaleY(1.45);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tc-track-segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--tc-color, #f59e0b);
+  box-shadow: 0 0 8px var(--tc-color, rgba(245, 158, 11, 0.5));
+  opacity: 0.92;
+}
+
+.tc-playhead {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.tc-playhead-head {
+  position: absolute;
+  top: -2px;
+  left: -3.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.tc-playhead-line {
+  position: absolute;
+  top: 3px;
+  bottom: 0;
+  left: -0.75px;
+  width: 1.5px;
+  background: linear-gradient(180deg, #fbbf24 0%, rgba(245, 158, 11, 0.35) 100%);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.65);
+}
+
+.tc-playhead.is-live .tc-playhead-head {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+}
+
+.tc-playhead.is-live .tc-playhead-line {
+  background: linear-gradient(180deg, #ef4444 0%, rgba(239, 68, 68, 0.4) 100%);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.75);
+}
+
+.modern-scene-card {
+  scroll-margin-top: 130px;
+}

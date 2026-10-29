@@ -2558,6 +2558,145 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     });
   }, [allWorkingForDate, records]);
 
+  // Live clock for playhead needle
+  const [nowMinutes, setNowMinutes] = useState<number>(() => {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+  });
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const n = new Date();
+      setNowMinutes(n.getHours() * 60 + n.getMinutes());
+    }, 30000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const timelineData = useMemo(() => {
+    if (byScene.length === 0) return null;
+
+    let minStart = Infinity;
+    let maxEnd = -Infinity;
+
+    interface SceneSpan {
+      scene: string;
+      cleanName: string;
+      accent: string;
+      minS: number;
+      maxE: number;
+      segments: Array<{ start: number; end: number }>;
+      startLabel: string;
+      endLabel: string;
+    }
+
+    const fmtMin = (m: number) => {
+      const norm = ((m % 1440) + 1440) % 1440;
+      const hh = Math.floor(norm / 60).toString().padStart(2, '0');
+      const mm = (norm % 60).toString().padStart(2, '0');
+      return `${hh}:${mm}`;
+    };
+
+    const spans: SceneSpan[] = [];
+
+    for (const [scene, recs] of byScene) {
+      let sMin = Infinity;
+      let sMax = -Infinity;
+      const rawIntervals: Array<{ start: number; end: number }> = [];
+
+      for (const r of recs) {
+        const tStr = (r as PlanningRecord & { shiftTime?: string }).shiftTime || r.time;
+        const rng = parseRange(tStr);
+        if (!rng) continue;
+        const s = rng.start;
+        let e = rng.end;
+        if (e <= s) e += 24 * 60; // overnight shift
+        if (s < sMin) sMin = s;
+        if (e > sMax) sMax = e;
+        rawIntervals.push({ start: s, end: e });
+      }
+
+      if (sMin < Infinity && sMax > -Infinity) {
+        if (sMin < minStart) minStart = sMin;
+        if (sMax > maxEnd) maxEnd = sMax;
+
+        // Merge overlapping intervals for this scene
+        rawIntervals.sort((a, b) => a.start - b.start);
+        const merged: Array<{ start: number; end: number }> = [];
+        for (const iv of rawIntervals) {
+          if (merged.length === 0) {
+            merged.push({ ...iv });
+          } else {
+            const last = merged[merged.length - 1];
+            if (iv.start <= last.end + 15) {
+              last.end = Math.max(last.end, iv.end);
+            } else {
+              merged.push({ ...iv });
+            }
+          }
+        }
+
+        const clean = cleanSceneName(scene);
+        const color = getSceneColor(clean);
+        spans.push({
+          scene,
+          cleanName: clean,
+          accent: color.accent,
+          minS: sMin,
+          maxE: sMax,
+          segments: merged,
+          startLabel: fmtMin(sMin),
+          endLabel: fmtMin(sMax),
+        });
+      }
+    }
+
+    if (minStart === Infinity || maxEnd <= minStart) return null;
+
+    // Sort tracks chronologically by start time so the ruler flows naturally from left to right
+    spans.sort((a, b) => a.minS - b.minS || a.maxE - b.maxE);
+
+    const totalSpan = maxEnd - minStart;
+
+    // Intermediate hour ticks (every 2h or 3h depending on span)
+    const stepHours = totalSpan > 14 * 60 ? 3 : 2;
+    const firstHour = Math.ceil((minStart + 45) / (stepHours * 60)) * (stepHours * 60);
+    const ticks: Array<{ pct: number; label: string }> = [];
+    for (let m = firstHour; m <= maxEnd - 45; m += stepHours * 60) {
+      const pct = ((m - minStart) / totalSpan) * 100;
+      const normH = Math.floor((((m % 1440) + 1440) % 1440) / 60);
+      ticks.push({
+        pct,
+        label: `${normH.toString().padStart(2, '0')}h`,
+      });
+    }
+
+    // Playhead calculation (always visible if within range, or marked LIVE if today)
+    const nowObj = new Date();
+    const todayStr = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, '0')}-${String(nowObj.getDate()).padStart(2, '0')}`;
+    const isToday = date === todayStr;
+
+    let effNow = nowMinutes;
+    if (effNow < minStart && effNow + 1440 <= maxEnd + 60) {
+      effNow += 1440;
+    }
+    const playheadPct = ((effNow - minStart) / totalSpan) * 100;
+    const showPlayhead = playheadPct >= 0 && playheadPct <= 100;
+
+    return {
+      minStart,
+      maxEnd,
+      totalSpan,
+      minLabel: fmtMin(minStart),
+      maxLabel: fmtMin(maxEnd),
+      spans,
+      ticks,
+      isToday,
+      showPlayhead,
+      playheadPct: Math.max(0, Math.min(100, playheadPct)),
+      nowLabel: fmtMin(nowMinutes),
+    };
+  }, [byScene, date, nowMinutes]);
+
 
 
 
@@ -2605,6 +2744,81 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 <span>PDF</span>
               </button>
             </div>
+
+            {timelineData && (
+              <div className="daily-timecode-ruler" aria-label="Amplitude horaire de la journée">
+                <div className="timecode-scale-bar">
+                  <span className="tc-bound tc-bound-start">{timelineData.minLabel}</span>
+                  <div className="tc-ticks-area">
+                    {timelineData.ticks.map((t) => (
+                      <span
+                        key={t.label}
+                        className="tc-tick-label"
+                        style={{ left: `${t.pct}%` }}
+                      >
+                        {t.label}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="tc-bound tc-bound-end">{timelineData.maxLabel}</span>
+                </div>
+
+                <div className="timecode-tracks-box">
+                  {/* Lignes de repère verticales */}
+                  {timelineData.ticks.map((t) => (
+                    <div
+                      key={`grid-${t.label}`}
+                      className="tc-grid-line"
+                      style={{ left: `${t.pct}%` }}
+                      aria-hidden="true"
+                    />
+                  ))}
+
+                  {/* Pistes colorées par scène */}
+                  <div className="tc-tracks-stack">
+                    {timelineData.spans.map((sp) => (
+                      <div
+                        key={sp.scene}
+                        className="tc-track-row"
+                        onClick={() => {
+                          const el = document.querySelector(`[data-testid="scene-group-${sp.scene}"]`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        title={`${sp.cleanName} : ${sp.startLabel} → ${sp.endLabel}`}
+                      >
+                        {sp.segments.map((seg, idx) => {
+                          const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
+                          const widthPct = Math.max(1.5, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
+                          return (
+                            <div
+                              key={idx}
+                              className="tc-track-segment"
+                              style={{
+                                left: `${leftPct}%`,
+                                width: `${widthPct}%`,
+                                '--tc-color': sp.accent,
+                              } as React.CSSProperties}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Aiguille Live / Playhead */}
+                  {timelineData.showPlayhead && (
+                    <div
+                      className={`tc-playhead ${timelineData.isToday ? 'is-live' : ''}`}
+                      style={{ left: `${timelineData.playheadPct}%` }}
+                      title={`Heure actuelle : ${timelineData.nowLabel}`}
+                    >
+                      <div className="tc-playhead-head" />
+                      <div className="tc-playhead-line" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {showExport && (
