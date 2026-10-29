@@ -20,7 +20,7 @@ const DAY_FR_FULL  = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','
 const DAY_FR_SHORT = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
 
 function cleanText(t: string): string {
-  return (t||'').replace(/[Ø<ß"«»®©]/g,'').replace(/^ENT\s+/i, '').replace(/\bENT\b\s*/gi, '').replace(/\s+/g,' ').trim();
+  return (t||'').replace(/[Ø<ß"«»®©]/g,'').replace(/^ENT[-_\s]+/i, '').replace(/\bENT\b[-_\s]*/gi, '').replace(/\s+/g,' ').trim();
 }
 function weekdayFromIso(iso: string): number|null {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -224,6 +224,74 @@ function drawAvatar(doc: jsPDF, x: number, y: number, name: string, color: [numb
 }
 
 /* ─── Scene Card ─── */
+/* ─── Night Shift Detection & Vector Moon Icon ─── */
+const NIGHT_BG: [number, number, number] = [238, 242, 255];     // Indigo-50
+const NIGHT_BORDER: [number, number, number] = [165, 180, 252]; // Indigo-300
+const NIGHT_PILL_BG: [number, number, number] = [30, 41, 59];   // Slate-800
+const NIGHT_PILL_BORDER: [number, number, number] = [79, 70, 229]; // Indigo-600
+const NIGHT_ACCENT: [number, number, number] = [67, 56, 202];   // Indigo-700
+
+function isNightShift(timeStr: string): boolean {
+  if (!timeStr || /^off$/i.test(timeStr)) return false;
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+  if (!m) return false;
+  const startH = parseInt(m[1], 10);
+  const endH = parseInt(m[3], 10);
+  if (startH >= 20 || startH < 5) return true;
+  if (startH >= 18 && endH >= 3 && endH <= 9) return true;
+  return false;
+}
+
+function drawMoonIcon(
+  doc: jsPDF,
+  cx: number,
+  cy: number,
+  r: number,
+  bgRgb: [number, number, number],
+  moonRgb: [number, number, number] = [251, 191, 36]
+) {
+  doc.setFillColor(...moonRgb);
+  doc.circle(cx, cy, r, 'F');
+  doc.setFillColor(...bgRgb);
+  doc.circle(cx + r * 0.42, cy - r * 0.22, r * 0.82, 'F');
+}
+
+function drawNightSectionHeader(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  count?: number,
+  compact = false
+) {
+  const barH = compact ? 3.8 : 4.2;
+  const label = count && count > 1 ? `ÉQUIPE DE NUIT (${count})` : 'ÉQUIPE DE NUIT';
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(compact ? 4.6 : 5.0);
+  const textW = doc.getTextWidth(label);
+  const badgeW = textW + (compact ? 6.2 : 6.8);
+  const badgeH = compact ? 3.3 : 3.6;
+  const by = y + (barH - badgeH) / 2;
+
+  // Horizontal accent line across full width
+  doc.setDrawColor(...NIGHT_BORDER);
+  doc.setLineWidth(0.22);
+  doc.line(x, y + barH / 2, x + w, y + barH / 2);
+
+  // Dark indigo pill on left
+  doc.setFillColor(...NIGHT_PILL_BG);
+  doc.setDrawColor(...NIGHT_PILL_BORDER);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(x, by, badgeW, badgeH, 0.9, 0.9, 'FD');
+
+  // Crescent moon icon
+  drawMoonIcon(doc, x + 2.1, by + badgeH / 2, compact ? 0.85 : 0.95, NIGHT_PILL_BG);
+
+  // Label text
+  doc.setTextColor(255, 255, 255);
+  doc.text(label, x + 4.0, by + badgeH * 0.71);
+}
+
 /* ─── Role Pill Style for PDF (Print-Friendly High Contrast) ─── */
 function getPdfRoleColors(role: string): { bg: [number, number, number]; border: [number, number, number]; text: [number, number, number] } {
   const r = (role || '').toLowerCase();
@@ -251,21 +319,40 @@ const C_ROW_H  = 5.2;  // row height
 const C_GUTTER = 4.2;  // column gutter
 const C_MARGIN = 10;   // page margin
 
+function calcSceneCardContentH(
+  rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>,
+  rowH: number
+): number {
+  if (rows.length === 0) return rowH;
+  let contentH = 0;
+  let nightCount = 0;
+  for (const r of rows) {
+    contentH += r.subtext ? rowH + 2.4 : rowH;
+    if (isNightShift(r.time)) nightCount++;
+  }
+  if (nightCount > 0) {
+    contentH += 4.6; // Night section header height
+  }
+  return contentH;
+}
+
 function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   headerText: string, rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>,
   rowH: number, themeColorName: string, dateStr?: string): number {
   const sc = getSceneColor(themeColorName);
   const headerH = C_HEADER;
   const padX = 3.5; const padTop = C_PAD_T; const padBot = C_PAD_B;
-  let contentH = 0;
-  for (const r of rows) {
-    if (r.subtext) {
-      contentH += rowH + 2.4;
-    } else {
-      contentH += rowH;
-    }
-  }
-  if (rows.length === 0) contentH += rowH;
+
+  // Ensure Day/Show shifts are listed first, followed by Night shifts
+  const sortedRows = [...rows].sort((a, b) => {
+    const nA = isNightShift(a.time) ? 1 : 0;
+    const nB = isNightShift(b.time) ? 1 : 0;
+    if (nA !== nB) return nA - nB;
+    return 0;
+  });
+
+  const nightCount = sortedRows.filter(r => isNightShift(r.time)).length;
+  const contentH = calcSceneCardContentH(sortedRows, rowH);
   const cardH = Math.max(dateStr ? 16 : 0, headerH + padTop + contentH + padBot);
 
   const cardX = x;
@@ -298,7 +385,7 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   doc.circle(dotX, dotY, 1.2, 'F');
 
   // Right count badge inside header
-  const countStr = `${rows.length}`;
+  const countStr = `${sortedRows.length}`;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
   const countW = Math.max(5.2, doc.getTextWidth(countStr) + 3.2);
@@ -328,23 +415,37 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
 
   // Rows
   let ry = y + headerH + padTop;
-  if (rows.length === 0) {
+  if (sortedRows.length === 0) {
     doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(...MUTED);
     doc.text('Aucun technicien', cardX + padX + 2, ry + rowH * 0.62);
   } else {
-    for (let rIdx = 0; rIdx < rows.length; rIdx++) {
-      const row = rows[rIdx];
+    let nightSectionStarted = false;
+    for (let rIdx = 0; rIdx < sortedRows.length; rIdx++) {
+      const row = sortedRows[rIdx];
+      const isNight = isNightShift(row.time);
       const currentH = row.subtext ? rowH + 2.4 : rowH;
 
-      // Subtle alternating row separator
-      if (rIdx > 0) {
-        doc.setDrawColor(241, 245, 249);
+      if (isNight && !nightSectionStarted) {
+        nightSectionStarted = true;
+        // Draw soft night background block for all remaining night rows
+        const remH = (y + cardH - padBot) - ry + 0.6;
+        doc.setFillColor(...NIGHT_BG);
+        doc.roundedRect(cardX + 2.6, ry + 0.2, cardW - 3.6, remH, 1.2, 1.2, 'F');
+        // Paint left accent bar in Night Indigo for the night zone
+        doc.setFillColor(...NIGHT_ACCENT);
+        doc.rect(cardX, ry + 0.2, 2.2, y + cardH - ry - 1.0, 'F');
+
+        drawNightSectionHeader(doc, cardX + padX + 0.6, ry + 0.4, cardW - padX * 2 - 0.6, nightCount, false);
+        ry += 4.6;
+      } else if (rIdx > 0) {
+        // Subtle alternating row separator
+        doc.setDrawColor(isNight ? 214 : 241, isNight ? 222 : 245, isNight ? 248 : 249);
         doc.setLineWidth(0.18);
         doc.line(cardX + 3.2, ry, cardX + cardW - 2.5, ry);
       }
 
       const avSize = 3.6;
-      const avColor: [number, number, number] = row.isFO ? VIOLET : sc.rgbAccent;
+      const avColor: [number, number, number] = row.isFO ? VIOLET : (isNight ? NIGHT_ACCENT : sc.rgbAccent);
       const mainRowCenterY = ry + rowH / 2;
       drawAvatar(doc, cardX + padX + 0.8, mainRowCenterY - avSize / 2, row.name, avColor, avSize);
 
@@ -359,9 +460,9 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
       const py = mainRowCenterY - th / 2;
 
       const isOff = /^off$/i.test(timeStr);
-      const pillColor: [number, number, number] = isOff ? [241, 245, 249] : sc.rgbBg;
-      const pillBorder: [number, number, number] = isOff ? [203, 213, 225] : sc.rgbAccent;
-      const pillText: [number, number, number] = isOff ? MUTED : sc.rgbText;
+      const pillColor: [number, number, number] = isOff ? [241, 245, 249] : (isNight ? NIGHT_PILL_BG : sc.rgbBg);
+      const pillBorder: [number, number, number] = isOff ? [203, 213, 225] : (isNight ? NIGHT_PILL_BORDER : sc.rgbAccent);
+      const pillText: [number, number, number] = isOff ? MUTED : (isNight ? [255, 255, 255] : sc.rgbText);
       doc.setFillColor(...pillColor);
       doc.setDrawColor(...pillBorder);
       doc.setLineWidth(0.22);
@@ -435,16 +536,7 @@ function simulatePages(
   const colYs = new Array(cols).fill(headerH);
   let pages = 1;
   for (const block of blocks) {
-    let contentH = 0;
-    for (const r of block.rows as Array<{subtext?: string}>) {
-      if (r.subtext) {
-        const estLines = Math.ceil(r.subtext.length / 45);
-        contentH += rowH + (estLines * rowH * 0.50);
-      } else {
-        contentH += rowH;
-      }
-    }
-    if (block.rows.length === 0) contentH += rowH;
+    const contentH = calcSceneCardContentH(block.rows as Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>, rowH);
     const cardH = C_HEADER + C_PAD_T + contentH + C_PAD_B;
     let bestCol = 0; let minY = colYs[0];
     for (let i=1; i<cols; i++) if (colYs[i] < minY) { minY=colYs[i]; bestCol=i; }
@@ -481,11 +573,7 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
-    let contentH = 0;
-    for (const r of block.rows) {
-      contentH += r.subtext ? rowH + 2.4 : rowH;
-    }
-    if (block.rows.length === 0) contentH += rowH;
+    const contentH = calcSceneCardContentH(block.rows, rowH);
     const cardH = Math.max(block.dateStr ? 16 : 0, C_HEADER + C_PAD_T + contentH + C_PAD_B);
     
     // Find shortest column
@@ -725,11 +813,139 @@ async function generateIndivPdf(opts: {
   const weekBannerGap = 1.6;
   const availableH = bottomLimit - startY - weekBannerH - weekBannerGap;
   const gapBlock = 1.9;
-  const blockH = Math.min(22.5, (availableH - 6 * gapBlock) / 7);
 
-  // Render up to 4 columns (weeks) per page
+  // Natural elastic height calculator for a day card
+  const calcDayNaturalH = (rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>): number => {
+    const isOff = rows.length === 0 || rows.every(r => /^off$/i.test(r.time));
+    if (isOff) return isSceneMode ? 12.8 : 20.7;
+    if (!isSceneMode && rows.length === 1) return 20.7;
+    if (rows.length === 1) {
+      const hasNight = isNightShift(rows[0].time);
+      return hasNight ? 20.5 : 18.6;
+    }
+    const nightCount = rows.filter(r => isNightShift(r.time)).length;
+    const hasNightHdr = nightCount > 0;
+    const rowH = 4.4;
+    const nightHdrH = hasNightHdr ? 4.3 : 0;
+    return Math.max(18.6, 2.6 + rows.length * rowH + nightHdrH);
+  };
+
+  interface ColumnSegment {
+    weekIndex: number;
+    partIndex: number;
+    totalParts: number;
+    days: string[];
+    heights: number[];
+  }
+
+  const fitSegmentHeights = (natHeights: number[]): number[] => {
+    const n = natHeights.length;
+    if (n === 0) return [];
+    const totalGaps = (n - 1) * gapBlock;
+    const maxCardsH = availableH - totalGaps;
+    const sumNat = natHeights.reduce((a, b) => a + b, 0);
+
+    if (sumNat > maxCardsH) {
+      const scale = maxCardsH / sumNat;
+      return natHeights.map(h => h * scale);
+    }
+    // Gentle expansion if there's slack so columns feel balanced, capped so small cards don't bloat
+    const slack = maxCardsH - sumNat;
+    const maxAddPerCard = n >= 6 ? 3.2 : 2.5;
+    const addTotal = Math.min(slack, n * maxAddPerCard);
+    return natHeights.map(h => h + addTotal / n);
+  };
+
+  const segments: ColumnSegment[] = [];
+
+  for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
+    const weekDays = weeks[wIdx];
+    const fallbackRows = isSceneMode ? [] : [{ name: 'Repos / Congé', time: 'OFF' }];
+
+    if (!isSceneMode) {
+      const fixedH = Math.min(22.5, (availableH - 6 * gapBlock) / 7);
+      segments.push({
+        weekIndex: wIdx,
+        partIndex: 1,
+        totalParts: 1,
+        days: weekDays,
+        heights: new Array(7).fill(fixedH),
+      });
+      continue;
+    }
+
+    const natH = weekDays.map(d => calcDayNaturalH(opts.dateMap.get(d) || fallbackRows));
+    const weekTotal = natH.reduce((a, b) => a + b, 0) + 6 * gapBlock;
+
+    if (weekTotal <= availableH * 1.04) {
+      // All 7 days of the week fit comfortably in 1 column
+      segments.push({
+        weekIndex: wIdx,
+        partIndex: 1,
+        totalParts: 1,
+        days: weekDays,
+        heights: fitSegmentHeights(natH),
+      });
+    } else {
+      // Check if splitting the week into 2 balanced columns works without heavy compression (scale >= 0.86)
+      let bestSplit = 4;
+      let bestMaxHalf = Infinity;
+      for (const s of [3, 4]) {
+        const h1 = natH.slice(0, s).reduce((a, b) => a + b, 0) + (s - 1) * gapBlock;
+        const h2 = natH.slice(s).reduce((a, b) => a + b, 0) + (7 - s - 1) * gapBlock;
+        const m = Math.max(h1, h2);
+        if (m < bestMaxHalf) {
+          bestMaxHalf = m;
+          bestSplit = s;
+        }
+      }
+
+      if (bestMaxHalf <= availableH / 0.86) {
+        const d1 = weekDays.slice(0, bestSplit);
+        const h1 = fitSegmentHeights(natH.slice(0, bestSplit));
+        const d2 = weekDays.slice(bestSplit);
+        const h2 = fitSegmentHeights(natH.slice(bestSplit));
+        segments.push({ weekIndex: wIdx, partIndex: 1, totalParts: 2, days: d1, heights: h1 });
+        segments.push({ weekIndex: wIdx, partIndex: 2, totalParts: 2, days: d2, heights: h2 });
+      } else {
+        // Greedy multi-column packing for very dense weeks so rows are never crushed
+        const weekParts: Array<{ days: string[]; nat: number[] }> = [];
+        let curDays: string[] = [];
+        let curNat: number[] = [];
+        let curSum = 0;
+
+        for (let i = 0; i < 7; i++) {
+          const hNeeded = natH[i] + (curDays.length > 0 ? gapBlock : 0);
+          if (curDays.length > 0 && curSum + hNeeded > availableH / 0.90) {
+            weekParts.push({ days: curDays, nat: curNat });
+            curDays = [weekDays[i]];
+            curNat = [natH[i]];
+            curSum = natH[i];
+          } else {
+            curDays.push(weekDays[i]);
+            curNat.push(natH[i]);
+            curSum += hNeeded;
+          }
+        }
+        if (curDays.length > 0) {
+          weekParts.push({ days: curDays, nat: curNat });
+        }
+        weekParts.forEach((p, idx) => {
+          segments.push({
+            weekIndex: wIdx,
+            partIndex: idx + 1,
+            totalParts: weekParts.length,
+            days: p.days,
+            heights: fitSegmentHeights(p.nat),
+          });
+        });
+      }
+    }
+  }
+
+  // Render up to 4 columns per page
   const maxColsPerPage = 4;
-  const cols = Math.min(maxColsPerPage, Math.max(1, weeks.length));
+  const cols = Math.min(maxColsPerPage, Math.max(1, segments.length));
 
   let colW: number;
   if (cols === 1) {
@@ -745,22 +961,25 @@ async function generateIndivPdf(opts: {
   const totalUsedWidth = cols * colW + (cols - 1) * gutter;
   const baseStartX = (pageW - totalUsedWidth) / 2;
 
-  for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
-    const colOnPage = wIdx % maxColsPerPage;
+  for (let sIdx = 0; sIdx < segments.length; sIdx++) {
+    const colOnPage = sIdx % maxColsPerPage;
 
-    if (wIdx > 0 && colOnPage === 0) {
+    if (sIdx > 0 && colOnPage === 0) {
       drawPremiumFooter(doc, pageW, pageH, marginX);
       doc.addPage();
       startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
     }
 
-    const weekDays = weeks[wIdx];
+    const seg = segments[sIdx];
     const x = baseStartX + colOnPage * (colW + gutter);
 
-    // Draw Week Column Header Pill (e.g. "SEMAINE 1 · 25/10 – 31/10")
-    const wStartShort = weekDays[0].slice(8, 10) + '/' + weekDays[0].slice(5, 7);
-    const wEndShort = weekDays[6].slice(8, 10) + '/' + weekDays[6].slice(5, 7);
-    const weekLabel = `SEMAINE ${wIdx + 1}  ·  ${wStartShort} AU ${wEndShort}`;
+    // Draw Week Column Header Pill (e.g. "SEMAINE 1 · 25/10 AU 31/10" or "SEMAINE 1 (1/2) · 25/10 AU 28/10")
+    const firstD = seg.days[0];
+    const lastD = seg.days[seg.days.length - 1];
+    const wStartShort = firstD.slice(8, 10) + '/' + firstD.slice(5, 7);
+    const wEndShort = lastD.slice(8, 10) + '/' + lastD.slice(5, 7);
+    const partSuffix = seg.totalParts > 1 ? ` (${seg.partIndex}/${seg.totalParts})` : '';
+    const weekLabel = `SEMAINE ${seg.weekIndex + 1}${partSuffix}  ·  ${wStartShort} AU ${wEndShort}`;
 
     const bannerSc = opts.themeColorName ? getSceneColor(opts.themeColorName) : null;
     doc.setFillColor(...(bannerSc ? bannerSc.rgbBg : [241, 245, 249] as [number, number, number]));
@@ -769,18 +988,19 @@ async function generateIndivPdf(opts: {
     doc.roundedRect(x, startY, colW, weekBannerH, 1.4, 1.4, 'FD');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(6.3);
     doc.setTextColor(...(bannerSc ? bannerSc.rgbText : [51, 65, 85] as [number, number, number]));
     doc.text(weekLabel, x + colW / 2, startY + 3.7, { align: 'center' });
 
     let currentY = startY + weekBannerH + weekBannerGap;
 
-    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
-      const d = weekDays[dayIdx];
+    for (let dayIdx = 0; dayIdx < seg.days.length; dayIdx++) {
+      const d = seg.days[dayIdx];
+      const cardH = seg.heights[dayIdx];
       const fallbackRows = isSceneMode ? [] : [{ name: 'Repos / Congé', time: 'OFF' }];
       const rows = opts.dateMap.get(d) || fallbackRows;
-      drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
-      currentY += blockH + gapBlock;
+      drawIndivDayBlock(doc, x, currentY, colW, cardH, d, rows, opts.themeColorName);
+      currentY += cardH + gapBlock;
     }
   }
 
@@ -795,7 +1015,7 @@ function drawIndivDayBlock(
   w: number,
   h: number,
   dateStr: string,
-  rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>,
+  rawRows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>,
   themeColorName?: string
 ) {
   let dayName = 'LUN.';
@@ -817,6 +1037,14 @@ function drawIndivDayBlock(
     }
   }
 
+  // Sort rows so Day/Show shifts are grouped first, followed by Night shifts
+  const rows = [...rawRows].sort((a, b) => {
+    const nA = isNightShift(a.time) ? 1 : 0;
+    const nB = isNightShift(b.time) ? 1 : 0;
+    if (nA !== nB) return nA - nB;
+    return 0;
+  });
+
   const isOff = rows.length === 0 || rows.every(r => /^off$/i.test(r.time));
   const firstActiveRow = !isOff ? rows[0] : null;
   const isFOFirst = firstActiveRow ? (firstActiveRow.isFO || isTrainingScene(firstActiveRow.name)) : false;
@@ -834,7 +1062,6 @@ function drawIndivDayBlock(
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.2);
   } else {
-    // Very soft 30% blend of scene pastel bg with white for a refined tinted card
     const cardTint: [number, number, number] = [
       Math.round(primaryBg[0] * 0.35 + 255 * 0.65),
       Math.round(primaryBg[1] * 0.35 + 255 * 0.65),
@@ -868,11 +1095,12 @@ function drawIndivDayBlock(
     }
   }
 
-  // Date Calendar Leaf Picto on left
+  // Date Calendar Leaf Picto on left (scales gracefully for compact Relâche cards or tall multi-tech cards)
   const pictoW = 12.2;
-  const pictoH = Math.min(17.6, h - 2.4);
+  const isCompactCard = h < 16.5;
+  const pictoH = isCompactCard ? Math.max(10.2, h - 2.0) : Math.min(17.6, h - 2.4);
   const px = x + (isOff ? 1.8 : 2.5);
-  const py = y + (h - pictoH) / 2;
+  const py = h > 26 ? y + 2.2 : y + (h - pictoH) / 2;
 
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(isOff ? 226 : primaryAccent[0], isOff ? 232 : primaryAccent[1], isOff ? 240 : primaryAccent[2]);
@@ -880,7 +1108,7 @@ function drawIndivDayBlock(
   doc.roundedRect(px, py, pictoW, pictoH, 1.4, 1.4, 'FD');
 
   // Top header cap on calendar picto
-  const capH = 4.3;
+  const capH = isCompactCard ? 3.3 : 4.3;
   if (isOff) {
     doc.setFillColor(241, 245, 249);
   } else {
@@ -891,23 +1119,23 @@ function drawIndivDayBlock(
 
   const cx = px + pictoW / 2;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(4.6);
+  doc.setFontSize(isCompactCard ? 4.1 : 4.6);
   if (isOff) {
     doc.setTextColor(100, 116, 139);
   } else {
     doc.setTextColor(255, 255, 255);
   }
-  doc.text(dayName, cx, py + 3.1, { align: 'center' });
+  doc.text(dayName, cx, py + (isCompactCard ? 2.4 : 3.1), { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10.2);
+  doc.setFontSize(isCompactCard ? 8.2 : 10.2);
   doc.setTextColor(isOff ? 148 : 15, isOff ? 163 : 23, isOff ? 184 : 42);
-  doc.text(dayNum, cx, py + 10.6, { align: 'center' });
+  doc.text(dayNum, cx, py + (isCompactCard ? 7.6 : 10.6), { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(3.9);
+  doc.setFontSize(isCompactCard ? 3.4 : 3.9);
   doc.setTextColor(100, 116, 139);
-  doc.text(monthName, cx, py + 14.5, { align: 'center' });
+  doc.text(monthName, cx, py + (isCompactCard ? 10.2 : 14.5), { align: 'center' });
 
   // Content area on right
   const rx = px + pictoW + 2.4;
@@ -915,12 +1143,12 @@ function drawIndivDayBlock(
   if (isOff) {
     const isScene = Boolean(themeColorName);
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(7.2);
+    doc.setFontSize(isCompactCard ? 6.6 : 7.2);
     doc.setTextColor(148, 163, 184);
     doc.text(isScene ? 'Relâche / Aucun service' : 'Repos / Congé', rx, y + h / 2 + 1.0);
 
     const pillW = 11.5;
-    const pillH = 4.8;
+    const pillH = isCompactCard ? 4.2 : 4.8;
     const pillX = x + w - pillW - 2.2;
     const pillY = y + (h - pillH) / 2;
     doc.setFillColor(241, 245, 249);
@@ -928,9 +1156,9 @@ function drawIndivDayBlock(
     doc.setLineWidth(0.2);
     doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.0);
+    doc.setFontSize(5.8);
     doc.setTextColor(148, 163, 184);
-    doc.text(isScene ? '—' : 'OFF', pillX + pillW / 2, pillY + 3.35, { align: 'center' });
+    doc.text(isScene ? '—' : 'OFF', pillX + pillW / 2, pillY + pillH * 0.70, { align: 'center' });
     return;
   }
 
@@ -940,10 +1168,11 @@ function drawIndivDayBlock(
   if (rowCount === 1) {
     const row = rows[0];
     const isFO = row.isFO || isTrainingScene(row.name);
+    const isNight = isNightShift(row.time);
     const sc = getSceneColor(themeColorName || row.name);
-    const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
-    const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
-    const scText: [number, number, number] = isFO ? [76, 29, 149] : sc.rgbText;
+    const scBg: [number, number, number] = isFO ? [245, 243, 255] : (isNight ? NIGHT_PILL_BG : sc.rgbBg);
+    const scAccent: [number, number, number] = isFO ? VIOLET : (isNight ? NIGHT_PILL_BORDER : sc.rgbAccent);
+    const scText: [number, number, number] = isFO ? [76, 29, 149] : (isNight ? [255, 255, 255] : sc.rgbText);
     const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
     const rawNm = cleanText(cleanSceneName(row.name));
@@ -963,7 +1192,7 @@ function drawIndivDayBlock(
     const pillW = tw + 4.0;
     const pillH = 5.0;
     const pillX = x + w - pillW - 2.0;
-    const hasSecondLine = Boolean(roleStr || subStr);
+    const hasSecondLine = Boolean(roleStr || subStr || isNight);
     const pillY = hasSecondLine ? y + 3.0 : y + (h - pillH) / 2;
 
     doc.setFillColor(...scBg);
@@ -993,10 +1222,25 @@ function drawIndivDayBlock(
     }
     doc.text(dispScene, rx, hasSecondLine ? y + 6.8 : y + h / 2 + 1.5);
 
-    // Second line: Role badge + optional subtext
+    // Second line: Night badge + Role badge + optional subtext
     if (hasSecondLine) {
       let curSubX = rx;
       const subY = y + 12.6;
+      if (isNight) {
+        const nLabel = 'NUIT';
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.0);
+        const nw = doc.getTextWidth(nLabel) + 5.6;
+        const nh = 3.7;
+        doc.setFillColor(...NIGHT_PILL_BG);
+        doc.setDrawColor(...NIGHT_PILL_BORDER);
+        doc.setLineWidth(0.18);
+        doc.roundedRect(curSubX, subY - 2.7, nw, nh, 0.8, 0.8, 'FD');
+        drawMoonIcon(doc, curSubX + 1.9, subY - 2.7 + nh / 2, 0.85, NIGHT_PILL_BG);
+        doc.setTextColor(255, 255, 255);
+        doc.text(nLabel, curSubX + 3.5, subY - 0.1);
+        curSubX += nw + 1.4;
+      }
       if (roleStr) {
         const cleanR = cleanRoleLabel(roleStr);
         doc.setFont('helvetica', 'bold');
@@ -1028,27 +1272,61 @@ function drawIndivDayBlock(
       }
     }
   } else {
-    // 2 or more rows inside the day card
-    const rH = (h - 2.0) / rowCount;
+    // 2 or more rows inside the day card (with automatic ÉQUIPE DE NUIT visual separation)
+    const nightCount = rows.filter(r => isNightShift(r.time)).length;
+    const hasNightHdr = nightCount > 0;
+    const padY = 1.1;
+    const innerH = h - padY * 2;
+    const nightHdrUnits = hasNightHdr ? 0.95 : 0;
+    const unitH = innerH / (rowCount + nightHdrUnits);
+    const rH = unitH;
+    const nightHdrH = hasNightHdr ? unitH * 0.95 : 0;
+
+    let curRowY = y + padY;
+    let nightSectionDrawn = false;
+
     for (let idx = 0; idx < rowCount; idx++) {
       const row = rows[idx];
+      const isNight = isNightShift(row.time);
       const isFO = row.isFO || isTrainingScene(row.name);
       const sc = getSceneColor(themeColorName || row.name);
-      const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
-      const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
-      const scText: [number, number, number] = isFO ? [76, 29, 149] : sc.rgbText;
 
-      const rowY = y + 1.0 + idx * rH;
+      // Draw Night Section background container + header right before the first Night row
+      if (isNight && !nightSectionDrawn) {
+        nightSectionDrawn = true;
+        const nightBoxY = curRowY;
+        const nightBoxH = (y + h - padY) - nightBoxY + 0.3;
+        const nightBoxX = rx - 1.2;
+        const nightBoxW = (x + w - 1.0) - nightBoxX;
+
+        doc.setFillColor(...NIGHT_BG);
+        doc.setDrawColor(...NIGHT_BORDER);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(nightBoxX, nightBoxY, nightBoxW, nightBoxH, 1.2, 1.2, 'FD');
+
+        // Also color the card's left accent bar in Night Indigo along the night section
+        doc.setFillColor(...NIGHT_ACCENT);
+        doc.rect(x, nightBoxY, 1.8, (y + h) - nightBoxY - 0.8, 'F');
+
+        drawNightSectionHeader(doc, rx - 0.2, curRowY + 0.2, (x + w - 2.0) - (rx - 0.2), nightCount, true);
+        curRowY += nightHdrH;
+      }
+
+      const rowY = curRowY;
       const rowMidY = rowY + rH / 2;
       const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
+      const scBg: [number, number, number] = isFO ? [245, 243, 255] : (isNight ? NIGHT_PILL_BG : sc.rgbBg);
+      const scAccent: [number, number, number] = isFO ? VIOLET : (isNight ? NIGHT_PILL_BORDER : sc.rgbAccent);
+      const scText: [number, number, number] = isFO ? [76, 29, 149] : (isNight ? [255, 255, 255] : sc.rgbText);
+
       // Time pill
-      const timeFont = rowCount === 2 ? 5.8 : 5.0;
+      const timeFont = rH >= 4.2 ? 5.6 : 5.1;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(timeFont);
       const tw = doc.getTextWidth(cleanTime);
-      const pillW = tw + (rowCount === 2 ? 3.4 : 2.6);
-      const pillH = rowCount === 2 ? 4.3 : Math.min(3.8, rH - 0.6);
+      const pillW = tw + (rH >= 4.2 ? 3.2 : 2.6);
+      const pillH = Math.min(3.8, Math.max(3.1, rH - 0.7));
       const pillX = x + w - pillW - 1.8;
       const pillY = rowMidY - pillH / 2;
 
@@ -1057,37 +1335,37 @@ function drawIndivDayBlock(
       doc.setLineWidth(0.2);
       doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
       doc.setTextColor(...scText);
-      doc.text(cleanTime, pillX + pillW / 2, pillY + pillH * 0.72, { align: 'center' });
+      doc.text(cleanTime, pillX + pillW / 2, pillY + pillH * 0.71, { align: 'center' });
 
-      // Optional Role pill next to time pill if space permits
-      let rightEdge = pillX - 1.2;
+      // Role pill next to time pill
+      let rightEdge = pillX - 1.1;
       const rawNm = cleanText(cleanSceneName(row.name));
       let mainName = rawNm.replace(/\s*\([^)]*\).*$/, '').replace(/\s*\[[^\]]*\].*$/, '').trim();
       let roleStr = row.role || '';
       const matchRole = rawNm.match(/\((.*?)\)/);
       if (matchRole && !roleStr) roleStr = matchRole[1];
 
-      if (roleStr && rowCount <= 3) {
+      if (roleStr && rH >= 3.4) {
         const cleanR = cleanRoleLabel(roleStr);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(rowCount === 2 ? 4.8 : 4.3);
+        doc.setFontSize(rH >= 4.2 ? 4.7 : 4.3);
         const rw = doc.getTextWidth(cleanR) + 2.2;
-        const rh = rowCount === 2 ? 3.4 : 3.0;
+        const rh = Math.min(3.3, Math.max(2.7, rH - 0.9));
         const rxRole = rightEdge - rw;
-        if (rxRole - rx > 22) {
+        if (rxRole - rx > 19) {
           const rc = getPdfRoleColors(cleanR);
           doc.setFillColor(...rc.bg);
           doc.setDrawColor(...rc.border);
           doc.setLineWidth(0.15);
           doc.roundedRect(rxRole, rowMidY - rh / 2, rw, rh, 0.7, 0.7, 'FD');
           doc.setTextColor(...rc.text);
-          doc.text(cleanR, rxRole + rw / 2, rowMidY + rh * 0.24, { align: 'center' });
+          doc.text(cleanR, rxRole + rw / 2, rowMidY + rh * 0.25, { align: 'center' });
           rightEdge = rxRole - 1.0;
         }
       }
 
       const maxSceneW = rightEdge - rx;
-      let fontSize = rowCount === 2 ? 6.8 : 5.8;
+      let fontSize = rH >= 4.2 ? 6.5 : 5.8;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(fontSize);
       doc.setTextColor(15, 23, 42);
@@ -1103,13 +1381,16 @@ function drawIndivDayBlock(
         }
         dispScene = dispScene.trim() + '…';
       }
-      doc.text(dispScene, rx, rowMidY + 1.0);
+      doc.text(dispScene, rx, rowMidY + 0.95);
 
-      if (idx < rowCount - 1) {
-        doc.setDrawColor(226, 232, 240);
+      const nextIsNightStart = idx + 1 < rowCount && !isNight && isNightShift(rows[idx + 1].time);
+      if (idx < rowCount - 1 && !nextIsNightStart) {
+        doc.setDrawColor(isNight ? 209 : 226, isNight ? 218 : 232, isNight ? 245 : 240);
         doc.setLineWidth(0.15);
         doc.line(rx, rowY + rH, x + w - 2, rowY + rH);
       }
+
+      curRowY += rH;
     }
   }
 }
