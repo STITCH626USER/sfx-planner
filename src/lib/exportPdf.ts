@@ -369,12 +369,17 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   doc.setLineWidth(0.2);
   doc.line(cardX, y + headerH, cardX + cardW, y + headerH);
 
-  // Left accent bar
-  doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
-  doc.roundedRect(cardX, y, 2.2, cardH, 1.0, 1.0, 'F');
+  // Re-stroke outer rounded border cleanly over the header band
+  doc.setDrawColor(
+    Math.round(sc.rgbAccent[0] * 0.35 + 203 * 0.65),
+    Math.round(sc.rgbAccent[1] * 0.35 + 213 * 0.65),
+    Math.round(sc.rgbAccent[2] * 0.35 + 225 * 0.65)
+  );
+  doc.setLineWidth(0.25);
+  doc.roundedRect(cardX, y, cardW, cardH, 2.2, 2.2, 'S');
 
   // Scene dot + Scene name
-  const dotX = cardX + padX + 2.2;
+  const dotX = cardX + padX + 1.2;
   const dotY = y + headerH / 2;
   doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
   doc.circle(dotX, dotY, 1.2, 'F');
@@ -425,12 +430,11 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
         // Draw soft night background block for all remaining night rows
         const remH = (y + cardH - padBot) - ry + 0.6;
         doc.setFillColor(...NIGHT_BG);
-        doc.roundedRect(cardX + 2.6, ry + 0.2, cardW - 3.6, remH, 1.2, 1.2, 'F');
-        // Paint left accent bar in Night Indigo for the night zone
-        doc.setFillColor(...NIGHT_ACCENT);
-        doc.rect(cardX, ry + 0.2, 2.2, y + cardH - ry - 1.0, 'F');
+        doc.setDrawColor(...NIGHT_BORDER);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(cardX + 1.8, ry + 0.2, cardW - 3.6, remH, 1.2, 1.2, 'FD');
 
-        drawNightSectionHeader(doc, cardX + padX + 0.6, ry + 0.4, cardW - padX * 2 - 0.6, nightCount, false);
+        drawNightSectionHeader(doc, cardX + padX + 0.2, ry + 0.4, cardW - padX * 2 - 0.4, nightCount, false);
         ry += 4.6;
       } else if (rIdx > 0) {
         // Subtle alternating row separator
@@ -1072,29 +1076,11 @@ function drawIndivDayBlock(
   }
   doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
 
-  // Left accent bar (1.8mm)
-  if (!isOff) {
-    if (rows.length > 1 && !themeColorName) {
-      const hPart = h / rows.length;
-      for (let idx = 0; idx < rows.length; idx++) {
-        const r = rows[idx];
-        const isFO = r.isFO || isTrainingScene(r.name);
-        const sc = getSceneColor(r.name);
-        const col: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
-        doc.setFillColor(...col);
-        doc.rect(x, y + idx * hPart, 1.8, hPart, 'F');
-      }
-    } else {
-      doc.setFillColor(...primaryAccent);
-      doc.roundedRect(x, y, 1.8, h, 0.8, 0.8, 'F');
-    }
-  }
-
   // Date Calendar Leaf Picto on left (scales gracefully for compact Relâche cards or tall multi-tech cards)
   const pictoW = 12.2;
   const isCompactCard = h < 16.5;
   const pictoH = isCompactCard ? Math.max(10.2, h - 2.0) : Math.min(17.6, h - 2.4);
-  const px = x + (isOff ? 1.8 : 2.5);
+  const px = x + 1.8;
   const py = h > 26 ? y + 2.2 : y + (h - pictoH) / 2;
 
   doc.setFillColor(255, 255, 255);
@@ -1298,10 +1284,6 @@ function drawIndivDayBlock(
         doc.setDrawColor(...NIGHT_BORDER);
         doc.setLineWidth(0.2);
         doc.roundedRect(nightBoxX, nightBoxY, nightBoxW, nightBoxH, 1.2, 1.2, 'FD');
-
-        // Also color the card's left accent bar in Night Indigo along the night section
-        doc.setFillColor(...NIGHT_ACCENT);
-        doc.rect(x, nightBoxY, 1.8, (y + h) - nightBoxY - 0.8, 'F');
 
         drawNightSectionHeader(doc, rx - 0.2, curRowY + 0.2, (x + w - 2.0) - (rx - 0.2), nightCount, true);
         curRowY += nightHdrH;
