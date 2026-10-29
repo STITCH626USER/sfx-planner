@@ -7251,3 +7251,32 @@ nav.seg button[aria-selected="true"] {
   }
 }
 
+
+/* Barre de recherche sticky en Vue Globale */
+.modern-daily-search-sticky {
+  position: sticky;
+  top: 124px;
+  z-index: 24;
+  padding: 8px 0;
+  margin: -8px 0 16px 0;
+  background: rgba(4, 6, 10, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 12px;
+}
+:root[data-theme="light"] .modern-daily-search-sticky {
+  background: rgba(252, 250, 246, 0.88);
+}
+@media (max-width: 600px) {
+  .modern-daily-search-sticky {
+    top: 114px;
+  }
+}
+@media (min-width: 1024px) {
+  .modern-daily-search-sticky {
+    top: 18px;
+  }
+}
+.compact-team-row {
+  scroll-margin-top: 190px;
+}

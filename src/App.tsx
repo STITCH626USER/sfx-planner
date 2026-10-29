@@ -2457,7 +2457,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     const timer = setTimeout(() => {
       const firstEl = document.querySelector('.compact-team-row.is-highlighted');
       if (firstEl) {
-        firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     }, 100);
     return () => clearTimeout(timer);
@@ -2590,7 +2590,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
               </button>
             </div>
 
-            <div className="modern-search-wrapper">
+            <div className="modern-daily-search-sticky"><div className="modern-search-wrapper">
               <div className="modern-search-icon" aria-hidden="true">
                 <IconSearch />
               </div>
@@ -2635,6 +2635,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   </button>
                 </div>
               )}
+            </div>
             </div>
           </div>
 
