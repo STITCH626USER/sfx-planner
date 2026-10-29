@@ -854,35 +854,37 @@ export default function App() {
 
         {showLegalMentions && (
           <div className="export-overlay" data-testid="legal-mentions-overlay" onClick={() => setShowLegalMentions(false)}>
-            <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-              <div className="export-head">
-                <div className="export-title">Mentions Légales</div>
+            <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+              <div className="export-head" style={{ padding: '12px 18px' }}>
+                <div className="export-title" style={{ fontSize: '16px' }}>Mentions Légales</div>
                 <button className="icon-btn" onClick={() => setShowLegalMentions(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
-              <div className="export-body" style={{ overflowY: 'auto', padding: '24px', fontSize: '14px', color: 'var(--fg-muted)', lineHeight: '1.6' }}>
-                <h3 style={{ color: 'var(--fg)', marginTop: 0, marginBottom: '8px' }}>1. Éditeur du site</h3>
-                <p>L'application web <strong>SFX Planner</strong> est un outil interne développé à titre privé pour faciliter la visualisation des plannings.</p>
-                
-                <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>2. Hébergement</h3>
-                <p>Le site est hébergé par <strong>GitHub Pages</strong>.<br/>
-                GitHub Inc.<br/>
-                88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</p>
-                
-                <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>3. Propriété intellectuelle</h3>
-                <p>L'ensemble du code source, des graphismes, textes, et autres éléments du site sont la propriété exclusive de leur auteur. Toute reproduction, même partielle, est strictement interdite sans accord préalable.</p>
-                
-                <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>4. Données personnelles et Cookies</h3>
-                <p>Cette application fonctionne <strong>100% en local</strong> sur votre appareil (navigateur).<br/>
-                Aucune donnée personnelle n'est collectée, stockée sur un serveur distant, ni partagée à des tiers.<br/>
-                Aucun cookie de traçage n'est utilisé. Le stockage local est uniquement utilisé pour le fonctionnement de l'application (sauvegarde de vos paramètres et plannings importés).</p>
-
-                <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>5. Responsabilité</h3>
-                <p>L'auteur décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations extraites de cette application. En cas de doute, seul le planning officiel (UKG) fait foi.</p>
+              <div className="export-body" style={{ overflowY: 'auto', padding: '14px 18px', gap: '10px', fontSize: '12.5px', color: 'var(--fg-muted)', lineHeight: '1.4' }}>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>1. Éditeur du site</h3>
+                  <p style={{ margin: 0 }}>L'application web <strong>SFX Planner</strong> est un outil interne développé à titre privé pour faciliter la visualisation des plannings.</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>2. Hébergement</h3>
+                  <p style={{ margin: 0 }}>Le site est hébergé par <strong>GitHub Pages</strong> — GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>3. Propriété intellectuelle</h3>
+                  <p style={{ margin: 0 }}>L'ensemble du code source, des graphismes, textes, et autres éléments du site sont la propriété exclusive de leur auteur. Toute reproduction, même partielle, est strictement interdite sans accord préalable.</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>4. Données personnelles et Cookies</h3>
+                  <p style={{ margin: 0 }}>Cette application fonctionne <strong>100% en local</strong> sur votre appareil (navigateur). Aucune donnée personnelle n'est collectée, stockée sur un serveur distant, ni partagée à des tiers. Aucun cookie de traçage n'est utilisé (stockage local uniquement pour vos paramètres et plannings importés).</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>5. Responsabilité</h3>
+                  <p style={{ margin: 0 }}>L'auteur décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations extraites de cette application. En cas de doute, seul le planning officiel (UKG) fait foi.</p>
+                </div>
               </div>
-              <div className="export-foot" style={{ justifyContent: 'flex-end', padding: '16px 24px' }}>
-                <button className="btn btn-secondary" onClick={() => setShowLegalMentions(false)}>Fermer</button>
+              <div className="export-foot" style={{ justifyContent: 'flex-end', padding: '10px 18px' }}>
+                <button className="btn btn-secondary" style={{ padding: '7px 16px', fontSize: '13px' }} onClick={() => setShowLegalMentions(false)}>Fermer</button>
               </div>
             </div>
           </div>
@@ -1130,35 +1132,37 @@ export default function App() {
 
       {showLegalMentions && (
         <div className="export-overlay" data-testid="legal-mentions-overlay" onClick={() => setShowLegalMentions(false)}>
-          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="export-head">
-              <div className="export-title">Mentions Légales</div>
+          <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="export-head" style={{ padding: '12px 18px' }}>
+              <div className="export-title" style={{ fontSize: '16px' }}>Mentions Légales</div>
               <button className="icon-btn" onClick={() => setShowLegalMentions(false)}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
-            <div className="export-body" style={{ overflowY: 'auto', padding: '24px', fontSize: '14px', color: 'var(--fg-muted)', lineHeight: '1.6' }}>
-              <h3 style={{ color: 'var(--fg)', marginTop: 0, marginBottom: '8px' }}>1. Éditeur du site</h3>
-              <p>L'application web <strong>SFX Planner</strong> est un outil interne développé à titre privé pour faciliter la visualisation des plannings.</p>
-              
-              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>2. Hébergement</h3>
-              <p>Le site est hébergé par <strong>GitHub Pages</strong>.<br/>
-              GitHub Inc.<br/>
-              88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</p>
-              
-              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>3. Propriété intellectuelle</h3>
-              <p>L'ensemble du code source, des graphismes, textes, et autres éléments du site sont la propriété exclusive de leur auteur. Toute reproduction, même partielle, est strictement interdite sans accord préalable.</p>
-              
-              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>4. Données personnelles et Cookies</h3>
-              <p>Cette application fonctionne <strong>100% en local</strong> sur votre appareil (navigateur).<br/>
-              Aucune donnée personnelle n'est collectée, stockée sur un serveur distant, ni partagée à des tiers.<br/>
-              Aucun cookie de traçage n'est utilisé. Le stockage local est uniquement utilisé pour le fonctionnement de l'application (sauvegarde de vos paramètres et plannings importés).</p>
-
-              <h3 style={{ color: 'var(--fg)', marginTop: '20px', marginBottom: '8px' }}>5. Responsabilité</h3>
-              <p>L'auteur décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations extraites de cette application. En cas de doute, seul le planning officiel (UKG) fait foi.</p>
+            <div className="export-body" style={{ overflowY: 'auto', padding: '14px 18px', gap: '10px', fontSize: '12.5px', color: 'var(--fg-muted)', lineHeight: '1.4' }}>
+              <div>
+                <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>1. Éditeur du site</h3>
+                <p style={{ margin: 0 }}>L'application web <strong>SFX Planner</strong> est un outil interne développé à titre privé pour faciliter la visualisation des plannings.</p>
+              </div>
+              <div>
+                <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>2. Hébergement</h3>
+                <p style={{ margin: 0 }}>Le site est hébergé par <strong>GitHub Pages</strong> — GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</p>
+              </div>
+              <div>
+                <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>3. Propriété intellectuelle</h3>
+                <p style={{ margin: 0 }}>L'ensemble du code source, des graphismes, textes, et autres éléments du site sont la propriété exclusive de leur auteur. Toute reproduction, même partielle, est strictement interdite sans accord préalable.</p>
+              </div>
+              <div>
+                <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>4. Données personnelles et Cookies</h3>
+                <p style={{ margin: 0 }}>Cette application fonctionne <strong>100% en local</strong> sur votre appareil (navigateur). Aucune donnée personnelle n'est collectée, stockée sur un serveur distant, ni partagée à des tiers. Aucun cookie de traçage n'est utilisé (stockage local uniquement pour vos paramètres et plannings importés).</p>
+              </div>
+              <div>
+                <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>5. Responsabilité</h3>
+                <p style={{ margin: 0 }}>L'auteur décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations extraites de cette application. En cas de doute, seul le planning officiel (UKG) fait foi.</p>
+              </div>
             </div>
-            <div className="export-foot" style={{ justifyContent: 'flex-end', padding: '16px 24px' }}>
-              <button className="btn btn-secondary" onClick={() => setShowLegalMentions(false)}>Fermer</button>
+            <div className="export-foot" style={{ justifyContent: 'flex-end', padding: '10px 18px' }}>
+              <button className="btn btn-secondary" style={{ padding: '7px 16px', fontSize: '13px' }} onClick={() => setShowLegalMentions(false)}>Fermer</button>
             </div>
           </div>
         </div>
