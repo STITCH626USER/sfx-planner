@@ -2409,6 +2409,22 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   const scrollPos = useRef(0);
   const [showExport, setShowExport] = useState(false);
   const [dailySearch, setDailySearch] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenSearch = () => {
+    setSearchExpanded(true);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 40);
+  };
+
+  const handleCloseSearch = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setDailySearch('');
+    setSearchExpanded(false);
+    searchInputRef.current?.blur();
+  };
 
   const handleSelectEmployee = (emp: string) => {
     scrollPos.current = window.scrollY;
@@ -2457,7 +2473,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     const timer = setTimeout(() => {
       const firstEl = document.querySelector('.compact-team-row.is-highlighted');
       if (firstEl) {
-        firstEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 100);
     return () => clearTimeout(timer);
@@ -2588,54 +2604,6 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 <IconDownload />
                 <span>PDF</span>
               </button>
-            </div>
-
-            <div className="modern-daily-search-sticky"><div className="modern-search-wrapper">
-              <div className="modern-search-icon" aria-hidden="true">
-                <IconSearch />
-              </div>
-              <input 
-                id="daily-technician-filter"
-                name="daily_technician_query"
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="words"
-                spellCheck={false}
-                data-lpignore="true"
-                data-1p-ignore="true"
-                data-bwignore="true"
-                data-form-type="other"
-                data-dashlane-ignore="true"
-                data-private="true"
-                placeholder="Rechercher un technicien..."
-                value={dailySearch}
-                onChange={(e) => setDailySearch(e.target.value)}
-                className="modern-search-input"
-              />
-              {dailySearch && (
-                <div className="modern-search-meta">
-                  {searchMatchingEmployees.size > 0 ? (
-                    <span className="search-match-badge">
-                      {searchMatchingEmployees.size} trouvé{searchMatchingEmployees.size > 1 ? 's' : ''}
-                    </span>
-                  ) : (
-                    <span className="search-no-match-badge">
-                      Aucun trouvé
-                    </span>
-                  )}
-                  <button 
-                    type="button" 
-                    className="modern-search-clear" 
-                    onClick={() => setDailySearch('')}
-                    aria-label="Effacer la recherche"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
             </div>
           </div>
 
@@ -2794,6 +2762,81 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
               })}
             </div>
           )}
+
+          {/* Capsule de recherche flottante en bas (style Apple Dynamic Island / Spotlight) */}
+          <div className="floating-search-dock">
+            <div
+              className={`floating-search-pill ${searchExpanded || isSearching ? 'is-expanded' : ''}`}
+              onClick={() => {
+                if (!searchExpanded) handleOpenSearch();
+              }}
+              role={!searchExpanded ? 'button' : undefined}
+              tabIndex={!searchExpanded ? 0 : undefined}
+              onKeyDown={(e) => {
+                if (!searchExpanded && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleOpenSearch();
+                }
+              }}
+            >
+              <div className="floating-search-icon" aria-hidden="true">
+                <IconSearch />
+              </div>
+
+              {!searchExpanded && !isSearching ? (
+                <span className="floating-search-label">Rechercher</span>
+              ) : (
+                <>
+                  <input
+                    ref={searchInputRef}
+                    id="daily-technician-filter"
+                    name="daily_technician_query"
+                    type="text"
+                    inputMode="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
+                    data-dashlane-ignore="true"
+                    data-private="true"
+                    placeholder="Rechercher un technicien..."
+                    value={dailySearch}
+                    onChange={(e) => setDailySearch(e.target.value)}
+                    onBlur={() => {
+                      if (!dailySearch.trim()) {
+                        setSearchExpanded(false);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        handleCloseSearch();
+                      }
+                    }}
+                    className="floating-search-input"
+                  />
+                  {dailySearch && (
+                    <span className={searchMatchingEmployees.size > 0 ? 'search-match-badge' : 'search-no-match-badge'}>
+                      {searchMatchingEmployees.size > 0
+                        ? `${searchMatchingEmployees.size} trouvé${searchMatchingEmployees.size > 1 ? 's' : ''}`
+                        : '0'}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="floating-search-close"
+                    onClick={handleCloseSearch}
+                    aria-label="Fermer la recherche"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
       </div>
     </>
   );
