@@ -3,7 +3,6 @@ import type { PlanningRecord } from './parsePdf';
 import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, parseRange, cleanRoleLabel } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
-const AMBER:   [number,number,number] = [255, 176, 58];
 const AMBER2:  [number,number,number] = [232, 130, 30];
 const VIOLET:  [number,number,number] = [108, 92,  231];
 const WHITE:   [number,number,number] = [255, 255, 255];
@@ -127,10 +126,6 @@ function drawPremiumHeader(doc: jsPDF, pageW: number, marginX: number, y: number
   doc.setDrawColor(203, 213, 225); // Slate-300
   doc.setLineWidth(0.3);
   doc.roundedRect(marginX, y, innerW, h, 2.0, 2.0, 'FD');
-
-  // Subtle top amber bar
-  doc.setFillColor(...AMBER);
-  doc.rect(marginX + 2, y, innerW - 4, 0.8, 'F');
 
   // Logo
   let tx = marginX + 6;
