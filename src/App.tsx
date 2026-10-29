@@ -2661,30 +2661,70 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
     const totalSpan = maxEnd - minStart;
 
-    // Intermediate hour ticks (every 2h or 3h depending on span)
-    const stepHours = totalSpan > 14 * 60 ? 3 : 2;
-    const firstHour = Math.ceil((minStart + 45) / (stepHours * 60)) * (stepHours * 60);
-    const ticks: Array<{ pct: number; label: string }> = [];
-    for (let m = firstHour; m <= maxEnd - 45; m += stepHours * 60) {
-      const pct = ((m - minStart) / totalSpan) * 100;
-      const normH = Math.floor((((m % 1440) + 1440) % 1440) / 60);
-      ticks.push({
-        pct,
-        label: `${normH.toString().padStart(2, '0')}h`,
-      });
-    }
-
-    // Playhead calculation (always visible if within range, or marked LIVE if today)
+    // Playhead calculation (active inside [minStart, maxEnd], or parked in discrete standby mode at the edge)
     const nowObj = new Date();
     const todayStr = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, '0')}-${String(nowObj.getDate()).padStart(2, '0')}`;
     const isToday = date === todayStr;
 
     let effNow = nowMinutes;
-    if (effNow < minStart && effNow + 1440 <= maxEnd + 60) {
-      effNow += 1440;
+    let inBounds = false;
+    let standbySide: 'start' | 'end' | null = null;
+
+    if (nowMinutes >= minStart && nowMinutes <= maxEnd) {
+      effNow = nowMinutes;
+      inBounds = true;
+    } else if (nowMinutes + 1440 >= minStart && nowMinutes + 1440 <= maxEnd) {
+      effNow = nowMinutes + 1440;
+      inBounds = true;
+    } else {
+      inBounds = false;
+      // Between 05:00 AM and minStart -> parked at start (waiting for first shift)
+      // After maxEnd or late night before 05:00 AM (when there is no night crew) -> parked at end
+      if (nowMinutes >= 300 && nowMinutes < minStart) {
+        standbySide = 'start';
+        effNow = minStart;
+      } else {
+        standbySide = 'end';
+        effNow = maxEnd;
+      }
     }
-    const playheadPct = ((effNow - minStart) / totalSpan) * 100;
-    const showPlayhead = playheadPct >= 0 && playheadPct <= 100;
+
+    const rawPct = ((effNow - minStart) / totalSpan) * 100;
+    const playheadPct = inBounds
+      ? Math.max(0, Math.min(100, rawPct))
+      : standbySide === 'start' ? 0 : 100;
+
+    // Fine 1-hour ruler graduations + major labeled ticks (every 2h or 3h)
+    const stepHours = totalSpan > 14 * 60 ? 3 : 2;
+    const firstWholeHour = Math.ceil(minStart / 60) * 60;
+    const ticks: Array<{ pct: number; label: string; isMajor: boolean; showLabel: boolean; showGrid: boolean }> = [];
+
+    for (let m = firstWholeHour; m <= maxEnd; m += 60) {
+      const pct = ((m - minStart) / totalSpan) * 100;
+      if (pct < 2.5 || pct > 97.5) continue;
+      const normMin = ((m % 1440) + 1440) % 1440;
+      const normH = Math.floor(normMin / 60);
+      const isMajor = normH % stepHours === 0;
+
+      // Avoid colliding with left/right bound badges (08:30 / 06:03) or with the live playhead pill
+      const farFromBounds = pct >= 14.5 && pct <= 85.5;
+      const farFromPlayhead = inBounds
+        ? Math.abs(pct - playheadPct) >= 8.5
+        : standbySide === 'start'
+          ? pct >= 22
+          : pct <= 78;
+
+      ticks.push({
+        pct,
+        label: `${normH.toString().padStart(2, '0')}h`,
+        isMajor,
+        showLabel: isMajor && farFromBounds && farFromPlayhead,
+        showGrid: isMajor && pct >= 7 && pct <= 93,
+      });
+    }
+
+    const startOccluded = inBounds && playheadPct < 12.5;
+    const endOccluded = inBounds && playheadPct > 87.5;
 
     return {
       minStart,
@@ -2695,8 +2735,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       spans,
       ticks,
       isToday,
-      showPlayhead,
-      playheadPct: Math.max(0, Math.min(100, playheadPct)),
+      inBounds,
+      standbySide,
+      effNow,
+      playheadPct,
+      startOccluded,
+      endOccluded,
       nowLabel: fmtMin(nowMinutes),
     };
   }, [byScene, date, nowMinutes]);
@@ -2752,27 +2796,52 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
             {timelineData && (
               <div className="daily-timecode-ruler" aria-label="Amplitude horaire de la journée">
                 <div className="timecode-scale-bar">
-                  <span className="tc-bound tc-bound-start">{timelineData.minLabel}</span>
+                  <span className={`tc-bound tc-bound-start ${timelineData.startOccluded ? 'is-occluded' : ''}`}>
+                    {timelineData.minLabel}
+                  </span>
+
                   <div className="tc-ticks-area">
-                    {timelineData.ticks.map((t) => (
-                      <span
-                        key={t.label}
-                        className="tc-tick-label"
+                    {timelineData.ticks.map((t, idx) => (
+                      <div
+                        key={`${t.label}-${idx}`}
+                        className={`tc-tick-node ${t.isMajor ? 'is-major' : 'is-minor'}`}
                         style={{ left: `${t.pct}%` }}
                       >
-                        {t.label}
-                      </span>
+                        {t.showLabel && <span className="tc-tick-label">{t.label}</span>}
+                        <span className="tc-tick-mark" />
+                      </div>
                     ))}
                   </div>
-                  <span className="tc-bound tc-bound-end">{timelineData.maxLabel}</span>
+
+                  {/* Bulle de l'heure en direct (ou en veille sur le côté si hors amplitude) */}
+                  <div
+                    className={`tc-playhead-badge ${timelineData.inBounds ? (timelineData.isToday ? 'is-live' : 'is-active') : `is-standby is-standby-${timelineData.standbySide}`}`}
+                    style={
+                      timelineData.inBounds
+                        ? { left: `clamp(30px, ${timelineData.playheadPct}%, calc(100% - 30px))` }
+                        : undefined
+                    }
+                    title={
+                      timelineData.inBounds
+                        ? `Heure actuelle : ${timelineData.nowLabel}`
+                        : `Hors amplitude du jour (en veille) · ${timelineData.nowLabel}`
+                    }
+                  >
+                    <span className="tc-playhead-badge-dot" />
+                    <span className="tc-playhead-badge-time">{timelineData.nowLabel}</span>
+                  </div>
+
+                  <span className={`tc-bound tc-bound-end ${timelineData.endOccluded ? 'is-occluded' : ''}`}>
+                    {timelineData.maxLabel}
+                  </span>
                 </div>
 
                 {/* Zone des pistes et du métrage pleine largeur */}
                 <div className="timecode-tracks-box">
                   {/* Lignes de repère verticales */}
-                  {timelineData.ticks.map((t) => (
+                  {timelineData.ticks.filter((t) => t.showGrid).map((t, idx) => (
                     <div
-                      key={`grid-${t.label}`}
+                      key={`grid-${t.label}-${idx}`}
                       className="tc-grid-line"
                       style={{ left: `${t.pct}%` }}
                       aria-hidden="true"
@@ -2794,10 +2863,14 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                         {sp.segments.map((seg, idx) => {
                           const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
                           const widthPct = Math.max(4, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
+                          const isActiveNow =
+                            timelineData.inBounds &&
+                            timelineData.effNow >= seg.start &&
+                            timelineData.effNow <= seg.end;
                           return (
                             <div
                               key={idx}
-                              className="tc-track-segment"
+                              className={`tc-track-segment ${isActiveNow ? 'is-active-now' : ''}`}
                               style={{
                                 left: `${leftPct}%`,
                                 width: `${widthPct}%`,
@@ -2812,17 +2885,19 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     ))}
                   </div>
 
-                  {/* Aiguille Live / Playhead */}
-                  {timelineData.showPlayhead && (
-                    <div
-                      className={`tc-playhead ${timelineData.isToday ? 'is-live' : ''}`}
-                      style={{ left: `${timelineData.playheadPct}%` }}
-                      title={`Heure actuelle : ${timelineData.nowLabel}`}
-                    >
-                      <div className="tc-playhead-head" />
-                      <div className="tc-playhead-line" />
-                    </div>
-                  )}
+                  {/* Aiguille Live / Playhead (active ou garée en veille au bord) */}
+                  <div
+                    className={`tc-playhead ${timelineData.inBounds ? (timelineData.isToday ? 'is-live' : 'is-active') : `is-standby is-standby-${timelineData.standbySide}`}`}
+                    style={{ left: `${timelineData.playheadPct}%` }}
+                    title={
+                      timelineData.inBounds
+                        ? `Heure actuelle : ${timelineData.nowLabel}`
+                        : `Hors amplitude (en veille) : ${timelineData.nowLabel}`
+                    }
+                  >
+                    <div className="tc-playhead-head" />
+                    <div className="tc-playhead-line" />
+                  </div>
                 </div>
               </div>
             )}
