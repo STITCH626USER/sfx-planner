@@ -7401,13 +7401,21 @@ nav.seg button[aria-selected="true"] {
 /* ─── Métrage Horaire / Timecode Ruler (Vue Globale) ─── */
 .daily-timecode-ruler {
   margin-top: 8px;
-  padding: 8px 12px 10px 12px;
+  padding: 10px 12px 12px 12px;
   border-radius: 12px;
   background: rgba(11, 16, 27, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 14px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  --tc-label-w: 132px;
+}
+
+@media (max-width: 500px) {
+  .daily-timecode-ruler {
+    --tc-label-w: 108px;
+    padding: 8px 10px 10px 10px;
+  }
 }
 
 :root[data-theme="light"] .daily-timecode-ruler {
@@ -7416,13 +7424,88 @@ nav.seg button[aria-selected="true"] {
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
+.tc-header-grid {
+  display: grid;
+  grid-template-columns: var(--tc-label-w) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tc-header-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  opacity: 0.75;
+  padding-left: 2px;
+}
+
+.tc-body-grid {
+  display: grid;
+  grid-template-columns: var(--tc-label-w) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.tc-labels-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.tc-scene-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 15px;
+  cursor: pointer;
+  min-width: 0;
+  padding-right: 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.tc-scene-label:hover {
+  transform: translateX(2px);
+}
+
+.tc-scene-label:hover .tc-scene-text {
+  color: var(--fg);
+}
+
+.tc-scene-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tc-scene-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+
+@media (max-width: 500px) {
+  .tc-scene-text {
+    font-size: 10px;
+  }
+}
+
 .timecode-scale-bar {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 16px;
-  margin-bottom: 6px;
   font-family: var(--font-mono, monospace);
   font-size: 10.5px;
   font-weight: 700;
@@ -7465,7 +7548,7 @@ nav.seg button[aria-selected="true"] {
 .timecode-tracks-box {
   position: relative;
   width: 100%;
-  padding: 3px 0;
+  padding: 2px 0;
 }
 
 .tc-grid-line {
@@ -7484,7 +7567,7 @@ nav.seg button[aria-selected="true"] {
 .tc-tracks-stack {
   display: flex;
   flex-direction: column;
-  gap: 3.5px;
+  gap: 4px;
   position: relative;
   z-index: 1;
 }
@@ -7492,30 +7575,43 @@ nav.seg button[aria-selected="true"] {
 .tc-track-row {
   position: relative;
   width: 100%;
-  height: 4.5px;
-  background: rgba(255, 255, 255, 0.035);
-  border-radius: 999px;
+  height: 15px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
 }
 
-:root[data-theme="light"] .tc-track-row {
+.tc-track-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+
+:root[data-theme="light"] .tc-track-row::before {
   background: rgba(15, 23, 42, 0.06);
 }
 
-.tc-track-row:hover {
-  transform: scaleY(1.45);
+.tc-track-row:hover::before {
   background: rgba(255, 255, 255, 0.08);
 }
 
 .tc-track-segment {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  height: 6px;
   border-radius: 999px;
   background: var(--tc-color, #f59e0b);
   box-shadow: 0 0 8px var(--tc-color, rgba(245, 158, 11, 0.5));
-  opacity: 0.92;
+  opacity: 0.95;
+  transition: height 0.15s ease;
+}
+
+.tc-track-row:hover .tc-track-segment {
+  height: 8.5px;
 }
 
 .tc-playhead {
