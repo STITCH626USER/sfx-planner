@@ -7345,16 +7345,22 @@ nav.seg button[aria-selected="true"] {
   user-select: none;
 }
 
-.floating-search-input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--fg);
-  font-size: 14.5px;
-  font-weight: 500;
-  outline: none;
-  padding: 4px 0;
+.floating-search-input,
+.floating-search-input:focus {
+  flex: 1 !important;
+  min-width: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: var(--fg) !important;
+  font-size: 14.5px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  padding: 4px 2px !important;
+  margin: 0 !important;
 }
 
 .floating-search-input::placeholder {
