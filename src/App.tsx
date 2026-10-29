@@ -2424,24 +2424,44 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
 
 
-  const allForDate = useMemo(() => {
-    return records.filter(r => r.date === date).sort((a, b) => {
+  const allWorkingForDate = useMemo(() => {
+    return records.filter(r => r.date === date && r.time !== 'OFF').sort((a, b) => {
       const byScene = a.scene.localeCompare(b.scene, 'fr');
       if (byScene !== 0) return byScene;
       return prettyName(a.employee).localeCompare(prettyName(b.employee), 'fr');
     });
   }, [records, date]);
 
-  const filteredPresent = useMemo(() => {
-    if (!dailySearch.trim()) return allForDate.filter(r => r.time !== 'OFF');
-    const q = dailySearch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    return allForDate.filter(r => prettyName(r.employee).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(q));
-  }, [allForDate, dailySearch]);
-
   const uniqueTechs = useMemo(() => {
-    // Only count people actually working, even during search
-    return new Set(filteredPresent.filter(r => r.time !== 'OFF').map(r => r.employee)).size;
-  }, [filteredPresent]);
+    return new Set(allWorkingForDate.map(r => r.employee)).size;
+  }, [allWorkingForDate]);
+
+  const searchMatchingEmployees = useMemo(() => {
+    const q = dailySearch.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    if (!q) return new Set<string>();
+    const matches = new Set<string>();
+    for (const r of allWorkingForDate) {
+      const cleanEmp = prettyName(r.employee).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      if (cleanEmp.includes(q)) {
+        matches.add(r.employee);
+      }
+    }
+    return matches;
+  }, [allWorkingForDate, dailySearch]);
+
+  const isSearching = !!dailySearch.trim();
+
+  // Scroll to first highlighted match when search changes
+  useEffect(() => {
+    if (!isSearching || searchMatchingEmployees.size === 0) return;
+    const timer = setTimeout(() => {
+      const firstEl = document.querySelector('.compact-team-row.is-highlighted');
+      if (firstEl) {
+        firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [dailySearch, isSearching, searchMatchingEmployees]);
 
   const byScene = useMemo(() => {
     const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
@@ -2456,7 +2476,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     }
 
     const groups = new Map<string, Array<PlanningRecord & { assocScenes?: string[] }>>();
-    for (const rec of filteredPresent) {
+    for (const rec of allWorkingForDate) {
       let groupName = cleanSceneName(rec.scene);
       let displayName = prettyName(rec.employee);
       
@@ -2520,7 +2540,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       if (countDiff !== 0) return countDiff;
       return a[0].localeCompare(b[0], 'fr');
     });
-  }, [filteredPresent, records]);
+  }, [allWorkingForDate, records]);
 
 
 
@@ -2595,14 +2615,25 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 className="modern-search-input"
               />
               {dailySearch && (
-                <button 
-                  type="button" 
-                  className="modern-search-clear" 
-                  onClick={() => setDailySearch('')}
-                  aria-label="Effacer la recherche"
-                >
-                  ✕
-                </button>
+                <div className="modern-search-meta">
+                  {searchMatchingEmployees.size > 0 ? (
+                    <span className="search-match-badge">
+                      {searchMatchingEmployees.size} trouvé{searchMatchingEmployees.size > 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="search-no-match-badge">
+                      Aucun trouvé
+                    </span>
+                  )}
+                  <button 
+                    type="button" 
+                    className="modern-search-clear" 
+                    onClick={() => setDailySearch('')}
+                    aria-label="Effacer la recherche"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -2686,6 +2717,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                       const prevIsNight = prevRange ? prevRange.start >= 18 * 60 : false;
                       const showNightHeader = isNight && !prevIsNight && rIdx > 0;
 
+                      const rawEmp = extRec.originalEmployeeName || rec.employee;
+                      const isMatch = isSearching && searchMatchingEmployees.has(rawEmp);
+
                       return (
                         <div key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}>
                           {showNightHeader && (
@@ -2694,11 +2728,12 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                             </div>
                           )}
                           <div
-                            className="compact-team-row"
+                            className={`compact-team-row ${isMatch ? 'is-highlighted' : ''} ${isSearching && !isMatch ? 'is-dimmed' : ''}`}
                             data-testid={`scene-tech-${scene}-${rec.employee}`}
                           >
                             <div style={{ minWidth: 0 }}>
                               <div className="team-name compact-name">
+                                {isMatch && <span className="highlight-ping-dot" aria-hidden="true" />}
                                 {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                               </div>
                               {isFOVirtual && originalScene && (
