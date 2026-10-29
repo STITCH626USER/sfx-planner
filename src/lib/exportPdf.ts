@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import type { PlanningRecord } from './parsePdf';
-import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, parseRange } from './utils';
+import { isTrainingScene, getSceneColor, timesMatch, prettyName, dayInitials, cleanSceneName, parseRange, cleanRoleLabel } from './utils';
 
 /* ─── Design Tokens (matches app CSS) ─── */
 const AMBER:   [number,number,number] = [255, 176, 58];
@@ -224,37 +224,43 @@ function drawAvatar(doc: jsPDF, x: number, y: number, name: string, color: [numb
 }
 
 /* ─── Scene Card ─── */
+/* ─── Role Pill Style for PDF (Print-Friendly High Contrast) ─── */
+function getPdfRoleColors(role: string): { bg: [number, number, number]; border: [number, number, number]; text: [number, number, number] } {
+  const r = (role || '').toLowerCase();
+  if (r.includes('regie')) {
+    return { bg: [254, 243, 199], border: [245, 158, 11], text: [146, 64, 14] }; // Amber Gold
+  }
+  if (r.includes('coord') || r.includes('lead') || r.includes('asst')) {
+    return { bg: [255, 228, 230], border: [244, 63, 94], text: [159, 18, 57] }; // Rose Coral
+  }
+  if (r.includes('secu') || r.includes('ponton') || r.includes('bassin')) {
+    return { bg: [204, 251, 241], border: [20, 184, 166], text: [17, 94, 89] }; // Teal
+  }
+  if (r.includes('atelier') || r.includes('bunker') || r.includes('magasin') || r.includes('parkwide')) {
+    return { bg: [224, 242, 254], border: [56, 189, 248], text: [3, 105, 161] }; // Sky Blue
+  }
+  return { bg: [241, 245, 249], border: [203, 213, 225], text: [71, 85, 105] }; // Slate neutral
+}
+
 /* ─── Compact card dimensions ─── */
-const C_HEADER = 6.0;  // card header height mm
-const C_PAD_T  = 0.8;  // padding top
-const C_PAD_B  = 1.8;  // padding bottom
-const C_CARD_GAP = 2.8; // gap between cards
-const C_ROW_H  = 4.5;  // row height (was 6.0)
-const C_GUTTER = 4.5;  // column gutter
+const C_HEADER = 6.8;  // card header height mm
+const C_PAD_T  = 1.0;  // padding top
+const C_PAD_B  = 1.6;  // padding bottom
+const C_CARD_GAP = 3.0; // gap between cards
+const C_ROW_H  = 5.2;  // row height
+const C_GUTTER = 4.2;  // column gutter
 const C_MARGIN = 10;   // page margin
 
 function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
-  headerText: string, rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>,
+  headerText: string, rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>,
   rowH: number, themeColorName: string, dateStr?: string): number {
   const sc = getSceneColor(themeColorName);
-  const accentRgb: [number,number,number] = [
-    Math.round(sc.rgbText[0]*0.7 + 30),
-    Math.round(sc.rgbText[1]*0.7 + 30),
-    Math.round(sc.rgbText[2]*0.7 + 30),
-  ];
   const headerH = C_HEADER;
   const padX = 3.5; const padTop = C_PAD_T; const padBot = C_PAD_B;
   let contentH = 0;
   for (const r of rows) {
     if (r.subtext) {
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
-      const avSize = Math.min(rowH * 0.72, 3.5);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
-      const tw = doc.getTextWidth(r.time||'')+4;
-      const maxW = w - padX*2 - 1.5 - avSize - 1.5 - tw - 1.5;
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
-      const subLines = doc.splitTextToSize(r.subtext, maxW);
-      contentH += rowH + (subLines.length * rowH * 0.50);
+      contentH += rowH + 2.4;
     } else {
       contentH += rowH;
     }
@@ -262,128 +268,154 @@ function drawSceneCard(doc: jsPDF, x: number, y: number, w: number,
   if (rows.length === 0) contentH += rowH;
   const cardH = Math.max(dateStr ? 16 : 0, headerH + padTop + contentH + padBot);
 
-  let cardX = x;
-  let cardW = w;
-  
-  if (dateStr) {
-    const dateObj = new Date(dateStr);
-    const days = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
-    const months = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
-    
-    const dayName = days[dateObj.getDay()].replace('.', '').toUpperCase();
-    const dayNum = dateObj.getDate().toString().padStart(2, '0');
-    const monthName = months[dateObj.getMonth()];
-    
-    const pictoW = 16;
-    const pictoH = 16;
-    
-    // Picto Background
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(220, 220, 225);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(x, y + (cardH - pictoH)/2, pictoW, pictoH, 2.5, 2.5, 'FD');
-    
-    // Picto Text
-    const py = y + (cardH - pictoH)/2;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
-    doc.text(dayName, x + pictoW/2, py + 4.5, {align: 'center'});
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 30, 40);
-    doc.text(dayNum, x + pictoW/2, py + 10.5, {align: 'center'});
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
-    doc.text(monthName, x + pictoW/2, py + 14.5, {align: 'center'});
-    
-    cardX = x + pictoW + 4;
-    cardW = w - pictoW - 4;
-    headerText = `${rows.length} technicien${rows.length > 1 ? 's' : ''}`;
-  }
+  const cardX = x;
+  const cardW = w;
 
-  // Card background (White)
+  // Card background (White with crisp slate border)
   doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(220, 220, 225); // Subtle border
-  doc.setLineWidth(0.2);
-  doc.roundedRect(cardX, y, cardW, cardH, 2.0, 2.0, 'FD');
+  doc.setDrawColor(214, 222, 233);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(cardX, y, cardW, cardH, 2.2, 2.2, 'FD');
 
-  // Header band (Pastel subtle color)
-  // Header band (Pastel subtle color)
+  // Header band (Rich scene tint)
   doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-  doc.roundedRect(cardX, y, cardW, headerH, 2.0, 2.0, 'F');
-  doc.rect(cardX, y+2.0, cardW, headerH-2.0, 'F');
+  doc.roundedRect(cardX, y, cardW, headerH, 2.2, 2.2, 'F');
+  doc.rect(cardX, y + 2.2, cardW, headerH - 2.2, 'F');
+
   // Bottom line of header
-  doc.setDrawColor(235, 235, 240);
-  doc.setLineWidth(0.15);
-  doc.line(cardX, y+headerH, cardX+cardW, y+headerH);
+  doc.setDrawColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
+  doc.setLineWidth(0.2);
+  doc.line(cardX, y + headerH, cardX + cardW, y + headerH);
 
-  // Left accent bar (thinner, more elegant)
+  // Left accent bar
   doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
-  doc.roundedRect(cardX, y, 2.0, cardH, 0.8, 0.8, 'F');
+  doc.roundedRect(cardX, y, 2.2, cardH, 1.0, 1.0, 'F');
 
-  // Scene name (compact font)
-  doc.setFont('helvetica','bold'); 
-  doc.setTextColor(30, 20, 10); // Dark premium text
-  let snSize = 7.5;
+  // Scene dot + Scene name
+  const dotX = cardX + padX + 2.2;
+  const dotY = y + headerH / 2;
+  doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
+  doc.circle(dotX, dotY, 1.2, 'F');
+
+  // Right count badge inside header
+  const countStr = `${rows.length}`;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  const countW = Math.max(5.2, doc.getTextWidth(countStr) + 3.2);
+  const countH = 4.4;
+  const countX = cardX + cardW - padX - countW;
+  const countY = y + (headerH - countH) / 2;
+  doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
+  doc.roundedRect(countX, countY, countW, countH, 1.2, 1.2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.text(countStr, countX + countW / 2, countY + 3.1, { align: 'center' });
+
+  // Scene title
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
+  let snSize = 8.0;
   doc.setFontSize(snSize);
-  const maxWText = cardW - padX*2 - 10;
+  const maxWText = countX - (dotX + 2.5) - 2;
   let sn = cleanText(headerText);
-  while(doc.getTextWidth(sn) > maxWText && snSize > 5.0) {
-    snSize -= 0.5;
+  while (doc.getTextWidth(sn) > maxWText && snSize > 5.5) {
+    snSize -= 0.4;
     doc.setFontSize(snSize);
   }
   if (doc.getTextWidth(sn) > maxWText) {
     sn = doc.splitTextToSize(sn, maxWText)[0] as string;
   }
-  doc.text(sn, cardX+padX+1.5, y+headerH*0.66);
-
-  // Count badge removed per user request
+  doc.text(sn, dotX + 2.6, y + headerH * 0.67);
 
   // Rows
-  let ry = y + headerH + padTop + 0.5;
+  let ry = y + headerH + padTop;
   if (rows.length === 0) {
-    doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(...MUTED);
-    doc.text('Aucun technicien', cardX+padX+3, ry+rowH*0.55);
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(...MUTED);
+    doc.text('Aucun technicien', cardX + padX + 2, ry + rowH * 0.62);
   } else {
-    for (const row of rows) {
-      let subLines: string[] = [];
-      let currentH = rowH;
-      const avSize = Math.min(rowH * 0.72, 3.5);
-      
-      doc.setFont('helvetica','bold'); doc.setFontSize(7);
-      const timeStr = row.time||'';
-      const tw = doc.getTextWidth(timeStr)+4;
-      const maxW = w - padX*2 - 1.5 - avSize - 1.5 - tw - 1.5;
+    for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+      const row = rows[rIdx];
+      const currentH = row.subtext ? rowH + 2.4 : rowH;
 
-      if (row.subtext) {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
-        subLines = doc.splitTextToSize(row.subtext, maxW);
-        currentH = rowH + (subLines.length * rowH * 0.50);
+      // Subtle alternating row separator
+      if (rIdx > 0) {
+        doc.setDrawColor(241, 245, 249);
+        doc.setLineWidth(0.18);
+        doc.line(cardX + 3.2, ry, cardX + cardW - 2.5, ry);
       }
-      
-      const avColor: [number,number,number] = row.isFO ? VIOLET : accentRgb;
-      drawAvatar(doc, cardX+padX+1, ry+(currentH-avSize)/2, row.name, avColor, avSize);
-      
-      const nameX = cardX+padX+1+avSize+1.5;
-      const th = rowH*0.68;
-      const px = cardX+cardW-padX-tw; const py = ry+(currentH-th)/2;
-      
+
+      const avSize = 3.6;
+      const avColor: [number, number, number] = row.isFO ? VIOLET : sc.rgbAccent;
+      const mainRowCenterY = ry + rowH / 2;
+      drawAvatar(doc, cardX + padX + 0.8, mainRowCenterY - avSize / 2, row.name, avColor, avSize);
+
+      const nameX = cardX + padX + 0.8 + avSize + 1.8;
+
+      // Time pill on far right
+      const timeStr = (row.time || '').replace(/\s*-\s*/, ' - ');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.6);
+      const tw = doc.getTextWidth(timeStr) + 3.8;
+      const th = 3.9;
+      const px = cardX + cardW - padX - tw;
+      const py = mainRowCenterY - th / 2;
+
       const isOff = /^off$/i.test(timeStr);
-      const pillColor: [number,number,number] = isOff ? [240, 240, 243] : sc.rgbBg;
-      const pillBorder: [number,number,number] = isOff ? [220, 220, 225] : sc.rgbAccent;
-      const pillText: [number,number,number] = isOff ? MUTED : sc.rgbText;
+      const pillColor: [number, number, number] = isOff ? [241, 245, 249] : sc.rgbBg;
+      const pillBorder: [number, number, number] = isOff ? [203, 213, 225] : sc.rgbAccent;
+      const pillText: [number, number, number] = isOff ? MUTED : sc.rgbText;
       doc.setFillColor(...pillColor);
       doc.setDrawColor(...pillBorder);
-      doc.setLineWidth(0.2);
-      doc.roundedRect(px, py, tw, th, 1.2, 1.2, 'FD');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7);
-      doc.setTextColor(...pillText); doc.text(timeStr, px+tw/2, py+th*0.72, {align:'center'});
-      
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...INK);
-      const nm = doc.splitTextToSize(row.name, maxW)[0] as string;
-      doc.text(nm, nameX, ry + currentH * (row.subtext ? (0.45 - (subLines.length-1)*0.08) : 0.65));
-      
-      if (row.subtext) {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(130, 140, 150);
-        doc.text(subLines, nameX, ry + currentH * (0.85 - (subLines.length-1)*0.1));
+      doc.setLineWidth(0.22);
+      doc.roundedRect(px, py, tw, th, 1.0, 1.0, 'FD');
+      doc.setTextColor(...pillText);
+      doc.text(timeStr, px + tw / 2, py + 2.8, { align: 'center' });
+
+      // Optional Role badge just to the left of Time pill
+      let roleRightEdge = px - 1.4;
+      const cleanRole = cleanRoleLabel(row.role || '');
+      if (cleanRole) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.5);
+        const rw = doc.getTextWidth(cleanRole) + 3.0;
+        const rh = 3.6;
+        const rxRole = roleRightEdge - rw;
+        const ryRole = mainRowCenterY - rh / 2;
+        const rc = getPdfRoleColors(cleanRole);
+        doc.setFillColor(...rc.bg);
+        doc.setDrawColor(...rc.border);
+        doc.setLineWidth(0.18);
+        doc.roundedRect(rxRole, ryRole, rw, rh, 0.9, 0.9, 'FD');
+        doc.setTextColor(...rc.text);
+        doc.text(cleanRole, rxRole + rw / 2, ryRole + 2.55, { align: 'center' });
+        roleRightEdge = rxRole - 1.4;
       }
-      
+
+      // Technician Name (bold surname / clear typography)
+      const maxNameW = Math.max(18, roleRightEdge - nameX);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.setTextColor(...INK);
+      let dispName = row.name;
+      if (doc.getTextWidth(dispName) > maxNameW) {
+        while (dispName.length > 0 && doc.getTextWidth(dispName + '…') > maxNameW) {
+          dispName = dispName.slice(0, -1);
+        }
+        dispName = dispName.trim() + '…';
+      }
+      doc.text(dispName, nameX, mainRowCenterY + 0.9);
+
+      // Subtext (e.g. Formation details or full shift amplitude)
+      if (row.subtext) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.4);
+        doc.setTextColor(100, 116, 139);
+        const maxSubW = cardW - (nameX - cardX) - padX;
+        let subLine = row.subtext;
+        if (doc.getTextWidth(subLine) > maxSubW) {
+          subLine = doc.splitTextToSize(subLine, maxSubW)[0] as string;
+        }
+        doc.text(subLine, nameX, ry + rowH + 1.4);
+      }
+
       ry += currentH;
     }
   }
@@ -439,9 +471,9 @@ function findBestCols(
 }
 
 /* ─── Multi-column card layout engine ─── */
-function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;isFO?:boolean}>, dateStr?: string}>,
+function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:string;rows:Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>, dateStr?: string}>,
   startY: number, marginX: number, pageW: number, pageH: number, cols: number, rowH: number, _gap: number, logo: string|null,
-  headerTitle: string, headerSub: string): void {
+  headerTitle: string, headerSub: string, statsBadge?: string): void {
   const bottom = pageH - 13;
   const gutter = C_GUTTER;
   const colW = (pageW - marginX*2 - gutter*(cols-1)) / cols;
@@ -449,8 +481,12 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
-    const nRows = Math.max(1, block.rows.length);
-    const cardH = Math.max(block.dateStr ? 16 : 0, C_HEADER + C_PAD_T + nRows * rowH + C_PAD_B);
+    let contentH = 0;
+    for (const r of block.rows) {
+      contentH += r.subtext ? rowH + 2.4 : rowH;
+    }
+    if (block.rows.length === 0) contentH += rowH;
+    const cardH = Math.max(block.dateStr ? 16 : 0, C_HEADER + C_PAD_T + contentH + C_PAD_B);
     
     // Find shortest column
     let bestCol = 0; let minY = colYs[0];
@@ -460,7 +496,7 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
     if (minY + cardH > bottom) {
       drawPremiumFooter(doc, pageW, pageH, marginX);
       doc.addPage();
-      const sy = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub + ' (suite)', logo) + 5;
+      const sy = drawPremiumHeader(doc, pageW, marginX, 10, headerTitle, headerSub + ' (suite)', logo, 'SFX PLANNER', statsBadge) + 2;
       colYs.fill(sy);
       bestCol = 0;
     }
@@ -471,15 +507,16 @@ function layoutCards(doc: jsPDF, blocks: Array<{header:string;themeColorName:str
   }
 }
 
-/* ─── generateAndSave (employee + scene exports) ─── */
+/* ─── generateAndSave (day export) ─── */
 export async function generateAndSave(opts: {
   title: string; subtitle: string; filename: string;
   itemCount: number; totalRows: number;
   maxCols?: number;
+  statsBadge?: string;
   blocks: Array<{
     header: string;
     themeColorName: string;
-    rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>;
+    rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>;
     dateStr?: string;
   }>;
 }): Promise<void> {
@@ -491,8 +528,8 @@ export async function generateAndSave(opts: {
   const APPROX_HEADER = 37; // header height + start margin
   const rowH = C_ROW_H;
   const cols = findBestCols(opts.blocks, pageW, pageH, APPROX_HEADER, rowH, opts.maxCols || 6);
-  const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo);
-  layoutCards(doc, opts.blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, opts.title, opts.subtitle);
+  const startY = drawPremiumHeader(doc, pageW, C_MARGIN, 10, opts.title, opts.subtitle, logo, 'SFX PLANNER', opts.statsBadge);
+  layoutCards(doc, opts.blocks, startY, C_MARGIN, pageW, pageH, cols, rowH, C_CARD_GAP, logo, opts.title, opts.subtitle, opts.statsBadge);
   drawPremiumFooter(doc, pageW, pageH, C_MARGIN);
   await downloadOrSharePdf(doc, opts.filename);
 }
@@ -502,29 +539,37 @@ export async function generateAndSave(opts: {
 ═══════════════════════════════════════════════ */
 export async function exportDayPdf(date: string, records: PlanningRecord[]): Promise<void> {
   const dayRecs = records.filter(r => r.date===date && r.time!=='OFF');
-  const sceneMap   = new Map<string, Array<{name:string;time:string;isFO?:boolean}>>();
+  const sceneMap = new Map<string, Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>>();
 
   for (const r of dayRecs) {
     let groupName = r.scene;
-    let displayName = prettyName(r.employee);
+    const displayName = prettyName(r.employee);
+    let roleLabel = r.role || '';
+    let subtext: string | undefined;
     
     if (isTrainingScene(r.scene)) {
       groupName = 'Formations';
       if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
-        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '');
-        if (detail) displayName = `${displayName} (${detail})`;
+        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '').trim();
+        if (detail) roleLabel = detail;
       }
-    } else if (r.role) {
-      displayName = `${displayName} (${r.role})`;
     }
     
     if (r.shiftTime && r.shiftTime !== r.time) {
-      displayName = `${displayName} [Journée: ${r.shiftTime}]`;
+      subtext = `Amplitude journée : ${r.shiftTime}`;
     }
     
     if (!sceneMap.has(groupName)) sceneMap.set(groupName, []);
-    sceneMap.get(groupName)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene)});
+    sceneMap.get(groupName)!.push({
+      name: displayName,
+      time: r.time,
+      role: roleLabel,
+      isFO: isTrainingScene(r.scene),
+      subtext
+    });
   }
+
+  const uniqueTechCount = new Set(dayRecs.map(r => r.employee)).size;
 
   const blocks = Array.from(sceneMap.entries())
     .sort((a, b) => {
@@ -532,18 +577,30 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
       const bFO = isTrainingScene(b[0]);
       if (aFO && !bFO) return 1;
       if (!aFO && bFO) return -1;
+      const diff = b[1].length - a[1].length;
+      if (diff !== 0) return diff;
       return a[0].localeCompare(b[0], 'fr');
     })
-    .map(([scene,rows]) => ({header:cleanText(cleanSceneName(scene)), themeColorName:scene, rows:rows.sort((a,b)=>a.name.localeCompare(b.name,'fr'))}));
+    .map(([scene, rows]) => ({
+      header: cleanText(cleanSceneName(scene)),
+      themeColorName: scene,
+      rows: rows.sort((a, b) => {
+        const rA = parseRange(a.time);
+        const rB = parseRange(b.time);
+        if (rA && rB && rA.start !== rB.start) return rA.start - rB.start;
+        return a.name.localeCompare(b.name, 'fr');
+      })
+    }));
 
   await generateAndSave({
     title: 'Vue globale du jour',
     subtitle: fmtDate(date),
+    statsBadge: `${uniqueTechCount} PRÉSENTS · ${blocks.length} SCÈNES`,
     blocks,
     itemCount: blocks.length,
     totalRows: blocks.reduce((a,b)=>a+Math.max(1,b.rows.length),0),
     filename: `sfx-planning-${date}.pdf`,
-    maxCols: 4
+    maxCols: 3
   });
 }
 
@@ -552,16 +609,13 @@ export async function exportDayPdf(date: string, records: PlanningRecord[]): Pro
 ═══════════════════════════════════════════════ */
 export async function exportEmployeePdf(employee: string, records: PlanningRecord[]): Promise<void> {
   const empRecs = records.filter(r => r.employee===employee);
-  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>();
+  const dateMap = new Map<string, Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>>();
 
   for (const r of empRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-    let clean = cleanSceneName(r.scene) || '-';
-    let role = (r.role && !isTrainingScene(r.scene)) ? r.role : '';
-    let name = clean;
-    if (role) {
-      name = `${name} (${role})`;
-    }
+    const clean = cleanSceneName(r.scene) || '-';
+    const role = (r.role && !isTrainingScene(r.scene)) ? cleanRoleLabel(r.role) : '';
+    const name = clean;
     let isFO = false;
     let subtext: string | undefined;
     if (isTrainingScene(r.scene)) {
@@ -570,7 +624,7 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
       const scenesOfDay = new Set<string>();
       for (const dr of dayRecs) {
         if (timesMatch(dr.time, r.time, 5)) {
-          let cln = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
+          const cln = dr.scene.replace(/\bENT\b/gi, '').trim().replace(/^[-_]+|[-_]+$/g, '').trim();
           if (cln && cln.toLowerCase() !== 'fo' && cln.toLowerCase() !== 'formation') {
             scenesOfDay.add(cln);
           }
@@ -579,9 +633,13 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
       scenesOfDay.add('Formation autre');
       if (scenesOfDay.size > 0) subtext = 'Possibilités : ' + Array.from(scenesOfDay).sort().join(', ');
     } else if (r.shiftTime && r.shiftTime !== r.time) {
-      subtext = `Journée: ${r.shiftTime}`;
+      subtext = `Journée : ${r.shiftTime}`;
     }
-    dateMap.get(r.date)!.push(r.time === 'OFF' ? { name: 'Repos / Congé', time: 'OFF' } : { name, time: r.time, isFO, subtext });
+    dateMap.get(r.date)!.push(
+      r.time === 'OFF'
+        ? { name: 'Repos / Congé', time: 'OFF' }
+        : { name, time: r.time, role, isFO, subtext }
+    );
   }
 
   const allDates = Array.from(dateMap.keys()).filter(Boolean).sort();
@@ -606,7 +664,7 @@ async function generateIndivPdf(opts: {
   title: string;
   subtitle: string;
   statsBadge?: string;
-  dateMap: Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>;
+  dateMap: Map<string, Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>>;
   allDates: string[];
   filename: string;
   themeColorName?: string;
@@ -618,135 +676,112 @@ async function generateIndivPdf(opts: {
   const marginX = 8;
   
   let startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle, logo, 'SFX PLANNER', opts.statsBadge);
-  const bottomLimit = pageH - 14; // footer top
-  const gutter = 3.0;
+  const bottomLimit = pageH - 13.5; // footer top
+  const gutter = 3.2;
 
-  const isDense = opts.filename.includes('scene');
+  // Build calendar weeks starting on Sunday (Dimanche -> Samedi, 7 days per column)
+  const firstIso = opts.allDates[0];
+  const lastIso = opts.allDates[opts.allDates.length - 1];
 
-  if (!isDense) {
-    // Standard individual employee schedule: strictly 1 column = 1 week (Sunday to Saturday, 7 days per column)
-    // Find min and max date in allDates to determine full calendar weeks starting on Sunday
-    let firstIso = opts.allDates[0];
-    let lastIso = opts.allDates[opts.allDates.length - 1];
+  const [y1, m1, d1] = firstIso.split('-').map(Number);
+  const startDate = new Date(y1, m1 - 1, d1);
+  const startDay = startDate.getDay(); // 0 is Sunday
+  startDate.setDate(startDate.getDate() - startDay);
 
-    // Compute first Sunday on or before firstIso
-    const [y1, m1, d1] = firstIso.split('-').map(Number);
-    const startDate = new Date(y1, m1 - 1, d1);
-    const startDay = startDate.getDay(); // 0 is Sunday
-    startDate.setDate(startDate.getDate() - startDay);
+  const [y2, m2, d2] = lastIso.split('-').map(Number);
+  const endDate = new Date(y2, m2 - 1, d2);
+  const endDay = endDate.getDay(); // 6 is Saturday
+  if (endDay !== 6) {
+    endDate.setDate(endDate.getDate() + (6 - endDay));
+  }
 
-    // Compute last Saturday on or after lastIso
-    const [y2, m2, d2] = lastIso.split('-').map(Number);
-    const endDate = new Date(y2, m2 - 1, d2);
-    const endDay = endDate.getDay(); // 6 is Saturday
-    if (endDay !== 6) {
-      endDate.setDate(endDate.getDate() + (6 - endDay));
+  const weeks: string[][] = [];
+  const cur = new Date(startDate);
+  let currentWeek: string[] = [];
+  while (cur <= endDate) {
+    const yStr = cur.getFullYear();
+    const mStr = String(cur.getMonth() + 1).padStart(2, '0');
+    const dStr = String(cur.getDate()).padStart(2, '0');
+    currentWeek.push(`${yStr}-${mStr}-${dStr}`);
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
     }
-
-    // Build array of weeks, each containing exactly 7 days (Dimanche -> Samedi)
-    const weeks: string[][] = [];
-    let cur = new Date(startDate);
-    let currentWeek: string[] = [];
-    while (cur <= endDate) {
+    cur.setDate(cur.getDate() + 1);
+  }
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) {
+      cur.setDate(cur.getDate() + 1);
       const yStr = cur.getFullYear();
       const mStr = String(cur.getMonth() + 1).padStart(2, '0');
       const dStr = String(cur.getDate()).padStart(2, '0');
       currentWeek.push(`${yStr}-${mStr}-${dStr}`);
-      if (currentWeek.length === 7) {
-        weeks.push(currentWeek);
-        currentWeek = [];
-      }
-      cur.setDate(cur.getDate() + 1);
     }
-    if (currentWeek.length > 0) {
-      while (currentWeek.length < 7) {
-        cur.setDate(cur.getDate() + 1);
-        const yStr = cur.getFullYear();
-        const mStr = String(cur.getMonth() + 1).padStart(2, '0');
-        const dStr = String(cur.getDate()).padStart(2, '0');
-        currentWeek.push(`${yStr}-${mStr}-${dStr}`);
-      }
-      weeks.push(currentWeek);
-    }
-
-    const availableH = bottomLimit - startY;
-    const gapBlock = 2.2;
-    // Exactly 7 days per column, so each day block gets generous height
-    const blockH = Math.min(23, (availableH - 6 * gapBlock) / 7);
-
-    // Render up to 4 columns (weeks) per page
-    const maxColsPerPage = 4;
-    const cols = Math.min(maxColsPerPage, Math.max(1, weeks.length));
-
-    let colW: number;
-    if (cols === 1) {
-      colW = 160;
-    } else if (cols === 2) {
-      colW = 130;
-    } else if (cols === 3) {
-      colW = (pageW - marginX * 2 - gutter * 2) / 3;
-    } else {
-      colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
-    }
-
-    const totalUsedWidth = cols * colW + (cols - 1) * gutter;
-    const baseStartX = (pageW - totalUsedWidth) / 2;
-
-    for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
-      const colOnPage = wIdx % maxColsPerPage;
-
-      if (wIdx > 0 && colOnPage === 0) {
-        drawPremiumFooter(doc, pageW, pageH, marginX);
-        doc.addPage();
-        startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
-      }
-
-      const weekDays = weeks[wIdx];
-      const x = baseStartX + colOnPage * (colW + gutter);
-      let currentY = startY;
-
-      for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
-        const d = weekDays[dayIdx];
-        const rows = opts.dateMap.get(d) || [{ name: 'Repos / Congé', time: 'OFF' }];
-        drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
-        currentY += blockH + gapBlock;
-      }
-    }
-
-    drawPremiumFooter(doc, pageW, pageH, marginX);
-    await downloadOrSharePdf(doc, opts.filename);
-    return;
+    weeks.push(currentWeek);
   }
 
-  // Dense / Scene schedule: dynamic card height and smooth multi-page column flow
-  const cols = 4;
-  const colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
-  const gapBlock = 2.0;
-  let currentCol = 0;
-  let currentY = startY;
+  const isSceneMode = Boolean(opts.themeColorName);
+  const weekBannerH = 5.4;
+  const weekBannerGap = 1.6;
+  const availableH = bottomLimit - startY - weekBannerH - weekBannerGap;
+  const gapBlock = 1.9;
+  const blockH = Math.min(22.5, (availableH - 6 * gapBlock) / 7);
 
-  for (let i = 0; i < opts.allDates.length; i++) {
-    const d = opts.allDates[i];
-    const rows = opts.dateMap.get(d) || [];
-    const rowCount = Math.max(1, rows.length);
-    const cardH = Math.max(16.0, 3.0 + rowCount * 5.2);
+  // Render up to 4 columns (weeks) per page
+  const maxColsPerPage = 4;
+  const cols = Math.min(maxColsPerPage, Math.max(1, weeks.length));
 
-    if (currentY + cardH > bottomLimit) {
-      currentCol++;
-      currentY = startY;
+  let colW: number;
+  if (cols === 1) {
+    colW = 160;
+  } else if (cols === 2) {
+    colW = 132;
+  } else if (cols === 3) {
+    colW = (pageW - marginX * 2 - gutter * 2) / 3;
+  } else {
+    colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
+  }
 
-      if (currentCol >= cols) {
-        drawPremiumFooter(doc, pageW, pageH, marginX);
-        doc.addPage();
-        startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
-        currentCol = 0;
-        currentY = startY;
-      }
+  const totalUsedWidth = cols * colW + (cols - 1) * gutter;
+  const baseStartX = (pageW - totalUsedWidth) / 2;
+
+  for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
+    const colOnPage = wIdx % maxColsPerPage;
+
+    if (wIdx > 0 && colOnPage === 0) {
+      drawPremiumFooter(doc, pageW, pageH, marginX);
+      doc.addPage();
+      startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
     }
 
-    const x = marginX + currentCol * (colW + gutter);
-    drawIndivDayBlock(doc, x, currentY, colW, cardH, d, rows, opts.themeColorName);
-    currentY += cardH + gapBlock;
+    const weekDays = weeks[wIdx];
+    const x = baseStartX + colOnPage * (colW + gutter);
+
+    // Draw Week Column Header Pill (e.g. "SEMAINE 1 · 25/10 – 31/10")
+    const wStartShort = weekDays[0].slice(8, 10) + '/' + weekDays[0].slice(5, 7);
+    const wEndShort = weekDays[6].slice(8, 10) + '/' + weekDays[6].slice(5, 7);
+    const weekLabel = `SEMAINE ${wIdx + 1}  ·  ${wStartShort} AU ${wEndShort}`;
+
+    const bannerSc = opts.themeColorName ? getSceneColor(opts.themeColorName) : null;
+    doc.setFillColor(...(bannerSc ? bannerSc.rgbBg : [241, 245, 249] as [number, number, number]));
+    doc.setDrawColor(...(bannerSc ? bannerSc.rgbAccent : [203, 213, 225] as [number, number, number]));
+    doc.setLineWidth(0.22);
+    doc.roundedRect(x, startY, colW, weekBannerH, 1.4, 1.4, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...(bannerSc ? bannerSc.rgbText : [51, 65, 85] as [number, number, number]));
+    doc.text(weekLabel, x + colW / 2, startY + 3.7, { align: 'center' });
+
+    let currentY = startY + weekBannerH + weekBannerGap;
+
+    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+      const d = weekDays[dayIdx];
+      const fallbackRows = isSceneMode ? [] : [{ name: 'Repos / Congé', time: 'OFF' }];
+      const rows = opts.dateMap.get(d) || fallbackRows;
+      drawIndivDayBlock(doc, x, currentY, colW, blockH, d, rows, opts.themeColorName);
+      currentY += blockH + gapBlock;
+    }
   }
 
   drawPremiumFooter(doc, pageW, pageH, marginX);
@@ -760,7 +795,7 @@ function drawIndivDayBlock(
   w: number,
   h: number,
   dateStr: string,
-  rows: Array<{name:string;time:string;isFO?:boolean;subtext?:string}>,
+  rows: Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>,
   themeColorName?: string
 ) {
   let dayName = 'LUN.';
@@ -779,98 +814,123 @@ function drawIndivDayBlock(
       dayName = days[dateObj.getDay()] || 'LUN.';
       dayNum = da.toString().padStart(2, '0');
       monthName = months[mo] || 'SEPT.';
-    } else {
-      const dateObj = new Date(dateStr);
-      if (!isNaN(dateObj.getTime())) {
-        const days = ['DIM.', 'LUN.', 'MAR.', 'MER.', 'JEU.', 'VEN.', 'SAM.'];
-        const months = ['JANV.', 'FÉVR.', 'MARS', 'AVR.', 'MAI', 'JUIN', 'JUIL.', 'AOÛT', 'SEPT.', 'OCT.', 'NOV.', 'DÉC.'];
-        dayName = days[dateObj.getDay()] || 'LUN.';
-        dayNum = dateObj.getDate().toString().padStart(2, '0');
-        monthName = months[dateObj.getMonth()] || '';
-      }
     }
   }
 
   const isOff = rows.length === 0 || rows.every(r => /^off$/i.test(r.time));
+  const firstActiveRow = !isOff ? rows[0] : null;
+  const isFOFirst = firstActiveRow ? (firstActiveRow.isFO || isTrainingScene(firstActiveRow.name)) : false;
+  const primarySc = !isOff && firstActiveRow ? getSceneColor(themeColorName || firstActiveRow.name) : null;
+  const primaryAccent: [number, number, number] = isFOFirst
+    ? VIOLET
+    : (primarySc ? primarySc.rgbAccent : [203, 213, 225]);
+  const primaryBg: [number, number, number] = isFOFirst
+    ? [245, 243, 255]
+    : (primarySc ? primarySc.rgbBg : [248, 250, 252]);
 
-  // Base card (soft slate-50 for OFF, pure white for working day)
-  doc.setFillColor(isOff ? 248 : 255, isOff ? 250 : 255, isOff ? 252 : 255);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.25);
+  // Base card: subtle warm/tinted background on active days, soft slate-50 for OFF
+  if (isOff) {
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.2);
+  } else {
+    // Very soft 30% blend of scene pastel bg with white for a refined tinted card
+    const cardTint: [number, number, number] = [
+      Math.round(primaryBg[0] * 0.35 + 255 * 0.65),
+      Math.round(primaryBg[1] * 0.35 + 255 * 0.65),
+      Math.round(primaryBg[2] * 0.35 + 255 * 0.65),
+    ];
+    doc.setFillColor(...cardTint);
+    doc.setDrawColor(
+      Math.round(primaryAccent[0] * 0.35 + 203 * 0.65),
+      Math.round(primaryAccent[1] * 0.35 + 213 * 0.65),
+      Math.round(primaryAccent[2] * 0.35 + 225 * 0.65)
+    );
+    doc.setLineWidth(0.25);
+  }
   doc.roundedRect(x, y, w, h, 1.8, 1.8, 'FD');
 
-  // Refined thin left accent stripe (1.4mm)
+  // Left accent bar (1.8mm)
   if (!isOff) {
-    const firstRow = rows[0];
-    const isFOFirst = firstRow.isFO || isTrainingScene(firstRow.name);
-    const scFirst = getSceneColor(themeColorName || firstRow.name);
-    const firstColor: [number, number, number] = isFOFirst ? VIOLET : scFirst.rgbAccent;
-
-    if (rows.length > 1) {
+    if (rows.length > 1 && !themeColorName) {
       const hPart = h / rows.length;
       for (let idx = 0; idx < rows.length; idx++) {
         const r = rows[idx];
         const isFO = r.isFO || isTrainingScene(r.name);
-        const sc = getSceneColor(themeColorName || r.name);
+        const sc = getSceneColor(r.name);
         const col: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
         doc.setFillColor(...col);
-        doc.rect(x, y + idx * hPart, 1.4, hPart, 'F');
+        doc.rect(x, y + idx * hPart, 1.8, hPart, 'F');
       }
     } else {
-      doc.setFillColor(...firstColor);
-      doc.rect(x, y, 1.4, h, 'F');
+      doc.setFillColor(...primaryAccent);
+      doc.roundedRect(x, y, 1.8, h, 0.8, 0.8, 'F');
     }
   }
 
-  // Date Picto on left
-  const pictoW = 12.0;
-  const pictoH = Math.min(18.0, h - 2.8);
-  const px = x + (isOff ? 1.8 : 2.2);
-  const py = y + (h <= 24 ? (h - pictoH) / 2 : 1.6);
+  // Date Calendar Leaf Picto on left
+  const pictoW = 12.2;
+  const pictoH = Math.min(17.6, h - 2.4);
+  const px = x + (isOff ? 1.8 : 2.5);
+  const py = y + (h - pictoH) / 2;
 
   doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.2);
+  doc.setDrawColor(isOff ? 226 : primaryAccent[0], isOff ? 232 : primaryAccent[1], isOff ? 240 : primaryAccent[2]);
+  doc.setLineWidth(isOff ? 0.2 : 0.22);
   doc.roundedRect(px, py, pictoW, pictoH, 1.4, 1.4, 'FD');
+
+  // Top header cap on calendar picto
+  const capH = 4.3;
+  if (isOff) {
+    doc.setFillColor(241, 245, 249);
+  } else {
+    doc.setFillColor(...primaryAccent);
+  }
+  doc.roundedRect(px, py, pictoW, capH, 1.4, 1.4, 'F');
+  doc.rect(px, py + capH - 1.4, pictoW, 1.4, 'F');
 
   const cx = px + pictoW / 2;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(4.8);
-  doc.setTextColor(71, 85, 105);
-  doc.text(dayName, cx, py + 4.2, { align: 'center' });
+  doc.setFontSize(4.6);
+  if (isOff) {
+    doc.setTextColor(100, 116, 139);
+  } else {
+    doc.setTextColor(255, 255, 255);
+  }
+  doc.text(dayName, cx, py + 3.1, { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11.0);
-  doc.setTextColor(15, 23, 42);
-  doc.text(dayNum, cx, py + 10.4, { align: 'center' });
+  doc.setFontSize(10.2);
+  doc.setTextColor(isOff ? 148 : 15, isOff ? 163 : 23, isOff ? 184 : 42);
+  doc.text(dayNum, cx, py + 10.6, { align: 'center' });
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(4.0);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(3.9);
   doc.setTextColor(100, 116, 139);
   doc.text(monthName, cx, py + 14.5, { align: 'center' });
 
   // Content area on right
-  const rx = px + pictoW + 2.2;
+  const rx = px + pictoW + 2.4;
 
   if (isOff) {
     const isScene = Boolean(themeColorName);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.2);
     doc.setTextColor(148, 163, 184);
-    doc.text(isScene ? 'Relâche / Aucun service' : 'Repos / Congé', rx, y + h / 2 + 1.2);
+    doc.text(isScene ? 'Relâche / Aucun service' : 'Repos / Congé', rx, y + h / 2 + 1.0);
 
-    const pillW = 12;
-    const pillH = 5.2;
-    const pillX = x + w - pillW - 2.5;
+    const pillW = 11.5;
+    const pillH = 4.8;
+    const pillX = x + w - pillW - 2.2;
     const pillY = y + (h - pillH) / 2;
     doc.setFillColor(241, 245, 249);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.2);
     doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.2);
+    doc.setFontSize(6.0);
     doc.setTextColor(148, 163, 184);
-    doc.text(isScene ? '—' : 'OFF', pillX + pillW / 2, pillY + 3.6, { align: 'center' });
+    doc.text(isScene ? '—' : 'OFF', pillX + pillW / 2, pillY + 3.35, { align: 'center' });
     return;
   }
 
@@ -883,36 +943,39 @@ function drawIndivDayBlock(
     const sc = getSceneColor(themeColorName || row.name);
     const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
     const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
+    const scText: [number, number, number] = isFO ? [76, 29, 149] : sc.rgbText;
     const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
-    let rawNm = cleanText(cleanSceneName(row.name));
+    const rawNm = cleanText(cleanSceneName(row.name));
     let mainName = rawNm;
-    let role = row.subtext || '';
+    let roleStr = row.role || '';
     const matchRole = rawNm.match(/^(.*?)\s*\((.*?)\)$/);
     if (matchRole) {
       mainName = matchRole[1].trim();
-      role = matchRole[2].trim();
+      if (!roleStr) roleStr = cleanRoleLabel(matchRole[2].trim());
     }
+    const subStr = row.subtext || '';
 
-    // Time pill top right (centered if no role)
+    // Time pill top right (or vertically centered if single line)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.6);
     const tw = doc.getTextWidth(cleanTime);
-    const pillW = tw + 4.2;
-    const pillH = 5.2;
-    const pillX = x + w - pillW - 2.2;
-    const pillY = role ? y + 2.5 : y + (h - pillH) / 2;
+    const pillW = tw + 4.0;
+    const pillH = 5.0;
+    const pillX = x + w - pillW - 2.0;
+    const hasSecondLine = Boolean(roleStr || subStr);
+    const pillY = hasSecondLine ? y + 3.0 : y + (h - pillH) / 2;
 
     doc.setFillColor(...scBg);
     doc.setDrawColor(...scAccent);
     doc.setLineWidth(0.25);
-    doc.roundedRect(pillX, pillY, pillW, pillH, 1.0, 1.0, 'FD');
-    doc.setTextColor(...scAccent);
-    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.7, { align: 'center' });
+    doc.roundedRect(pillX, pillY, pillW, pillH, 1.1, 1.1, 'FD');
+    doc.setTextColor(...scText);
+    doc.text(cleanTime, pillX + pillW / 2, pillY + 3.55, { align: 'center' });
 
-    // Scene name
-    const maxSceneW = pillX - rx - 1.2;
-    let fontSize = 8.0;
+    // Main title (Scene name in Employee PDF, or Technician name in Scene PDF)
+    const maxSceneW = pillX - rx - 1.5;
+    let fontSize = 8.2;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(fontSize);
     doc.setTextColor(15, 23, 42);
@@ -923,103 +986,49 @@ function drawIndivDayBlock(
     }
     let dispScene = mainName;
     if (doc.getTextWidth(dispScene) > maxSceneW) {
-      while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
+      while (dispScene.length > 0 && doc.getTextWidth(dispScene + '…') > maxSceneW) {
         dispScene = dispScene.slice(0, -1);
       }
-      dispScene = dispScene.trim() + '...';
+      dispScene = dispScene.trim() + '…';
     }
-    doc.text(dispScene, rx, role ? y + 6.8 : y + h / 2 + 1.8);
+    doc.text(dispScene, rx, hasSecondLine ? y + 6.8 : y + h / 2 + 1.5);
 
-    // Role
-    if (role) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5.8);
-      doc.setTextColor(100, 116, 139);
-      let dispRole = role;
-      if (doc.getTextWidth(dispRole) > maxSceneW) {
-        while (dispRole.length > 0 && doc.getTextWidth(dispRole + '...') > maxSceneW) {
-          dispRole = dispRole.slice(0, -1);
-        }
-        dispRole = dispRole.trim() + '...';
+    // Second line: Role badge + optional subtext
+    if (hasSecondLine) {
+      let curSubX = rx;
+      const subY = y + 12.6;
+      if (roleStr) {
+        const cleanR = cleanRoleLabel(roleStr);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.4);
+        const rw = doc.getTextWidth(cleanR) + 3.0;
+        const rh = 3.7;
+        const rc = getPdfRoleColors(cleanR);
+        doc.setFillColor(...rc.bg);
+        doc.setDrawColor(...rc.border);
+        doc.setLineWidth(0.18);
+        doc.roundedRect(curSubX, subY - 2.7, rw, rh, 0.8, 0.8, 'FD');
+        doc.setTextColor(...rc.text);
+        doc.text(cleanR, curSubX + rw / 2, subY - 0.1, { align: 'center' });
+        curSubX += rw + 1.6;
       }
-      doc.text(dispRole, rx, y + 12.0);
-    }
-  } else if (rowCount === 2) {
-    const rH = (h - 2.4) / 2;
-    for (let idx = 0; idx < 2; idx++) {
-      const row = rows[idx];
-      const isFO = row.isFO || isTrainingScene(row.name);
-      const sc = getSceneColor(themeColorName || row.name);
-      const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
-      const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
-
-      const rowY = y + 1.2 + idx * rH;
-      const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
-
-      // Time pill
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(5.8);
-      const tw = doc.getTextWidth(cleanTime);
-      const pillW = tw + 3.8;
-      const pillH = 4.6;
-      const pillX = x + w - pillW - 2.0;
-      const pillY = rowY + (rH - pillH) / 2;
-
-      doc.setFillColor(...scBg);
-      doc.setDrawColor(...scAccent);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
-      doc.setTextColor(...scAccent);
-      doc.text(cleanTime, pillX + pillW / 2, pillY + 3.3, { align: 'center' });
-
-      // Scene
-      let rawNm = cleanText(cleanSceneName(row.name));
-      let mainName = rawNm.replace(/\s*\([^)]*\).*$/, '').replace(/\s*\[[^\]]*\].*$/, '').trim();
-      let role = '';
-      const matchRole = rawNm.match(/\((.*?)\)/);
-      if (matchRole) role = matchRole[1];
-
-      const maxSceneW = pillX - rx - 1.2;
-      let fontSize = 6.8;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(fontSize);
-      doc.setTextColor(15, 23, 42);
-
-      while (fontSize > 5.8 && doc.getTextWidth(mainName) > maxSceneW) {
-        fontSize -= 0.3;
-        doc.setFontSize(fontSize);
-      }
-      let dispScene = mainName;
-      if (doc.getTextWidth(dispScene) > maxSceneW) {
-        while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
-          dispScene = dispScene.slice(0, -1);
-        }
-        dispScene = dispScene.trim() + '...';
-      }
-      doc.text(dispScene, rx, rowY + rH * 0.45);
-
-      if (role) {
+      if (subStr) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(5.0);
+        doc.setFontSize(5.4);
         doc.setTextColor(100, 116, 139);
-        let dispRole = role;
-        if (doc.getTextWidth(dispRole) > maxSceneW) {
-          while (dispRole.length > 0 && doc.getTextWidth(dispRole + '...') > maxSceneW) {
-            dispRole = dispRole.slice(0, -1);
+        const availSubW = (x + w - 2.0) - curSubX;
+        let dispSub = subStr;
+        if (doc.getTextWidth(dispSub) > availSubW) {
+          while (dispSub.length > 0 && doc.getTextWidth(dispSub + '…') > availSubW) {
+            dispSub = dispSub.slice(0, -1);
           }
-          dispRole = dispRole.trim() + '...';
+          dispSub = dispSub.trim() + '…';
         }
-        doc.text(dispRole, rx, rowY + rH * 0.82);
-      }
-
-      if (idx === 0) {
-        doc.setDrawColor(241, 245, 249);
-        doc.setLineWidth(0.2);
-        doc.line(rx, rowY + rH, x + w - 2, rowY + rH);
+        doc.text(dispSub, curSubX, subY);
       }
     }
   } else {
-    // 3 or more rows - DYNAMIC FIT inside card!
+    // 2 or more rows inside the day card
     const rH = (h - 2.0) / rowCount;
     for (let idx = 0; idx < rowCount; idx++) {
       const row = rows[idx];
@@ -1027,59 +1036,77 @@ function drawIndivDayBlock(
       const sc = getSceneColor(themeColorName || row.name);
       const scBg: [number, number, number] = isFO ? [245, 243, 255] : sc.rgbBg;
       const scAccent: [number, number, number] = isFO ? VIOLET : sc.rgbAccent;
+      const scText: [number, number, number] = isFO ? [76, 29, 149] : sc.rgbText;
 
       const rowY = y + 1.0 + idx * rH;
+      const rowMidY = rowY + rH / 2;
       const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
       // Time pill
+      const timeFont = rowCount === 2 ? 5.8 : 5.0;
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(5.0);
+      doc.setFontSize(timeFont);
       const tw = doc.getTextWidth(cleanTime);
-      const pillW = tw + 2.8;
-      const pillH = 4.2;
+      const pillW = tw + (rowCount === 2 ? 3.4 : 2.6);
+      const pillH = rowCount === 2 ? 4.3 : Math.min(3.8, rH - 0.6);
       const pillX = x + w - pillW - 1.8;
-      const pillY = rowY + (rH - pillH) / 2;
+      const pillY = rowMidY - pillH / 2;
 
       doc.setFillColor(...scBg);
       doc.setDrawColor(...scAccent);
       doc.setLineWidth(0.2);
       doc.roundedRect(pillX, pillY, pillW, pillH, 0.8, 0.8, 'FD');
-      doc.setTextColor(...scAccent);
-      doc.text(cleanTime, pillX + pillW / 2, pillY + 3.0, { align: 'center' });
+      doc.setTextColor(...scText);
+      doc.text(cleanTime, pillX + pillW / 2, pillY + pillH * 0.72, { align: 'center' });
 
-      // Scene
-      let rawNm = cleanText(cleanSceneName(row.name));
+      // Optional Role pill next to time pill if space permits
+      let rightEdge = pillX - 1.2;
+      const rawNm = cleanText(cleanSceneName(row.name));
       let mainName = rawNm.replace(/\s*\([^)]*\).*$/, '').replace(/\s*\[[^\]]*\].*$/, '').trim();
-      let role = '';
+      let roleStr = row.role || '';
       const matchRole = rawNm.match(/\((.*?)\)/);
-      if (matchRole) role = matchRole[1];
+      if (matchRole && !roleStr) roleStr = matchRole[1];
 
-      let fullLabel = mainName;
-      if (role && !mainName.toLowerCase().includes('formation')) {
-        fullLabel = `${mainName} (${role})`;
+      if (roleStr && rowCount <= 3) {
+        const cleanR = cleanRoleLabel(roleStr);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(rowCount === 2 ? 4.8 : 4.3);
+        const rw = doc.getTextWidth(cleanR) + 2.2;
+        const rh = rowCount === 2 ? 3.4 : 3.0;
+        const rxRole = rightEdge - rw;
+        if (rxRole - rx > 22) {
+          const rc = getPdfRoleColors(cleanR);
+          doc.setFillColor(...rc.bg);
+          doc.setDrawColor(...rc.border);
+          doc.setLineWidth(0.15);
+          doc.roundedRect(rxRole, rowMidY - rh / 2, rw, rh, 0.7, 0.7, 'FD');
+          doc.setTextColor(...rc.text);
+          doc.text(cleanR, rxRole + rw / 2, rowMidY + rh * 0.24, { align: 'center' });
+          rightEdge = rxRole - 1.0;
+        }
       }
 
-      const maxSceneW = pillX - rx - 1.2;
-      let fontSize = 5.8;
+      const maxSceneW = rightEdge - rx;
+      let fontSize = rowCount === 2 ? 6.8 : 5.8;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(fontSize);
       doc.setTextColor(15, 23, 42);
 
-      let dispScene = fullLabel;
-      while (fontSize > 4.4 && doc.getTextWidth(dispScene) > maxSceneW) {
-        fontSize -= 0.2;
+      while (fontSize > 4.6 && doc.getTextWidth(mainName) > maxSceneW) {
+        fontSize -= 0.25;
         doc.setFontSize(fontSize);
       }
+      let dispScene = mainName;
       if (doc.getTextWidth(dispScene) > maxSceneW) {
-        while (dispScene.length > 0 && doc.getTextWidth(dispScene + '...') > maxSceneW) {
+        while (dispScene.length > 0 && doc.getTextWidth(dispScene + '…') > maxSceneW) {
           dispScene = dispScene.slice(0, -1);
         }
-        dispScene = dispScene.trim() + '...';
+        dispScene = dispScene.trim() + '…';
       }
-      doc.text(dispScene, rx, rowY + rH / 2 + 1.5);
+      doc.text(dispScene, rx, rowMidY + 1.0);
 
       if (idx < rowCount - 1) {
-        doc.setDrawColor(241, 245, 249);
+        doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.15);
         doc.line(rx, rowY + rH, x + w - 2, rowY + rH);
       }
@@ -1111,13 +1138,18 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     }
   }
 
-  const dateMap = new Map<string, Array<{name:string;time:string;isFO?:boolean;subtext?:string}>>();
+  const dateMap = new Map<string, Array<{name:string;time:string;role?:string;isFO?:boolean;subtext?:string}>>();
   for (const r of sceneRecs) {
     if (!dateMap.has(r.date)) dateMap.set(r.date, []);
-    let displayName = prettyName(r.employee);
+    const displayName = prettyName(r.employee);
+    let roleLabel = r.role ? cleanRoleLabel(r.role) : '';
     let subtext = '';
     
     if (isFOExport) {
+      if (r.scene.toLowerCase() !== 'formation' && r.scene.toLowerCase() !== 'fo') {
+        const detail = r.scene.replace(/^(formation|fo)\s*(-\s*)?/i, '').trim();
+        if (detail) roleLabel = detail;
+      }
       const scenesOfDate = dateToScenes.get(r.date) || [];
       const matched = new Set<string>();
       for (const sc of scenesOfDate) {
@@ -1128,7 +1160,13 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
         subtext = 'Possibilités : ' + Array.from(matched).sort().join(', ');
       }
     }
-    dateMap.get(r.date)!.push({name: displayName, time: r.time, isFO: isTrainingScene(r.scene), subtext});
+    dateMap.get(r.date)!.push({
+      name: displayName,
+      time: r.time,
+      role: roleLabel,
+      isFO: isTrainingScene(r.scene),
+      subtext
+    });
   }
 
   const allDatesTotal = Array.from(new Set(records.map(r=>r.date).filter(Boolean))).sort();
@@ -1142,7 +1180,12 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
   const activeDays = Array.from(dateMap.entries()).filter(([, rows]) => rows.length > 0).length;
 
   for (const d of allDatesTotal) {
-    dateMap.get(d)!.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+    dateMap.get(d)!.sort((a, b) => {
+      const rA = parseRange(a.time);
+      const rB = parseRange(b.time);
+      if (rA && rB && rA.start !== rB.start) return rA.start - rB.start;
+      return a.name.localeCompare(b.name, 'fr');
+    });
   }
 
   await generateIndivPdf({
@@ -1171,7 +1214,7 @@ function shortenSceneName(scene: string): string {
   let s = cleanText(cleanSceneName(scene)).toUpperCase();
   s = s.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '').replace(/^DLP\s+/, '');
   s = s.split(/\s+/)[0];
-  if (s.length > 9) s = s.substring(0, 9);
+  if (s.length > 8) s = s.substring(0, 8);
   return s;
 }
 
@@ -1280,10 +1323,10 @@ async function generateGridGlobalPdf(opts: {
       if (rowH > 14) rowH = 14; // Cap max height so it doesn't stretch to infinity if only 2 people
       
       const fName = Math.max(5, Math.min(8.5, rowH * 0.9));
-      const fTime = Math.max(5, Math.min(7.5, rowH * 0.8));
-      const fScene = Math.max(4, Math.min(6.2, rowH * 0.7));
+      const fTime = Math.max(5, Math.min(6.4, rowH * 0.72));
+      const fScene = Math.max(4, Math.min(5.8, rowH * 0.65));
       const fOff = Math.max(5, Math.min(7.5, rowH * 0.8));
-      const badgeW = 16.5;
+      const badgeW = 14.2;
 
       for (let i = 0; i < emps.length; i++) {
         const emp = emps[i];
@@ -1347,9 +1390,9 @@ async function generateGridGlobalPdf(opts: {
               doc.rect(dx+0.4 + splitW, y+0.4, cellW - splitW, cellH, 'F');
 
               // 3. Two-tone Multi-color Badge: [ SCENE | FO ]
-              const leftBadgeW = 10.5;
-              const rightBadgeW = 6.0;
-              const totalBadgeW = leftBadgeW + rightBadgeW; // 16.5mm
+              const leftBadgeW = 9.2;
+              const rightBadgeW = 5.0;
+              const totalBadgeW = leftBadgeW + rightBadgeW; // 14.2mm
               const badgeH = rowH - 1.2;
 
               // Left part (Scene color)
@@ -1406,7 +1449,8 @@ async function generateGridGlobalPdf(opts: {
               // Just the daily amplitude (clean, no +FO)
               doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
               doc.setFont('helvetica', 'bold'); doc.setFontSize(fTime);
-              doc.text(amplitudeStr, dx + 0.6 + badgeW + (colDayW - badgeW - 1.2)/2, y + rowH/2 + 1.2, {align: 'center'});
+              const timeCenterX = dx + 0.6 + badgeW + 0.4 + (colDayW - badgeW - 1.4) / 2;
+              doc.text(amplitudeStr, timeCenterX, y + rowH/2 + 1.2, {align: 'center'});
             }
           }
         }

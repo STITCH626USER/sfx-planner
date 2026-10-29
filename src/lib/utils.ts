@@ -237,69 +237,67 @@ export function getSceneColor(scene: string): SceneColor {
     };
   }
 
-  let hue: number;
-  if (lower.includes('arendelle')) {
-    hue = 230; // Blue
-  } else if (lower.includes('cascade')) {
-    hue = 25;  // Deep Orange
-  } else if (lower.includes('castle')) {
-    hue = 150; // Emerald Green
-  } else if (lower.includes('dfact') || lower.includes('fact')) {
-    hue = 310; // Pink
-  } else if (lower.includes('illumination')) {
-    hue = 350; // Red
-  } else if (isTrainingScene(s) || lower.includes('formation') || lower === 'fo') {
-    hue = 270; // Purple
-  } else if (lower.includes('marvel')) {
-    hue = 190; // Cyan
-  } else if (lower.includes('matmops')) {
-    hue = 60;  // Pure Yellow / Chartreuse Lime
-  } else if (lower.includes('pooltechn')) {
-    hue = 10;  // Rust Red
-  } else if (lower.includes('studiotsh')) {
-    hue = 100; // Bright Green
-  } else if (lower.includes('lionking')) {
-    hue = 40;  // Gold
-  } else if (lower.includes('videopolis')) {
-    hue = 210; // Azure
-  } else if (lower.includes('regie')) {
-    hue = 285; // Indigo
-  } else if (lower.includes('star') || lower.includes('tour')) {
-    hue = 175; // Teal
-  } else {
-    // High dispersion deterministic hash for any generated scene
+  // Colorblind-friendly (Okabe-Ito / Paul Tol inspired) distinct palettes
+  // Avoids red/green/brown ambiguity by varying luminance, blue/yellow axis, and saturation
+  interface PaletteEntry {
+    rgbAccent: [number, number, number];
+    rgbBg: [number, number, number];
+    rgbText: [number, number, number];
+  }
+
+  const CB_PALETTES: Record<string, PaletteEntry> = {
+    arendelle:    { rgbAccent: [0, 114, 178],   rgbBg: [232, 244, 252], rgbText: [10, 62, 102] },   // Cobalt Blue
+    cascade:      { rgbAccent: [230, 126, 0],   rgbBg: [255, 244, 230], rgbText: [130, 65, 0] },    // Bright Amber-Orange
+    castle:       { rgbAccent: [0, 158, 115],   rgbBg: [230, 249, 243], rgbText: [0, 88, 64] },     // Bluish-Green (Teal Emerald)
+    dfact:        { rgbAccent: [204, 68, 153],  rgbBg: [252, 237, 247], rgbText: [118, 30, 86] },   // Reddish Purple / Magenta
+    illumination: { rgbAccent: [213, 48, 32],   rgbBg: [254, 236, 234], rgbText: [125, 22, 12] },   // Crimson Vermilion
+    formation:    { rgbAccent: [124, 58, 237],  rgbBg: [243, 236, 254], rgbText: [76, 29, 149] },   // Deep Royal Violet
+    marvel:       { rgbAccent: [14, 148, 210],  rgbBg: [232, 247, 254], rgbText: [12, 74, 110] },   // Sky Cyan
+    matmops:      { rgbAccent: [184, 134, 11],  rgbBg: [254, 249, 226], rgbText: [104, 72, 4] },    // Ochre Gold
+    pooltechn:    { rgbAccent: [51, 65, 149],   rgbBg: [236, 239, 252], rgbText: [30, 41, 99] },    // Deep Navy Indigo
+    studiotsh:    { rgbAccent: [13, 148, 136],  rgbBg: [230, 250, 248], rgbText: [15, 82, 76] },    // Dark Turquoise
+    lionking:     { rgbAccent: [194, 65, 12],   rgbBg: [255, 239, 230], rgbText: [116, 36, 8] },    // Terracotta Copper
+    videopolis:   { rgbAccent: [79, 70, 229],   rgbBg: [238, 238, 254], rgbText: [49, 46, 129] },   // Electric Ultramarine
+    halloween:    { rgbAccent: [162, 28, 175],  rgbBg: [250, 235, 252], rgbText: [98, 16, 107] },   // Plum Fuchsia
+    regie:        { rgbAccent: [109, 40, 217],  rgbBg: [241, 234, 254], rgbText: [67, 20, 138] },   // Purple Indigo
+    star:         { rgbAccent: [2, 132, 199],   rgbBg: [230, 244, 254], rgbText: [7, 89, 133] },    // Cerulean
+  };
+
+  let chosen: PaletteEntry | null = null;
+  if (lower.includes('arendelle')) chosen = CB_PALETTES.arendelle;
+  else if (lower.includes('cascade')) chosen = CB_PALETTES.cascade;
+  else if (lower.includes('castle')) chosen = CB_PALETTES.castle;
+  else if (lower.includes('dfact') || lower.includes('fact')) chosen = CB_PALETTES.dfact;
+  else if (lower.includes('illumination')) chosen = CB_PALETTES.illumination;
+  else if (isTrainingScene(s) || lower.includes('formation') || lower === 'fo') chosen = CB_PALETTES.formation;
+  else if (lower.includes('marvel')) chosen = CB_PALETTES.marvel;
+  else if (lower.includes('matmops')) chosen = CB_PALETTES.matmops;
+  else if (lower.includes('pooltechn')) chosen = CB_PALETTES.pooltechn;
+  else if (lower.includes('studiotsh')) chosen = CB_PALETTES.studiotsh;
+  else if (lower.includes('lionking')) chosen = CB_PALETTES.lionking;
+  else if (lower.includes('videopolis')) chosen = CB_PALETTES.videopolis;
+  else if (lower.includes('halloween')) chosen = CB_PALETTES.halloween;
+  else if (lower.includes('regie')) chosen = CB_PALETTES.regie;
+  else if (lower.includes('star') || lower.includes('tour')) chosen = CB_PALETTES.star;
+
+  if (!chosen) {
+    const fallbackList = Object.values(CB_PALETTES);
     let hash = 0;
     for (let i = 0; i < lower.length; i++) {
       hash = lower.charCodeAt(i) + ((hash << 5) - hash);
     }
-    // Mix the hash to avoid prefix clustering (e.g. all "ENT " scenes)
-    hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
-    hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
-    hash = (hash ^ (hash >>> 16)) >>> 0;
-    hue = hash % 360;
+    hash = Math.abs(hash);
+    chosen = fallbackList[hash % fallbackList.length];
   }
 
-  const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
-    s /= 100;
-    l /= 100;
-    const k = (n: number) => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
-    return [
-      Math.round(255 * f(0)),
-      Math.round(255 * f(8)),
-      Math.round(255 * f(4))
-    ];
-  };
-
-  const rgbBg = hslToRgb(hue, 85, 94);
-  const rgbText = hslToRgb(hue, 85, 22);
-  const rgbAccent = hslToRgb(hue, 70, 45);
+  const { rgbBg, rgbText, rgbAccent } = chosen;
+  const toHex = (c: [number, number, number]) =>
+    '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 
   return {
-    bg: `hsl(${hue}, 85%, 94%)`,
-    text: `hsl(${hue}, 85%, 22%)`,
-    accent: `hsl(${hue}, 70%, 45%)`,
+    bg: toHex(rgbBg),
+    text: toHex(rgbText),
+    accent: toHex(rgbAccent),
     rgbBg,
     rgbText,
     rgbAccent
