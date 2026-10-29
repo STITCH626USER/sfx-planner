@@ -2747,102 +2747,78 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
             {timelineData && (
               <div className="daily-timecode-ruler" aria-label="Amplitude horaire de la journée">
-                <div className="tc-header-grid">
-                  <span className="tc-header-title">SCÈNES</span>
-                  <div className="timecode-scale-bar">
-                    <span className="tc-bound tc-bound-start">{timelineData.minLabel}</span>
-                    <div className="tc-ticks-area">
-                      {timelineData.ticks.map((t) => (
-                        <span
-                          key={t.label}
-                          className="tc-tick-label"
-                          style={{ left: `${t.pct}%` }}
-                        >
-                          {t.label}
-                        </span>
-                      ))}
-                    </div>
-                    <span className="tc-bound tc-bound-end">{timelineData.maxLabel}</span>
+                <div className="timecode-scale-bar">
+                  <span className="tc-bound tc-bound-start">{timelineData.minLabel}</span>
+                  <div className="tc-ticks-area">
+                    {timelineData.ticks.map((t) => (
+                      <span
+                        key={t.label}
+                        className="tc-tick-label"
+                        style={{ left: `${t.pct}%` }}
+                      >
+                        {t.label}
+                      </span>
+                    ))}
                   </div>
+                  <span className="tc-bound tc-bound-end">{timelineData.maxLabel}</span>
                 </div>
 
-                <div className="tc-body-grid">
-                  {/* Colonne des noms de scènes */}
-                  <div className="tc-labels-col">
+                {/* Zone des pistes et du métrage pleine largeur */}
+                <div className="timecode-tracks-box">
+                  {/* Lignes de repère verticales */}
+                  {timelineData.ticks.map((t) => (
+                    <div
+                      key={`grid-${t.label}`}
+                      className="tc-grid-line"
+                      style={{ left: `${t.pct}%` }}
+                      aria-hidden="true"
+                    />
+                  ))}
+
+                  {/* Bulles colorées par scène avec le nom intégré dedans */}
+                  <div className="tc-tracks-stack">
                     {timelineData.spans.map((sp) => (
                       <div
-                        key={`lbl-${sp.scene}`}
-                        className="tc-scene-label"
+                        key={sp.scene}
+                        className="tc-track-row"
                         onClick={() => {
                           const el = document.querySelector(`[data-testid="scene-group-${sp.scene}"]`);
                           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }}
-                        title={`${sp.cleanName} (${sp.startLabel} → ${sp.endLabel})`}
+                        title={`${sp.cleanName} : ${sp.startLabel} → ${sp.endLabel}`}
                       >
-                        <span
-                          className="tc-scene-dot"
-                          style={{ background: sp.accent, boxShadow: `0 0 6px ${sp.accent}` }}
-                        />
-                        <span className="tc-scene-text">{sp.cleanName}</span>
+                        {sp.segments.map((seg, idx) => {
+                          const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
+                          const widthPct = Math.max(4, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
+                          return (
+                            <div
+                              key={idx}
+                              className="tc-track-segment"
+                              style={{
+                                left: `${leftPct}%`,
+                                width: `${widthPct}%`,
+                                '--tc-color': sp.accent,
+                              } as React.CSSProperties}
+                            >
+                              <span className="tc-segment-label">{sp.cleanName}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     ))}
                   </div>
 
-                  {/* Zone des pistes et du métrage */}
-                  <div className="timecode-tracks-box">
-                    {/* Lignes de repère verticales */}
-                    {timelineData.ticks.map((t) => (
-                      <div
-                        key={`grid-${t.label}`}
-                        className="tc-grid-line"
-                        style={{ left: `${t.pct}%` }}
-                        aria-hidden="true"
-                      />
-                    ))}
-
-                    {/* Pistes colorées par scène */}
-                    <div className="tc-tracks-stack">
-                      {timelineData.spans.map((sp) => (
-                        <div
-                          key={sp.scene}
-                          className="tc-track-row"
-                          onClick={() => {
-                            const el = document.querySelector(`[data-testid="scene-group-${sp.scene}"]`);
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }}
-                          title={`${sp.cleanName} : ${sp.startLabel} → ${sp.endLabel}`}
-                        >
-                          {sp.segments.map((seg, idx) => {
-                            const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
-                            const widthPct = Math.max(1.5, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
-                            return (
-                              <div
-                                key={idx}
-                                className="tc-track-segment"
-                                style={{
-                                  left: `${leftPct}%`,
-                                  width: `${widthPct}%`,
-                                  '--tc-color': sp.accent,
-                                } as React.CSSProperties}
-                              />
-                            );
-                          })}
-                        </div>
-                      ))}
+                  {/* Aiguille Live / Playhead */}
+                  {timelineData.showPlayhead && (
+                    <div
+                      className={`tc-playhead ${timelineData.isToday ? 'is-live' : ''}`}
+                      style={{ left: `${timelineData.playheadPct}%` }}
+                      title={`Heure actuelle : ${timelineData.nowLabel}`}
+                    >
+                      <div className="tc-playhead-head" />
+                      <div className="tc-playhead-line" />
                     </div>
-
-                    {/* Aiguille Live / Playhead */}
-                    {timelineData.showPlayhead && (
-                      <div
-                        className={`tc-playhead ${timelineData.isToday ? 'is-live' : ''}`}
-                        style={{ left: `${timelineData.playheadPct}%` }}
-                        title={`Heure actuelle : ${timelineData.nowLabel}`}
-                      >
-                        <div className="tc-playhead-head" />
-                        <div className="tc-playhead-line" />
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             )}
