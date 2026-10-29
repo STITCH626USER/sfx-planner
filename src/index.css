@@ -7256,15 +7256,21 @@ nav.seg button[aria-selected="true"] {
 /* Capsule de recherche flottante en bas (style Apple Dynamic Island / Spotlight) */
 .floating-search-dock {
   position: fixed;
-  bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 60;
+  z-index: 1010;
   display: flex;
   justify-content: center;
   width: auto;
   max-width: calc(100vw - 32px);
   pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .floating-search-dock {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .floating-search-pill {
@@ -7383,5 +7389,5 @@ nav.seg button[aria-selected="true"] {
 
 .compact-team-row {
   scroll-margin-top: 130px;
-  scroll-margin-bottom: 100px;
+  scroll-margin-bottom: 175px;
 }
