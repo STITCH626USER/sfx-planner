@@ -6661,18 +6661,19 @@ nav.seg button[aria-selected="true"] {
 }
 
 .compact-team-row.is-highlighted {
+  margin: 4px 10px !important;
+  padding: 8px 12px !important;
   background: rgba(245, 158, 11, 0.16) !important;
   border: 1.5px solid #f59e0b !important;
-  border-radius: 8px !important;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.4), inset 0 0 10px rgba(245, 158, 11, 0.15) !important;
-  transform: scale(1.01) !important;
-  z-index: 2 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.45), inset 0 0 10px rgba(245, 158, 11, 0.15) !important;
+  z-index: 3 !important;
   position: relative !important;
 }
 :root[data-theme="light"] .compact-team-row.is-highlighted {
   background: #fef3c7 !important;
   border-color: #d97706 !important;
-  box-shadow: 0 0 14px rgba(217, 119, 6, 0.3) !important;
+  box-shadow: 0 0 14px rgba(217, 119, 6, 0.35) !important;
 }
 .compact-team-row.is-dimmed {
   opacity: 0.35 !important;
