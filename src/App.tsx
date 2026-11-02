@@ -1444,7 +1444,9 @@ function RecherchePanel({ records }: { records: PlanningRecord[] }) {
     <div data-testid="panel-recherche" className={`recherche-panel-container ${query.trim() ? 'has-query' : ''}`}>
       <div className="recherche-header">
         <RealisticHeaderFireworks />
-        <h2 className="recherche-title">Planning Individuel</h2>
+        <h2 className="recherche-title">
+          Planning <span className="recherche-title-accent">Individuel</span>
+        </h2>
         <p className="recherche-subtitle">Recherchez un technicien pour afficher son planning complet ou l'exporter en PDF.</p>
       </div>
 
