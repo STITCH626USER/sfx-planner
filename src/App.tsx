@@ -1021,18 +1021,20 @@ export default function App() {
 
         {sources.length > 0 && (
           <div className="sources-strip" data-testid="sources-strip">
-            {sources.map(s => (
-              <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
-                <span className="dot" />
-                <span className="source-pill-name" title={s.name}>{shortName(s.name)}</span>
-                <span className="source-pill-count">· {s.recordCount}</span>
-                <button
-                  aria-label={`Retirer ${s.name}`}
-                  data-testid={`btn-remove-${s.name}`}
-                  onClick={() => removeSource(s.name)}
-                >×</button>
-              </span>
-            ))}
+            {[...sources]
+              .sort((a, b) => shortName(a.name).localeCompare(shortName(b.name), 'fr', { numeric: true }))
+              .map(s => (
+                <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
+                  <span className="dot" />
+                  <span className="source-pill-name" title={s.name}>{shortName(s.name)}</span>
+                  <span className="source-pill-count">· {s.recordCount}</span>
+                  <button
+                    aria-label={`Retirer ${s.name}`}
+                    data-testid={`btn-remove-${s.name}`}
+                    onClick={() => removeSource(s.name)}
+                  >×</button>
+                </span>
+              ))}
           </div>
         )}
 
@@ -2813,54 +2815,50 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       <div data-testid="panel-daily" className="modern-daily-panel">
           <div className="modern-daily-header">
             <div className="modern-daily-compact-bar">
-              <div className="modern-daily-date-group">
-                {(() => {
-                  const parts = formatDateParts(date);
-                  const isTodayDate = date === getTodayIso();
-                  return (
-                    <div className="modern-daily-title-block">
-                      <div className="modern-daily-title-row">
-                        <h1 className="modern-daily-date">
-                          {parts ? (
-                            <>
-                              <span className="modern-daily-weekday">{parts.dayName}</span>{' '}
-                              <span className="modern-daily-daynum">{parts.dayNum}</span>{' '}
-                              <span className="modern-daily-month">{parts.monthName}</span>{' '}
-                              <span className="modern-daily-year">{parts.year}</span>
-                            </>
-                          ) : (
-                            formatDateLong(date)
-                          )}
-                        </h1>
-                        {isTodayDate && (
-                          <span className="modern-today-live-pill">
-                            <span className="modern-today-live-dot" />
-                            AUJOURD'HUI
-                          </span>
-                        )}
-                      </div>
+              {(() => {
+                const parts = formatDateParts(date);
+                const isTodayDate = date === getTodayIso();
+                return (
+                  <>
+                    <h1 className="modern-daily-date">
+                      {parts ? (
+                        <>
+                          <span className="modern-daily-weekday">{parts.dayName}</span>{' '}
+                          <span className="modern-daily-daynum">{parts.dayNum}</span>{' '}
+                          <span className="modern-daily-month">{parts.monthName}</span>{' '}
+                          <span className="modern-daily-year">{parts.year}</span>
+                        </>
+                      ) : (
+                        formatDateLong(date)
+                      )}
+                    </h1>
+                    <div className="modern-daily-meta-row">
+                      {isTodayDate && (
+                        <span className="modern-today-live-pill">
+                          <span className="modern-today-live-dot" />
+                          AUJOURD'HUI
+                        </span>
+                      )}
                       <div className="modern-presence-chip" title="Techniciens présents sur cette journée">
                         <span className="modern-pulse-dot" />
                         <span className="modern-presence-count">{uniqueTechs}</span>
                         <span className="modern-presence-label">présents</span>
                       </div>
+                      <button
+                        type="button"
+                        className="modern-btn-export"
+                        data-testid="btn-export-pdf"
+                        aria-label="Exporter en PDF"
+                        onClick={() => setShowExport(true)}
+                      >
+                        <IconDownload />
+                        <span className="modern-btn-export-text-full">Exporter PDF</span>
+                        <span className="modern-btn-export-text-short">Export PDF</span>
+                      </button>
                     </div>
-                  );
-                })()}
-              </div>
-              <button
-                type="button"
-                className="modern-btn-export"
-                data-testid="btn-export-pdf"
-                aria-label="Exporter en PDF"
-                onClick={() => setShowExport(true)}
-              >
-                <span className="modern-btn-export-icon">
-                  <IconDownload />
-                </span>
-                <span className="modern-btn-export-text-full">Exporter PDF</span>
-                <span className="modern-btn-export-text-short">PDF</span>
-              </button>
+                  </>
+                );
+              })()}
             </div>
 
             {timelineData && (

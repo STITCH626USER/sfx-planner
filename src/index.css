@@ -6509,42 +6509,23 @@ nav.seg button[aria-selected="true"] {
   color: #78350f !important;
 }
 
-/* En-tête de page moderne & impactant */
+/* En-tête de page moderne, centré & impactant */
 .modern-daily-header {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 .modern-daily-compact-bar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
   margin-bottom: 12px;
-  padding: 6px 4px 4px 4px;
-}
-.modern-daily-date-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-.modern-daily-title-block {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.modern-daily-title-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  padding: 4px 4px 2px 4px;
 }
 .modern-daily-date {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 900;
   letter-spacing: -0.025em;
   color: var(--fg);
@@ -6552,7 +6533,8 @@ nav.seg button[aria-selected="true"] {
   line-height: 1.15;
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
   flex-wrap: wrap;
 }
 .modern-daily-weekday {
@@ -6585,21 +6567,30 @@ nav.seg button[aria-selected="true"] {
   letter-spacing: 0;
 }
 
+.modern-daily-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .modern-today-live-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  gap: 5.5px;
+  height: 28px;
+  padding: 0 11px;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.14);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.13);
+  border: 1px solid rgba(16, 185, 129, 0.38);
   color: #34d399;
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 :root[data-theme="light"] .modern-today-live-pill {
   background: #ecfdf5;
@@ -6615,25 +6606,16 @@ nav.seg button[aria-selected="true"] {
   box-shadow: 0 0 6px #10b981;
 }
 
-@media (max-width: 520px) {
-  .modern-daily-date {
-    font-size: 20px;
-    gap: 5px;
-  }
-  .modern-daily-title-block {
-    gap: 8px;
-  }
-}
-
 .modern-presence-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.055);
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 12.5px;
+  padding: 0 12px;
+  font-size: 12px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 :root[data-theme="light"] .modern-presence-chip {
@@ -6641,8 +6623,8 @@ nav.seg button[aria-selected="true"] {
   border-color: #cbd5e1;
 }
 .modern-pulse-dot {
-  width: 7px;
-  height: 7px;
+  width: 6.5px;
+  height: 6.5px;
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
@@ -6659,73 +6641,65 @@ nav.seg button[aria-selected="true"] {
 .modern-btn-export {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.09) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  border-radius: 10px;
-  padding: 6px 13px 6px 9px;
-  color: #fbbf24;
+  gap: 6px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--fg);
   font-family: var(--font-display);
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.16s ease;
   flex-shrink: 0;
 }
-.modern-btn-export-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: rgba(245, 158, 11, 0.2);
-  color: #fcd34d;
-}
-.modern-btn-export-icon svg {
-  width: 14px;
-  height: 14px;
+.modern-btn-export svg {
+  width: 13px;
+  height: 13px;
+  color: #fbbf24;
+  flex-shrink: 0;
 }
 .modern-btn-export-text-short {
   display: none;
 }
 @media (max-width: 520px) {
+  .modern-daily-date {
+    font-size: 21px;
+    gap: 5px;
+  }
   .modern-btn-export-text-full {
     display: none;
   }
   .modern-btn-export-text-short {
     display: inline;
   }
-  .modern-btn-export {
-    padding: 5px 11px 5px 8px;
-  }
 }
 .modern-btn-export:hover {
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.26) 0%, rgba(217, 119, 6, 0.16) 100%);
-  border-color: #fbbf24;
-  color: #fef3c7;
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
   transform: translateY(-1px);
 }
 .modern-btn-export:active {
   transform: translateY(0) scale(0.98);
 }
 :root[data-theme="light"] .modern-btn-export {
-  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
-  border-color: #f59e0b;
-  color: #b45309;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.12), inset 0 1px 0 #ffffff;
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
-:root[data-theme="light"] .modern-btn-export-icon {
-  background: rgba(217, 119, 6, 0.15);
-  color: #b45309;
+:root[data-theme="light"] .modern-btn-export svg {
+  color: #d97706;
 }
 :root[data-theme="light"] .modern-btn-export:hover {
-  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #d97706;
-  color: #92400e;
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #b45309;
 }
 
 /* Recherche épurée */
