@@ -32,6 +32,23 @@ const MONTH_FR_FULL: Record<string, string> = {
   '06': 'juin', '07': 'juillet', '08': 'août', '09': 'septembre', '10': 'octobre', '11': 'novembre', '12': 'décembre',
 };
 
+function getTodayIso(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+}
+
+function resolveDefaultDate(dates: string[]): string {
+  if (dates.length === 0) return '';
+  const today = getTodayIso();
+  if (dates.includes(today)) return today;
+  const todayTime = new Date(`${today}T12:00:00`).getTime();
+  return [...dates].sort(
+    (a, b) =>
+      Math.abs(new Date(`${a}T12:00:00`).getTime() - todayTime) -
+      Math.abs(new Date(`${b}T12:00:00`).getTime() - todayTime)
+  )[0];
+}
+
 function formatDateLong(iso: string): string {
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return iso;
@@ -39,6 +56,20 @@ function formatDateLong(iso: string): string {
   const dayName = DAY_FR_FULL_MAP[dObj.getDay()] || '';
   const monthName = MONTH_FR_FULL[m[2]] || MONTH_FR[m[2]] || m[2];
   return `${dayName} ${parseInt(m[3], 10)} ${monthName} ${m[1]}`;
+}
+
+function formatDateParts(iso: string): { dayName: string; dayNum: string; monthName: string; year: string } | null {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const dObj = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+  const dayName = DAY_FR_FULL_MAP[dObj.getDay()] || '';
+  const monthName = MONTH_FR_FULL[m[2]] || MONTH_FR[m[2]] || m[2];
+  return {
+    dayName,
+    dayNum: String(parseInt(m[3], 10)),
+    monthName,
+    year: m[1],
+  };
 }
 
 
@@ -670,7 +701,13 @@ export default function App() {
         return [...prev, ...newRecs];
       });
       setSources(prev => [...prev, ...newSrcs]);
-      if (newRecs.length > 0) setFireworkTrigger(t => t + 1);
+      if (newRecs.length > 0) {
+        setFireworkTrigger(t => t + 1);
+        const todayIso = getTodayIso();
+        if (newRecs.some(r => r.date === todayIso)) {
+          setDailyDate(todayIso);
+        }
+      }
       if (ignored > 0) {
         setError(`${ignored} fichier(s) non-PDF ignoré(s).`);
       }
@@ -982,8 +1019,25 @@ export default function App() {
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
 
+        {sources.length > 0 && (
+          <div className="sources-strip" data-testid="sources-strip">
+            {sources.map(s => (
+              <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
+                <span className="dot" />
+                <span className="source-pill-name" title={s.name}>{shortName(s.name)}</span>
+                <span className="source-pill-count">· {s.recordCount}</span>
+                <button
+                  aria-label={`Retirer ${s.name}`}
+                  data-testid={`btn-remove-${s.name}`}
+                  onClick={() => removeSource(s.name)}
+                >×</button>
+              </span>
+            ))}
+          </div>
+        )}
+
         {tab !== 'shows' ? (
-          <div className="sidebar-nav-block" style={{ marginTop: 10, marginBottom: 8 }}>
+          <div className="sidebar-nav-block" style={{ marginTop: sources.length > 0 ? 6 : 10, marginBottom: 8 }}>
             <nav className="seg" role="tablist" aria-label="Catégories">
               <button
                 role="tab"
@@ -1010,7 +1064,7 @@ export default function App() {
             </nav>
           </div>
         ) : (
-          <div className="sidebar-nav-block" style={{ marginTop: 10, marginBottom: 8 }}>
+          <div className="sidebar-nav-block" style={{ marginTop: sources.length > 0 ? 6 : 10, marginBottom: 8 }}>
             <div style={{ padding: '2px 4px' }}>
               <button
                 type="button"
@@ -1021,23 +1075,6 @@ export default function App() {
                 <IconArrowLeft /> Retour planning
               </button>
             </div>
-          </div>
-        )}
-
-        {sources.length > 0 && (
-          <div className="sources-strip" data-testid="sources-strip">
-            {sources.map(s => (
-              <span className="source-pill" key={s.name} data-testid={`source-${s.name}`}>
-                <span className="dot" />
-                <span title={s.name}>{shortName(s.name)}</span>
-                <span style={{ color: 'var(--fg-dim)' }}>· {s.recordCount}</span>
-                <button
-                  aria-label={`Retirer ${s.name}`}
-                  data-testid={`btn-remove-${s.name}`}
-                  onClick={() => removeSource(s.name)}
-                >×</button>
-              </span>
-            ))}
           </div>
         )}
       </aside>
@@ -2398,7 +2435,7 @@ function DailyDateBar({ records, date, onDateChange }: {
 
   useEffect(() => {
     if (dates.length === 0) return;
-    if (!date || !dates.includes(date)) onDateChange(dates[0]);
+    if (!date || !dates.includes(date)) onDateChange(resolveDefaultDate(dates));
   }, [dates, date, onDateChange]);
 
   if (dates.length === 0) return null;
@@ -2663,9 +2700,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
 
     const totalSpan = maxEnd - minStart;
 
-    // Playhead calculation (active inside [minStart, maxEnd], or parked in discrete standby mode at the edge)
-    const nowObj = new Date();
-    const todayStr = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, '0')}-${String(nowObj.getDate()).padStart(2, '0')}`;
+    // Playhead calculation (active ONLY on today's date inside [minStart, maxEnd], or parked in discrete standby mode at the edge)
+    const todayStr = getTodayIso();
     const isToday = date === todayStr;
 
     let effNow = nowMinutes;
@@ -2708,13 +2744,15 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       const normH = Math.floor(normMin / 60);
       const isMajor = normH % stepHours === 0;
 
-      // Avoid colliding with left/right bound badges (08:30 / 06:03) or with the live playhead pill
+      // Avoid colliding with left/right bound badges (08:30 / 06:03) or with the live playhead pill (only when isToday)
       const farFromBounds = pct >= 14.5 && pct <= 85.5;
-      const farFromPlayhead = inBounds
-        ? Math.abs(pct - playheadPct) >= 8.5
-        : standbySide === 'start'
-          ? pct >= 22
-          : pct <= 78;
+      const farFromPlayhead = !isToday
+        ? true
+        : inBounds
+          ? Math.abs(pct - playheadPct) >= 8.5
+          : standbySide === 'start'
+            ? pct >= 22
+            : pct <= 78;
 
       ticks.push({
         pct,
@@ -2725,8 +2763,8 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
       });
     }
 
-    const startOccluded = inBounds && playheadPct < 12.5;
-    const endOccluded = inBounds && playheadPct > 87.5;
+    const startOccluded = isToday && inBounds && playheadPct < 12.5;
+    const endOccluded = isToday && inBounds && playheadPct > 87.5;
 
     return {
       minStart,
@@ -2776,12 +2814,39 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
           <div className="modern-daily-header">
             <div className="modern-daily-compact-bar">
               <div className="modern-daily-date-group">
-                <h1 className="modern-daily-date">{formatDateLong(date)}</h1>
-                <div className="modern-presence-chip" title="Techniciens présents aujourd'hui">
-                  <span className="modern-pulse-dot" />
-                  <span className="modern-presence-count">{uniqueTechs}</span>
-                  <span className="modern-presence-label">présents</span>
-                </div>
+                {(() => {
+                  const parts = formatDateParts(date);
+                  const isTodayDate = date === getTodayIso();
+                  return (
+                    <div className="modern-daily-title-block">
+                      <div className="modern-daily-title-row">
+                        <h1 className="modern-daily-date">
+                          {parts ? (
+                            <>
+                              <span className="modern-daily-weekday">{parts.dayName}</span>{' '}
+                              <span className="modern-daily-daynum">{parts.dayNum}</span>{' '}
+                              <span className="modern-daily-month">{parts.monthName}</span>{' '}
+                              <span className="modern-daily-year">{parts.year}</span>
+                            </>
+                          ) : (
+                            formatDateLong(date)
+                          )}
+                        </h1>
+                        {isTodayDate && (
+                          <span className="modern-today-live-pill">
+                            <span className="modern-today-live-dot" />
+                            AUJOURD'HUI
+                          </span>
+                        )}
+                      </div>
+                      <div className="modern-presence-chip" title="Techniciens présents sur cette journée">
+                        <span className="modern-pulse-dot" />
+                        <span className="modern-presence-count">{uniqueTechs}</span>
+                        <span className="modern-presence-label">présents</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <button
                 type="button"
@@ -2790,8 +2855,11 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                 aria-label="Exporter en PDF"
                 onClick={() => setShowExport(true)}
               >
-                <IconDownload />
-                <span>PDF</span>
+                <span className="modern-btn-export-icon">
+                  <IconDownload />
+                </span>
+                <span className="modern-btn-export-text-full">Exporter PDF</span>
+                <span className="modern-btn-export-text-short">PDF</span>
               </button>
             </div>
 
@@ -2815,23 +2883,25 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     ))}
                   </div>
 
-                  {/* Bulle de l'heure en direct (ou en veille sur le côté si hors amplitude) */}
-                  <div
-                    className={`tc-playhead-badge ${timelineData.inBounds ? (timelineData.isToday ? 'is-live' : 'is-active') : `is-standby is-standby-${timelineData.standbySide}`}`}
-                    style={
-                      timelineData.inBounds
-                        ? { left: `clamp(30px, ${timelineData.playheadPct}%, calc(100% - 30px))` }
-                        : undefined
-                    }
-                    title={
-                      timelineData.inBounds
-                        ? `Heure actuelle : ${timelineData.nowLabel}`
-                        : `Hors amplitude du jour (en veille) · ${timelineData.nowLabel}`
-                    }
-                  >
-                    <span className="tc-playhead-badge-dot" />
-                    <span className="tc-playhead-badge-time">{timelineData.nowLabel}</span>
-                  </div>
+                  {/* Bulle de l'heure en direct (affichée uniquement sur la date d'aujourd'hui) */}
+                  {timelineData.isToday && (
+                    <div
+                      className={`tc-playhead-badge ${timelineData.inBounds ? 'is-live' : `is-standby is-standby-${timelineData.standbySide}`}`}
+                      style={
+                        timelineData.inBounds
+                          ? { left: `clamp(30px, ${timelineData.playheadPct}%, calc(100% - 30px))` }
+                          : undefined
+                      }
+                      title={
+                        timelineData.inBounds
+                          ? `Heure actuelle : ${timelineData.nowLabel}`
+                          : `Hors amplitude du jour (en veille) · ${timelineData.nowLabel}`
+                      }
+                    >
+                      <span className="tc-playhead-badge-dot" />
+                      <span className="tc-playhead-badge-time">{timelineData.nowLabel}</span>
+                    </div>
+                  )}
 
                   <span className={`tc-bound tc-bound-end ${timelineData.endOccluded ? 'is-occluded' : ''}`}>
                     {timelineData.maxLabel}
@@ -2866,6 +2936,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                           const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
                           const widthPct = Math.max(4, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
                           const isActiveNow =
+                            timelineData.isToday &&
                             timelineData.inBounds &&
                             timelineData.effNow >= seg.start &&
                             timelineData.effNow <= seg.end;
@@ -2887,19 +2958,21 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                     ))}
                   </div>
 
-                  {/* Aiguille Live / Playhead (active ou garée en veille au bord) */}
-                  <div
-                    className={`tc-playhead ${timelineData.inBounds ? (timelineData.isToday ? 'is-live' : 'is-active') : `is-standby is-standby-${timelineData.standbySide}`}`}
-                    style={{ left: `${timelineData.playheadPct}%` }}
-                    title={
-                      timelineData.inBounds
-                        ? `Heure actuelle : ${timelineData.nowLabel}`
-                        : `Hors amplitude (en veille) : ${timelineData.nowLabel}`
-                    }
-                  >
-                    <div className="tc-playhead-head" />
-                    <div className="tc-playhead-line" />
-                  </div>
+                  {/* Aiguille Live / Playhead (uniquement sur la journée d'aujourd'hui) */}
+                  {timelineData.isToday && (
+                    <div
+                      className={`tc-playhead ${timelineData.inBounds ? 'is-live' : `is-standby is-standby-${timelineData.standbySide}`}`}
+                      style={{ left: `${timelineData.playheadPct}%` }}
+                      title={
+                        timelineData.inBounds
+                          ? `Heure actuelle : ${timelineData.nowLabel}`
+                          : `Hors amplitude (en veille) : ${timelineData.nowLabel}`
+                      }
+                    >
+                      <div className="tc-playhead-head" />
+                      <div className="tc-playhead-line" />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -3144,6 +3217,7 @@ function DatePicker({ dates, date, records, onChange }: {
   dates: string[]; date: string; records: PlanningRecord[]; onChange: (date: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const todayIso = getTodayIso();
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -3162,38 +3236,40 @@ function DatePicker({ dates, date, records, onChange }: {
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
+  // Auto-center active date pill when date changes or on initial load
+  useEffect(() => {
+    if (!date) return;
+    const timer = setTimeout(() => {
+      const container = scrollRef.current;
+      if (!container) return;
+      const pill = container.querySelector(`[data-testid="date-pill-${date}"]`) as HTMLElement | null;
+      if (pill) {
+        const targetLeft = pill.offsetLeft - container.clientWidth / 2 + pill.offsetWidth / 2;
+        container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+      }
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [date, dates.length]);
+
+  const isOnToday = date === todayIso;
+
   return (
     <div className="date-picker-wrapper" style={{
       display: 'flex', alignItems: 'center',
       width: '100%', minWidth: 0
     }}>
       <button
-        className="date-pill ma3-btn-today-live modern-today-btn"
+        type="button"
+        className={`date-pill ma3-btn-today-live modern-today-btn ${isOnToday ? 'is-on-today' : ''}`}
         onClick={() => {
-          const today = new Date().toISOString().split('T')[0];
-          let targetDate = dates.includes(today) ? today : null;
-          
-          if (!targetDate && dates.length > 0) {
-            // Find closest date
-            const todayTime = new Date(today).getTime();
-            targetDate = [...dates].sort((a, b) => 
-              Math.abs(new Date(a).getTime() - todayTime) - Math.abs(new Date(b).getTime() - todayTime)
-            )[0];
-          }
-          
+          const targetDate = resolveDefaultDate(dates);
           if (targetDate) {
             onChange(targetDate);
-            setTimeout(() => {
-              const pill = document.querySelector(`[data-testid="date-pill-${targetDate}"]`);
-              if (pill) {
-                pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-              }
-            }, 50);
           }
         }}
         title="Aller à aujourd'hui"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -3202,22 +3278,29 @@ function DatePicker({ dates, date, records, onChange }: {
         <span>Auj.</span>
       </button>
 
+      <div className="modern-date-divider" aria-hidden="true" />
+
       <div ref={scrollRef} className="date-row modern-date-row" role="tablist" data-testid="date-row">
       {dates.map(d => {
         const sel = d === date;
+        const isTodayPill = d === todayIso;
         const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
         const dn = m ? m[3] : d;
         const day = records.find(r => r.date === d)?.day ?? '';
+        const dayShort = DAY_FR_SHORT[day] ?? '';
         return (
           <button
             key={d}
+            type="button"
             role="tab"
             aria-selected={sel}
-            className="modern-date-pill"
+            className={`modern-date-pill ${isTodayPill ? 'is-today-pill' : ''}`}
             data-testid={`date-pill-${d}`}
             onClick={() => onChange(d)}
           >
-            <span className="modern-dp-label">{DAY_FR_SHORT[day] ?? ''} {dn}</span>
+            <span className="modern-dp-day">{dayShort}</span>
+            <span className="modern-dp-num">{dn}</span>
+            {isTodayPill && <span className="modern-dp-today-dot" aria-hidden="true" />}
           </button>
         );
       })}

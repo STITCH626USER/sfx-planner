@@ -1080,16 +1080,17 @@ input:focus, select:focus {
   color: #9a1a25;
 }
 
-/* Source management layout - horizontal scrolling compact strip */
+/* Source management layout - horizontal scrolling compact strip (placed above main tabs) */
 .sources-strip {
   display: flex;
   flex-wrap: nowrap;
+  align-items: center;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  gap: 6px;
-  margin-top: 4px;
-  margin-bottom: 6px;
+  gap: 7px;
+  margin-top: 8px;
+  margin-bottom: 2px;
   padding: 2px 2px;
   width: 100%;
 }
@@ -1099,23 +1100,43 @@ input:focus, select:focus {
 .source-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  gap: 6px;
+  background: rgba(18, 26, 42, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 999px;
-  padding: 3px 8px 3px 6px;
-  font-size: 11px;
-  color: var(--fg-muted);
-  font-weight: 600;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 9px 4px 8px;
+  font-size: 11.5px;
+  color: var(--fg);
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: var(--spring-transition);
   white-space: nowrap;
   flex: 0 0 auto;
 }
+:root[data-theme="light"] .source-pill {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
 .source-pill:hover {
-  border-color: var(--line-strong);
-  background: var(--bg-3);
+  border-color: rgba(0, 229, 198, 0.45);
+  background: rgba(24, 34, 54, 0.92);
+}
+:root[data-theme="light"] .source-pill:hover {
+  border-color: #0d9488;
+  background: #f8fafc;
+}
+.source-pill-name {
+  letter-spacing: 0.02em;
+}
+.source-pill-count {
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
 }
 .source-pill .dot {
   width: 7px;
@@ -1131,17 +1152,28 @@ input:focus, select:focus {
   100% { box-shadow: 0 0 0 0px rgba(0, 229, 198, 0); }
 }
 .source-pill button {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--fg-dim);
-  margin-left: 4px;
-  padding: 0 2px;
-  font-size: 15px;
+  margin-left: 2px;
+  padding: 0;
+  font-size: 13px;
   line-height: 1;
   transition: var(--spring-transition);
 }
+:root[data-theme="light"] .source-pill button {
+  background: #f1f5f9;
+  color: #64748b;
+}
 .source-pill button:hover {
+  background: rgba(244, 63, 94, 0.2);
   color: var(--rose);
-  transform: scale(1.15);
+  transform: scale(1.12);
 }
 
 /* Section Title Headers */
@@ -6287,59 +6319,92 @@ nav.seg button[aria-selected="true"] {
    FACELIFT MODERNE & ÉPURÉ (SFX Planner Next-Gen)
    ══════════════════════════════════════════════════════════════════════ */
 
-/* Date Bar Compact & Épuré */
+/* Date Bar Compact & Épuré (Calendrier 2 lignes + indicateur Auj.) */
 .daily-date-bar {
-  background: #0f1521 !important;
+  background: linear-gradient(180deg, rgba(16, 23, 38, 0.94) 0%, rgba(11, 16, 28, 0.94) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 12px !important;
-  padding: 6px 8px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
+  border-radius: 14px !important;
+  padding: 6px 10px !important;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
   contain: paint !important;
 }
 :root[data-theme="light"] .daily-date-bar {
-  background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff !important;
 }
 
 .modern-today-btn {
   display: inline-flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   align-items: center !important;
-  gap: 6px !important;
-  padding: 0 14px !important;
-  min-width: auto !important;
-  height: 38px !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  padding: 0 12px !important;
+  min-width: 54px !important;
+  height: 46px !important;
+  border-radius: 11px !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
   color: var(--fg) !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  box-shadow: none !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  margin-right: 8px !important;
+  margin-right: 0 !important;
+  flex-shrink: 0 !important;
+}
+.modern-today-btn svg {
+  color: var(--amber) !important;
 }
 .modern-today-btn:hover {
-  background: rgba(255, 176, 32, 0.15) !important;
-  border-color: rgba(255, 176, 32, 0.4) !important;
-  color: var(--amber) !important;
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  color: #fbbf24 !important;
+  transform: translateY(-1px) !important;
+}
+.modern-today-btn.is-on-today {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #34d399 !important;
+}
+.modern-today-btn.is-on-today svg {
+  color: #34d399 !important;
 }
 :root[data-theme="light"] .modern-today-btn {
   background: #f1f5f9 !important;
   border-color: #cbd5e1 !important;
   color: #334155 !important;
 }
+:root[data-theme="light"] .modern-today-btn.is-on-today {
+  background: #ecfdf5 !important;
+  border-color: #6ee7b7 !important;
+  color: #047857 !important;
+}
+:root[data-theme="light"] .modern-today-btn.is-on-today svg {
+  color: #059669 !important;
+}
+
+.modern-date-divider {
+  width: 1px;
+  height: 30px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+:root[data-theme="light"] .modern-date-divider {
+  background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.14), transparent);
+}
 
 .modern-date-row {
   display: flex !important;
-  gap: 8px !important;
+  gap: 6px !important;
   overflow-x: auto !important;
   scrollbar-width: none !important;
-  padding: 6px 4px !important;
+  padding: 3px 2px !important;
   align-items: center !important;
 }
 .modern-date-row::-webkit-scrollbar {
@@ -6347,24 +6412,27 @@ nav.seg button[aria-selected="true"] {
 }
 
 .modern-date-pill {
+  position: relative !important;
   flex: 0 0 auto !important;
   display: inline-flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  min-width: auto !important;
-  height: 38px !important;
-  padding: 0 14px !important;
-  border-radius: 999px !important;
+  gap: 1px !important;
+  min-width: 52px !important;
+  height: 46px !important;
+  padding: 4px 10px !important;
+  border-radius: 11px !important;
   background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
   box-shadow: none !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.16s ease !important;
 }
 .modern-date-pill:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  transform: translateY(-1px) !important;
 }
 :root[data-theme="light"] .modern-date-pill {
   background: #f8fafc !important;
@@ -6372,37 +6440,76 @@ nav.seg button[aria-selected="true"] {
 }
 :root[data-theme="light"] .modern-date-pill:hover {
   background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
 }
 
-.modern-dp-label {
+.modern-dp-day {
   font-family: var(--font-display) !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.02em !important;
-  color: var(--fg-muted) !important;
-  white-space: nowrap !important;
-  text-transform: capitalize !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  color: var(--fg-dim) !important;
+  text-transform: uppercase !important;
+  line-height: 1.1 !important;
 }
 
-/* Date Pill Active (Galet lumineux ambre doux) */
-.modern-date-pill[aria-selected="true"] {
-  background: rgba(245, 158, 11, 0.18) !important;
-  border: 1.5px solid #f59e0b !important;
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25) !important;
-}
-.modern-date-pill[aria-selected="true"] .modern-dp-label {
-  color: #fbbf24 !important;
+.modern-dp-num {
+  font-family: var(--font-display) !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.02em !important;
+  color: var(--fg) !important;
+  line-height: 1.15 !important;
+}
+
+.modern-dp-today-dot {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+}
+
+.modern-date-pill.is-today-pill:not([aria-selected="true"]) {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  background: rgba(16, 185, 129, 0.06) !important;
+}
+:root[data-theme="light"] .modern-date-pill.is-today-pill:not([aria-selected="true"]) {
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  background: #ecfdf5 !important;
+}
+
+/* Date Pill Active (Capsule lumineuse ambre doré) */
+.modern-date-pill[aria-selected="true"] {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.24) 0%, rgba(217, 119, 6, 0.14) 100%) !important;
+  border: 1.5px solid #f59e0b !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  transform: translateY(-1px) !important;
+}
+.modern-date-pill[aria-selected="true"] .modern-dp-day {
+  color: #fcd34d !important;
+}
+.modern-date-pill[aria-selected="true"] .modern-dp-num {
+  color: #ffffff !important;
+  font-weight: 900 !important;
 }
 :root[data-theme="light"] .modern-date-pill[aria-selected="true"] {
-  background: #fffbeb !important;
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%) !important;
   border-color: #d97706 !important;
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.2), inset 0 1px 0 #ffffff !important;
 }
-:root[data-theme="light"] .modern-date-pill[aria-selected="true"] .modern-dp-label {
+:root[data-theme="light"] .modern-date-pill[aria-selected="true"] .modern-dp-day {
   color: #b45309 !important;
 }
+:root[data-theme="light"] .modern-date-pill[aria-selected="true"] .modern-dp-num {
+  color: #78350f !important;
+}
 
-/* En-tête de page moderne & compact */
+/* En-tête de page moderne & impactant */
 .modern-daily-header {
   margin-bottom: 20px;
 }
@@ -6413,27 +6520,108 @@ nav.seg button[aria-selected="true"] {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 12px;
-  padding: 4px 2px;
+  padding: 6px 4px 4px 4px;
 }
 .modern-daily-date-group {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.modern-daily-title-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.modern-daily-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .modern-daily-date {
   font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+  margin: 0;
+  line-height: 1.15;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.modern-daily-weekday {
+  color: var(--fg);
+}
+.modern-daily-daynum {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #ea580c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #f59e0b;
+  font-weight: 900;
+  padding: 0 1px;
+}
+:root[data-theme="light"] .modern-daily-daynum {
+  background: linear-gradient(135deg, #d97706 0%, #ea580c 65%, #c2410c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #d97706;
+}
+.modern-daily-month {
   color: var(--fg);
   text-transform: capitalize;
-  margin: 0;
+}
+.modern-daily-year {
+  color: var(--fg-dim);
+  font-weight: 700;
+  font-size: 0.78em;
+  letter-spacing: 0;
 }
 
-@media (max-width: 480px) {
+.modern-today-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+:root[data-theme="light"] .modern-today-live-pill {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+  box-shadow: none;
+}
+.modern-today-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+@media (max-width: 520px) {
   .modern-daily-date {
-    font-size: 18px;
+    font-size: 20px;
+    gap: 5px;
+  }
+  .modern-daily-title-block {
+    gap: 8px;
   }
 }
 
@@ -6441,15 +6629,16 @@ nav.seg button[aria-selected="true"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 999px;
   padding: 4px 12px;
   font-size: 12.5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 :root[data-theme="light"] .modern-presence-chip {
   background: #f1f5f9;
-  border-color: #e2e8f0;
+  border-color: #cbd5e1;
 }
 .modern-pulse-dot {
   width: 7px;
@@ -6470,26 +6659,73 @@ nav.seg button[aria-selected="true"] {
 .modern-btn-export {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  padding: 5px 14px;
-  color: var(--fg);
-  font-size: 13px;
-  font-weight: 700;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.09) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 10px;
+  padding: 6px 13px 6px 9px;
+  color: #fbbf24;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+.modern-btn-export-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+.modern-btn-export-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.modern-btn-export-text-short {
+  display: none;
+}
+@media (max-width: 520px) {
+  .modern-btn-export-text-full {
+    display: none;
+  }
+  .modern-btn-export-text-short {
+    display: inline;
+  }
+  .modern-btn-export {
+    padding: 5px 11px 5px 8px;
+  }
 }
 .modern-btn-export:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--amber);
-  color: var(--amber);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.26) 0%, rgba(217, 119, 6, 0.16) 100%);
+  border-color: #fbbf24;
+  color: #fef3c7;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+.modern-btn-export:active {
+  transform: translateY(0) scale(0.98);
 }
 :root[data-theme="light"] .modern-btn-export {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  color: #334155;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #f59e0b;
+  color: #b45309;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.12), inset 0 1px 0 #ffffff;
+}
+:root[data-theme="light"] .modern-btn-export-icon {
+  background: rgba(217, 119, 6, 0.15);
+  color: #b45309;
+}
+:root[data-theme="light"] .modern-btn-export:hover {
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #d97706;
+  color: #92400e;
 }
 
 /* Recherche épurée */
