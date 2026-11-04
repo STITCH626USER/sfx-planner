@@ -7176,10 +7176,11 @@ nav.seg button[aria-selected="true"] {
   color: #475569 !important;
 }
 
-/* Cartes de journées (DayCard) épurées et compactes */
+/* Cartes de journées (DayCard) épurées et compactes avec rappel couleur scène à gauche */
 .day-card {
   background: rgba(18, 24, 35, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-left: 3.5px solid var(--scene-accent, rgba(148, 163, 184, 0.25)) !important;
   border-radius: 10px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
   backdrop-filter: blur(12px) !important;
@@ -7191,24 +7192,33 @@ nav.seg button[aria-selected="true"] {
   gap: 10px !important;
   margin-bottom: 6px !important;
 }
+.day-card[data-off="true"] {
+  border-left-color: rgba(148, 163, 184, 0.2) !important;
+}
 .day-card:hover {
   background: rgba(255, 255, 255, 0.035) !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
+  border-left-color: var(--scene-accent, rgba(148, 163, 184, 0.35)) !important;
 }
 :root[data-theme="light"] .day-card {
   background: #ffffff !important;
   border-color: #e2e8f0 !important;
+  border-left: 3.5px solid var(--scene-accent, #cbd5e1) !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
+}
+:root[data-theme="light"] .day-card[data-off="true"] {
+  border-left-color: #cbd5e1 !important;
 }
 .day-card.is-today {
   border-color: rgba(245, 158, 11, 0.5) !important;
+  border-left-color: var(--scene-accent, #f59e0b) !important;
   box-shadow: 0 0 14px rgba(245, 158, 11, 0.12) !important;
 }
 
 .day-tag {
   background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 6px !important;
+  border-radius: 7px !important;
   padding: 4px 6px !important;
   min-width: 44px !important;
   display: flex !important;
@@ -7217,17 +7227,28 @@ nav.seg button[aria-selected="true"] {
   justify-content: center !important;
   box-shadow: none !important;
 }
+.day-card[data-off="false"] .day-tag {
+  background: color-mix(in srgb, var(--scene-accent, #38bdf8) 12%, rgba(255, 255, 255, 0.02)) !important;
+  border-color: color-mix(in srgb, var(--scene-accent, #38bdf8) 38%, rgba(255, 255, 255, 0.08)) !important;
+}
 :root[data-theme="light"] .day-tag {
   background: #f8fafc !important;
   border-color: #e2e8f0 !important;
 }
+:root[data-theme="light"] .day-card[data-off="false"] .day-tag {
+  background: color-mix(in srgb, var(--scene-accent, #38bdf8) 10%, #ffffff) !important;
+  border-color: color-mix(in srgb, var(--scene-accent, #38bdf8) 35%, #e2e8f0) !important;
+}
 .day-tag .d {
   font-size: 10px !important;
   color: var(--fg-muted) !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
   line-height: 1 !important;
+}
+.day-card[data-off="false"] .day-tag .d {
+  color: var(--scene-accent, var(--fg-muted)) !important;
 }
 .day-tag .n {
   font-family: var(--font-display) !important;

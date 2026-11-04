@@ -1832,7 +1832,7 @@ function DayCard({
   const shiftTime = first?.shiftTime;
   const isMulti = records.length > 1 || (!!shiftTime && shiftTime !== first.time);
 
-  const todayIso = new Date().toISOString().split('T')[0];
+  const todayIso = getTodayIso();
   const isToday = date === todayIso;
 
   if (isOff) {
@@ -1889,12 +1889,12 @@ function DayCard({
         aria-label={interactive ? `Voir l'équipe de ${cleanSceneName(rec.scene)} le ${formatDateLong(rec.date)}` : undefined}
         onClick={interactive ? () => onOpenScene!(rec.scene) : undefined}
         style={{
-          borderLeft: `4px solid ${scColor.accent}`,
+          '--scene-accent': scColor.accent,
           cursor: interactive ? 'pointer' : undefined,
-        }}
+        } as React.CSSProperties}
       >
-        <div className="day-tag" style={{ borderColor: `${scColor.accent}30` }}>
-          <span className="d" style={{ color: scColor.accent }}>{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
+        <div className="day-tag">
+          <span className="d">{DAY_FR_SHORT[rec.day] ?? rec.day.slice(0, 3).toUpperCase()}</span>
           <span className="n">{dayPart}</span>
         </div>
         <div style={{ minWidth: 0, flex: 1, paddingLeft: 4 }}>
@@ -1960,12 +1960,20 @@ function DayCard({
 
 
   // Multi-créneaux ou vacation globale distincte
+  const primaryMultiColor = getSceneColor(cleanSceneName(first?.scene || '')).accent;
   return (
     <div
-      className="day-card multi-day-card"
+      className={`day-card multi-day-card ${isToday ? 'is-today' : ''}`}
       data-off="false"
       data-testid={`day-${date}`}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 10, padding: '12px 14px' }}
+      style={{
+        '--scene-accent': primaryMultiColor,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 10,
+        padding: '12px 14px',
+      } as React.CSSProperties}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: 8, flexWrap: 'wrap', gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
