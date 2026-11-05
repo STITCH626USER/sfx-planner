@@ -848,11 +848,11 @@ async function generateIndivPdf(opts: {
       const scale = maxCardsH / sumNat;
       return natHeights.map(h => h * scale);
     }
-    // Gentle expansion if there's slack so columns feel balanced, capped so small cards don't bloat
-    const slack = maxCardsH - sumNat;
-    const maxAddPerCard = n >= 6 ? 3.2 : 2.5;
-    const addTotal = Math.min(slack, n * maxAddPerCard);
-    return natHeights.map(h => h + addTotal / n);
+    // Proportional expansion so 3-day and 4-day columns of the same week align cleanly at the bottom
+    // and dense cards (7-9 technicians) receive proportionally more breathing room.
+    const maxScale = isSceneMode ? 1.32 : 1.18;
+    const targetScale = Math.min(maxScale, maxCardsH / sumNat);
+    return natHeights.map(h => h * targetScale);
   };
 
   const segments: ColumnSegment[] = [];
@@ -942,64 +942,160 @@ async function generateIndivPdf(opts: {
     }
   }
 
-  // Render up to 4 columns per page
+  // Group segments into pages (max 4 columns per page, keeping columns of the same week together whenever possible)
   const maxColsPerPage = 4;
-  const cols = Math.min(maxColsPerPage, Math.max(1, segments.length));
+  const pages: ColumnSegment[][] = [];
+  let curPage: ColumnSegment[] = [];
 
-  let colW: number;
-  if (cols === 1) {
-    colW = 160;
-  } else if (cols === 2) {
-    colW = 132;
-  } else if (cols === 3) {
-    colW = (pageW - marginX * 2 - gutter * 2) / 3;
-  } else {
-    colW = (pageW - marginX * 2 - gutter * (cols - 1)) / cols;
-  }
-
-  const totalUsedWidth = cols * colW + (cols - 1) * gutter;
-  const baseStartX = (pageW - totalUsedWidth) / 2;
-
-  for (let sIdx = 0; sIdx < segments.length; sIdx++) {
-    const colOnPage = sIdx % maxColsPerPage;
-
-    if (sIdx > 0 && colOnPage === 0) {
-      drawPremiumFooter(doc, pageW, pageH, marginX);
-      doc.addPage();
-      startY = drawPremiumHeader(doc, pageW, marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
+  let iSeg = 0;
+  while (iSeg < segments.length) {
+    const wIdx = segments[iSeg].weekIndex;
+    const weekSegs: ColumnSegment[] = [];
+    while (iSeg < segments.length && segments[iSeg].weekIndex === wIdx) {
+      weekSegs.push(segments[iSeg]);
+      iSeg++;
     }
 
-    const seg = segments[sIdx];
-    const x = baseStartX + colOnPage * (colW + gutter);
+    if (weekSegs.length <= maxColsPerPage) {
+      if (curPage.length + weekSegs.length > maxColsPerPage && curPage.length > 0) {
+        pages.push(curPage);
+        curPage = [];
+      }
+      curPage.push(...weekSegs);
+    } else {
+      for (const ws of weekSegs) {
+        if (curPage.length >= maxColsPerPage) {
+          pages.push(curPage);
+          curPage = [];
+        }
+        curPage.push(ws);
+      }
+    }
+  }
+  if (curPage.length > 0) pages.push(curPage);
 
-    // Draw Week Column Header Pill (e.g. "SEMAINE 1 · 25/10 AU 31/10" or "SEMAINE 1 (1/2) · 25/10 AU 28/10")
-    const firstD = seg.days[0];
-    const lastD = seg.days[seg.days.length - 1];
-    const wStartShort = firstD.slice(8, 10) + '/' + firstD.slice(5, 7);
-    const wEndShort = lastD.slice(8, 10) + '/' + lastD.slice(5, 7);
-    const partSuffix = seg.totalParts > 1 ? ` (${seg.partIndex}/${seg.totalParts})` : '';
-    const weekLabel = `SEMAINE ${seg.weekIndex + 1}${partSuffix}  ·  ${wStartShort} AU ${wEndShort}`;
+  const bannerSc = opts.themeColorName ? getSceneColor(opts.themeColorName) : null;
 
-    const bannerSc = opts.themeColorName ? getSceneColor(opts.themeColorName) : null;
-    doc.setFillColor(...(bannerSc ? bannerSc.rgbBg : [241, 245, 249] as [number, number, number]));
-    doc.setDrawColor(...(bannerSc ? bannerSc.rgbAccent : [203, 213, 225] as [number, number, number]));
-    doc.setLineWidth(0.22);
-    doc.roundedRect(x, startY, colW, weekBannerH, 1.4, 1.4, 'FD');
+  for (let pIdx = 0; pIdx < pages.length; pIdx++) {
+    if (pIdx > 0) {
+      drawPremiumFooter(doc, pageW, pageH, marginX);
+      doc.addPage();
+      startY = drawPremiumHeader(doc, pageW, pageH ? marginX : marginX, 8, opts.title, opts.subtitle + ' (suite)', logo, 'SFX PLANNER', opts.statsBadge);
+    }
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.3);
-    doc.setTextColor(...(bannerSc ? bannerSc.rgbText : [51, 65, 85] as [number, number, number]));
-    doc.text(weekLabel, x + colW / 2, startY + 3.7, { align: 'center' });
+    const pageSegs = pages[pIdx];
+    const cols = pageSegs.length;
 
-    let currentY = startY + weekBannerH + weekBannerGap;
+    // Identify week groups on this page so we can put a tighter gap inside a week and a wider visual separation between weeks
+    interface WeekGroupOnPage {
+      weekIndex: number;
+      segs: ColumnSegment[];
+    }
+    const weekGroups: WeekGroupOnPage[] = [];
+    for (const seg of pageSegs) {
+      const last = weekGroups[weekGroups.length - 1];
+      if (last && last.weekIndex === seg.weekIndex) {
+        last.segs.push(seg);
+      } else {
+        weekGroups.push({ weekIndex: seg.weekIndex, segs: [seg] });
+      }
+    }
 
-    for (let dayIdx = 0; dayIdx < seg.days.length; dayIdx++) {
-      const d = seg.days[dayIdx];
-      const cardH = seg.heights[dayIdx];
-      const fallbackRows = isSceneMode ? [] : [{ name: 'Repos / Congé', time: 'OFF' }];
-      const rows = opts.dateMap.get(d) || fallbackRows;
-      drawIndivDayBlock(doc, x, currentY, colW, cardH, d, rows, opts.themeColorName);
-      currentY += cardH + gapBlock;
+    const intraGutter = 2.4; // tighter gap between columns of the SAME week
+    const interGutter = weekGroups.length > 1 ? 6.0 : gutter; // wider gap between DIFFERENT weeks
+    const numInterGaps = Math.max(0, weekGroups.length - 1);
+    const numIntraGaps = Math.max(0, cols - 1 - numInterGaps);
+    const totalGapsW = numInterGaps * interGutter + numIntraGaps * intraGutter;
+
+    let colW: number;
+    if (cols === 1) {
+      colW = 160;
+    } else if (cols === 2) {
+      colW = 132;
+    } else {
+      colW = (pageW - marginX * 2 - totalGapsW) / cols;
+    }
+
+    const totalUsedWidth = cols * colW + totalGapsW;
+    let groupStartX = (pageW - totalUsedWidth) / 2;
+
+    for (let gIdx = 0; gIdx < weekGroups.length; gIdx++) {
+      const wg = weekGroups[gIdx];
+      const groupCols = wg.segs.length;
+      const groupW = groupCols * colW + (groupCols - 1) * intraGutter;
+
+      // Draw a subtle vertical separator line between distinct weeks on the same page
+      if (gIdx > 0) {
+        const sepX = groupStartX - interGutter / 2;
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineWidth(0.25);
+        doc.line(sepX, startY + 0.5, sepX, bottomLimit - 1.5);
+      }
+
+      // Draw Unified Spanning Week Banner across all columns of this week on the page
+      const firstD = wg.segs[0].days[0];
+      const lastSeg = wg.segs[wg.segs.length - 1];
+      const lastD = lastSeg.days[lastSeg.days.length - 1];
+      const wStartShort = firstD.slice(8, 10) + '/' + firstD.slice(5, 7);
+      const wEndShort = lastD.slice(8, 10) + '/' + lastD.slice(5, 7);
+
+      // Check if this week is complete on this page or split across pages
+      const isPartialOnPage = wg.segs.length < wg.segs[0].totalParts;
+      const partSuffix = isPartialOnPage
+        ? ` (${wg.segs[0].partIndex}/${wg.segs[0].totalParts})`
+        : '';
+      const weekLabel = groupCols >= 2
+        ? `SEMAINE ${wg.weekIndex + 1}${partSuffix}   ·   DIM. ${wStartShort} AU SAM. ${wEndShort}`
+        : `SEMAINE ${wg.weekIndex + 1}${partSuffix}  ·  ${wStartShort} AU ${wEndShort}`;
+
+      // Count services in this week group for a quick summary badge on wide 2-column week headers
+      let weekServices = 0;
+      let weekActiveDays = 0;
+      const allWeekDaysOnPage = wg.segs.flatMap(s => s.days);
+      for (const d of allWeekDaysOnPage) {
+        const rList = (opts.dateMap.get(d) || []).filter(r => !/^off$/i.test(r.time));
+        if (rList.length > 0) {
+          weekActiveDays++;
+          weekServices += rList.length;
+        }
+      }
+
+      doc.setFillColor(...(bannerSc ? bannerSc.rgbBg : [241, 245, 249] as [number, number, number]));
+      doc.setDrawColor(...(bannerSc ? bannerSc.rgbAccent : [203, 213, 225] as [number, number, number]));
+      doc.setLineWidth(0.28);
+      doc.roundedRect(groupStartX, startY, groupW, weekBannerH, 1.5, 1.5, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(groupCols >= 2 ? 6.8 : 6.3);
+      doc.setTextColor(...(bannerSc ? bannerSc.rgbText : [30, 41, 59] as [number, number, number]));
+
+      if (groupCols >= 2 && isSceneMode) {
+        doc.text(weekLabel, groupStartX + 3.2, startY + 3.75);
+        const summaryRight = `${weekServices} SERV. · ${weekActiveDays}/${allWeekDaysOnPage.length} J.`;
+        doc.setFontSize(5.8);
+        doc.text(summaryRight, groupStartX + groupW - 3.2, startY + 3.75, { align: 'right' });
+      } else {
+        doc.text(weekLabel, groupStartX + groupW / 2, startY + 3.75, { align: 'center' });
+      }
+
+      // Draw each column inside this Week Group
+      let colX = groupStartX;
+      for (let cIdx = 0; cIdx < wg.segs.length; cIdx++) {
+        const seg = wg.segs[cIdx];
+        let currentY = startY + weekBannerH + weekBannerGap;
+
+        for (let dayIdx = 0; dayIdx < seg.days.length; dayIdx++) {
+          const d = seg.days[dayIdx];
+          const cardH = seg.heights[dayIdx];
+          const fallbackRows = isSceneMode ? [] : [{ name: 'Repos / Congé', time: 'OFF' }];
+          const rows = opts.dateMap.get(d) || fallbackRows;
+          drawIndivDayBlock(doc, colX, currentY, colW, cardH, d, rows, opts.themeColorName);
+          currentY += cardH + gapBlock;
+        }
+        colX += colW + intraGutter;
+      }
+
+      groupStartX += groupW + interGutter;
     }
   }
 
@@ -1055,11 +1151,21 @@ function drawIndivDayBlock(
     ? [245, 243, 255]
     : (primarySc ? primarySc.rgbBg : [248, 250, 252]);
 
-  // Base card: subtle warm/tinted background on active days, soft slate-50 for OFF
+  // Base card: in Scene Mode, use a crisp white card background with subtle tinted border so technician names & zebra rows pop;
+  // in Employee Mode, keep the gentle scene tint per day.
+  const isSceneCard = Boolean(themeColorName);
   if (isOff) {
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.2);
+  } else if (isSceneCard) {
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(
+      Math.round(primaryAccent[0] * 0.40 + 203 * 0.60),
+      Math.round(primaryAccent[1] * 0.40 + 213 * 0.60),
+      Math.round(primaryAccent[2] * 0.40 + 225 * 0.60)
+    );
+    doc.setLineWidth(0.28);
   } else {
     const cardTint: [number, number, number] = [
       Math.round(primaryBg[0] * 0.35 + 255 * 0.65),
@@ -1151,9 +1257,9 @@ function drawIndivDayBlock(
     const isFO = row.isFO || isTrainingScene(row.name);
     const isNight = isNightShift(row.time);
     const sc = getSceneColor(themeColorName || row.name);
-    const scBg: [number, number, number] = isFO ? [245, 243, 255] : (isNight ? NIGHT_PILL_BG : sc.rgbBg);
-    const scAccent: [number, number, number] = isFO ? VIOLET : (isNight ? NIGHT_PILL_BORDER : sc.rgbAccent);
-    const scText: [number, number, number] = isFO ? [76, 29, 149] : (isNight ? [255, 255, 255] : sc.rgbText);
+    const scBg: [number, number, number] = isFO ? [245, 243, 255] : (isNight ? NIGHT_PILL_BG : (isSceneCard ? [241, 245, 249] : sc.rgbBg));
+    const scAccent: [number, number, number] = isFO ? VIOLET : (isNight ? NIGHT_PILL_BORDER : (isSceneCard ? [148, 163, 184] : sc.rgbAccent));
+    const scText: [number, number, number] = isFO ? [76, 29, 149] : (isNight ? [255, 255, 255] : (isSceneCard ? [15, 23, 42] : sc.rgbText));
     const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
     const rawNm = cleanText(cleanSceneName(row.name));
@@ -1293,9 +1399,34 @@ function drawIndivDayBlock(
       const rowMidY = rowY + rH / 2;
       const cleanTime = (row.time || '').replace(/\s*-\s*/, ' - ');
 
-      const scBg: [number, number, number] = isFO ? [245, 243, 255] : (isNight ? NIGHT_PILL_BG : sc.rgbBg);
-      const scAccent: [number, number, number] = isFO ? VIOLET : (isNight ? NIGHT_PILL_BORDER : sc.rgbAccent);
-      const scText: [number, number, number] = isFO ? [76, 29, 149] : (isNight ? [255, 255, 255] : sc.rgbText);
+      // Subtle alternating zebra background on daytime rows in Scene Mode so the eye tracks horizontally with zero effort
+      if (isSceneCard && !isNight && idx % 2 === 1) {
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(rx - 0.8, rowY + 0.15, (x + w - 1.2) - (rx - 0.8), rH - 0.3, 0.6, 0.6, 'F');
+      }
+
+      // In Scene Mode, use high-contrast Slate time pills for daytime shifts to avoid a monochrome wall of scene color
+      const scBg: [number, number, number] = isFO
+        ? [245, 243, 255]
+        : isNight
+          ? NIGHT_PILL_BG
+          : isSceneCard
+            ? [241, 245, 249]
+            : sc.rgbBg;
+      const scAccent: [number, number, number] = isFO
+        ? VIOLET
+        : isNight
+          ? NIGHT_PILL_BORDER
+          : isSceneCard
+            ? [148, 163, 184]
+            : sc.rgbAccent;
+      const scText: [number, number, number] = isFO
+        ? [76, 29, 149]
+        : isNight
+          ? [255, 255, 255]
+          : isSceneCard
+            ? [15, 23, 42]
+            : sc.rgbText;
 
       // Time pill
       const timeFont = rH >= 4.2 ? 5.6 : 5.1;
@@ -1442,6 +1573,10 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
       const rA = parseRange(a.time);
       const rB = parseRange(b.time);
       if (rA && rB && rA.start !== rB.start) return rA.start - rB.start;
+      // Within the same time slot, place special roles (RegieSFX, Asst Coord, Lead, Secu...) before generic Tech
+      const isGenericA = !a.role || a.role.toLowerCase() === 'tech';
+      const isGenericB = !b.role || b.role.toLowerCase() === 'tech';
+      if (isGenericA !== isGenericB) return isGenericA ? 1 : -1;
       return a.name.localeCompare(b.name, 'fr');
     });
   }
