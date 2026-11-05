@@ -733,6 +733,14 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
   const workedDays = Array.from(dateMap.entries()).filter(([, rows]) => rows.some(r => !/^off$/i.test(r.time))).length;
   const numWeeks = Math.ceil(allDates.length / 7);
 
+  const weekNumberByDate = new Map<string, number>();
+  for (const r of records) {
+    if (r.date && r.weekLabel) {
+      const m = r.weekLabel.match(/sem(?:aine|\.)?\s*(\d+)/i);
+      if (m) weekNumberByDate.set(r.date, parseInt(m[1], 10));
+    }
+  }
+
   const pStart   = allDates[0] ? fmtDate(allDates[0]) : '';
   const pEnd     = allDates[allDates.length-1] ? fmtDate(allDates[allDates.length-1]) : '';
   const period   = pStart&&pEnd&&pStart!==pEnd ? `${pStart} - ${pEnd}` : pStart;
@@ -744,7 +752,29 @@ export async function exportEmployeePdf(employee: string, records: PlanningRecor
     dateMap,
     allDates,
     filename: `sfx-planning-indiv-${slug(prettyName(employee))}.pdf`,
+    weekNumberByDate,
   });
+}
+
+function getCalendarWeekNumber(weekDays: string[], weekNumberByDate?: Map<string, number>): number {
+  if (weekNumberByDate) {
+    for (const d of weekDays) {
+      const known = weekNumberByDate.get(d);
+      if (known !== undefined) return known;
+    }
+  }
+  const refIso = weekDays[0];
+  if (!refIso) return 1;
+  const [y, m, d] = refIso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  // In DLP's Sunday->Saturday planning week, Sunday belongs to the upcoming Mon-Sat ISO week
+  if (dt.getUTCDay() === 0) {
+    dt.setUTCDate(dt.getUTCDate() + 1);
+  }
+  const dayNum = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  return Math.ceil((((dt.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
 async function generateIndivPdf(opts: {
@@ -755,6 +785,7 @@ async function generateIndivPdf(opts: {
   allDates: string[];
   filename: string;
   themeColorName?: string;
+  weekNumberByDate?: Map<string, number>;
 }): Promise<void> {
   const logo = await getLogoDataUrl();
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
@@ -1001,8 +1032,9 @@ async function generateIndivPdf(opts: {
       }
     }
 
+    const hasMultiColWeek = weekGroups.some(wg => wg.segs.length > 1);
     const intraGutter = 2.4; // tighter gap between columns of the SAME week
-    const interGutter = weekGroups.length > 1 ? 6.0 : gutter; // wider gap between DIFFERENT weeks
+    const interGutter = (weekGroups.length > 1 && hasMultiColWeek) ? 6.0 : gutter; // wider gap between DIFFERENT weeks when multi-column
     const numInterGaps = Math.max(0, weekGroups.length - 1);
     const numIntraGaps = Math.max(0, cols - 1 - numInterGaps);
     const totalGapsW = numInterGaps * interGutter + numIntraGaps * intraGutter;
@@ -1024,8 +1056,8 @@ async function generateIndivPdf(opts: {
       const groupCols = wg.segs.length;
       const groupW = groupCols * colW + (groupCols - 1) * intraGutter;
 
-      // Draw a subtle vertical separator line between distinct weeks on the same page
-      if (gIdx > 0) {
+      // Draw a subtle vertical separator line between distinct weeks when weeks span multiple columns
+      if (gIdx > 0 && hasMultiColWeek) {
         const sepX = groupStartX - interGutter / 2;
         doc.setDrawColor(203, 213, 225);
         doc.setLineWidth(0.25);
@@ -1039,19 +1071,21 @@ async function generateIndivPdf(opts: {
       const wStartShort = firstD.slice(8, 10) + '/' + firstD.slice(5, 7);
       const wEndShort = lastD.slice(8, 10) + '/' + lastD.slice(5, 7);
 
+      const allWeekDaysOnPage = wg.segs.flatMap(s => s.days);
+      const calWeekNum = getCalendarWeekNumber(allWeekDaysOnPage, opts.weekNumberByDate);
+
       // Check if this week is complete on this page or split across pages
       const isPartialOnPage = wg.segs.length < wg.segs[0].totalParts;
       const partSuffix = isPartialOnPage
         ? ` (${wg.segs[0].partIndex}/${wg.segs[0].totalParts})`
         : '';
       const weekLabel = groupCols >= 2
-        ? `SEMAINE ${wg.weekIndex + 1}${partSuffix}   ·   DIM. ${wStartShort} AU SAM. ${wEndShort}`
-        : `SEMAINE ${wg.weekIndex + 1}${partSuffix}  ·  ${wStartShort} AU ${wEndShort}`;
+        ? `SEMAINE ${calWeekNum}${partSuffix}   ·   DIM. ${wStartShort} AU SAM. ${wEndShort}`
+        : `SEMAINE ${calWeekNum}${partSuffix}  ·  ${wStartShort} AU ${wEndShort}`;
 
       // Count services in this week group for a quick summary badge on wide 2-column week headers
       let weekServices = 0;
       let weekActiveDays = 0;
-      const allWeekDaysOnPage = wg.segs.flatMap(s => s.days);
       for (const d of allWeekDaysOnPage) {
         const rList = (opts.dateMap.get(d) || []).filter(r => !/^off$/i.test(r.time));
         if (rList.length > 0) {
@@ -1581,6 +1615,14 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     });
   }
 
+  const weekNumberByDate = new Map<string, number>();
+  for (const r of records) {
+    if (r.date && r.weekLabel) {
+      const m = r.weekLabel.match(/sem(?:aine|\.)?\s*(\d+)/i);
+      if (m) weekNumberByDate.set(r.date, parseInt(m[1], 10));
+    }
+  }
+
   await generateIndivPdf({
     title: cleanText(cleanSceneName(scene)).toUpperCase(),
     subtitle: period ? `Planning de scène · ${period}` : 'Planning de scène',
@@ -1589,6 +1631,7 @@ export async function exportScenePdf(scene: string, records: PlanningRecord[]): 
     allDates: allDatesTotal,
     filename: `sfx-planning-scene-${slug(scene)}.pdf`,
     themeColorName: scene, // Force scene color for all cards
+    weekNumberByDate,
   });
 }
 
