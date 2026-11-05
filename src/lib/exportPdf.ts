@@ -1649,6 +1649,18 @@ function shortenSceneName(scene: string): string {
   if (isTrainingScene(scene)) return 'FO';
   let s = cleanText(cleanSceneName(scene)).toUpperCase();
   s = s.replace(/^ENT\s+/, '').replace(/^EMT\s+/, '').replace(/^DLP\s+/, '');
+  const compact = s.replace(/[\s_-]+/g, '');
+  if (compact.includes('CASCADE')) return 'CASCADE';
+  if (compact.includes('ILLUMINATION')) return 'ILLUMI.';
+  if (compact.includes('ARENDELLE')) return 'ARENDEL.';
+  if (compact.includes('POOLTECH')) return 'POOL SFX';
+  if (compact.includes('MARVEL')) return 'MARVEL';
+  if (compact.includes('XMAS')) return 'XMAS';
+  if (compact.includes('HALLOWEEN')) return 'HALLOW.';
+  if (compact.includes('STUDIOT')) return 'STUDIO T';
+  if (compact.includes('DFACT')) return 'DFACT S6';
+  if (compact.includes('LIONKING')) return 'LION KING';
+  if (compact.includes('MATM')) return 'MATM';
   s = s.split(/\s+/)[0];
   if (s.length > 8) s = s.substring(0, 8);
   return s;
@@ -1695,13 +1707,22 @@ async function generateGridGlobalPdf(opts: {
   if (allDates.length === 0) return;
   
   const allEmps = Array.from(new Set(records.map(r=>r.employee).filter(Boolean))).sort((a,b)=>prettyName(a).localeCompare(prettyName(b),'fr'));
+  const logo = await getLogoDataUrl();
   
-  // Use A4 landscape for better readability (more pages, less cramped)
+  const weekNumberByDate = new Map<string, number>();
+  for (const r of records) {
+    if (r.date && r.weekLabel) {
+      const m = r.weekLabel.match(/sem(?:aine|\.)?\s*(\d+)/i);
+      if (m) weekNumberByDate.set(r.date, parseInt(m[1], 10));
+    }
+  }
+
+  // Use A4 landscape with wider usable area (8mm margins)
   const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const C_MARGIN = 15;
-  const bottom = pageH - 12;
+  const marginX = 8;
+  const bottom = pageH - 11.5;
   
   const weeks: string[][] = [];
   for (let i = 0; i < allDates.length; i += 7) {
@@ -1709,26 +1730,24 @@ async function generateGridGlobalPdf(opts: {
   }
 
   let pageCount = 0;
-  let y = bottom + 1; // force page break immediately
+  let y = 0;
 
-  const drawPageHeader = () => {
-    if (pageCount > 0) doc.addPage();
-    pageCount++;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(20, 30, 50);
-    doc.text(`${opts.title} - ${opts.subtitle}`, C_MARGIN, 15);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 110, 130);
-    doc.text('SFX Planner', pageW - C_MARGIN, 15, {align: 'right'});
-    y = 22;
-  };
-
-  const headerH = 7.5;
-  const colNameW = 55;
-  const colDayW = (pageW - C_MARGIN*2 - colNameW) / 7;
+  const headerH = 8.4;
+  const colNameW = 54;
+  const tableW = pageW - marginX * 2;
+  const colDayW = (tableW - colNameW) / 7;
 
   for (const weekDates of weeks) {
     const weekRecs = records.filter(r => weekDates.includes(r.date));
     const activeEmps = allEmps.filter(emp => weekRecs.some(r => r.employee === emp));
     if (activeEmps.length === 0) continue;
+
+    const calWeekNum = getCalendarWeekNumber(weekDates, weekNumberByDate);
+    const wStartFmt = weekDates[0] ? fmtDate(weekDates[0]) : '';
+    const wEndFmt = weekDates[weekDates.length - 1] ? fmtDate(weekDates[weekDates.length - 1]) : '';
+    const workingEmpsInWeek = activeEmps.filter(emp =>
+      weekRecs.some(r => r.employee === emp && r.time !== 'OFF' && !/^off$/i.test(r.time))
+    ).length;
 
     const halfLen = Math.ceil(activeEmps.length / 2);
     const halves = [activeEmps.slice(0, halfLen), activeEmps.slice(halfLen)];
@@ -1737,167 +1756,274 @@ async function generateGridGlobalPdf(opts: {
       const emps = halves[part];
       if (emps.length === 0) continue;
 
-      drawPageHeader();
+      if (pageCount > 0) {
+        drawPremiumFooter(doc, pageW, pageH, marginX);
+        doc.addPage();
+      }
+      pageCount++;
 
-      // Draw Week Header
-      doc.setFillColor(30, 40, 60);
-      doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, headerH, 'F');
+      const firstLetter = prettyName(emps[0]).charAt(0).toUpperCase();
+      const lastLetter = prettyName(emps[emps.length - 1]).charAt(0).toUpperCase();
+      const alphaRange = `${firstLetter} – ${lastLetter}`;
+      const pageTitle = `PLANNING MASTER  ·  SEMAINE ${calWeekNum}`;
+      const pageSubtitle = `${wStartFmt} — ${wEndFmt}   ·   Partie ${part + 1}/${halves.length} (${alphaRange})`;
+      const statsBadge = `SEM. ${calWeekNum} · ${workingEmpsInWeek} TECH. ACTIFS · ${part + 1}/${halves.length}`;
+
+      y = drawPremiumHeader(doc, pageW, marginX, 7.5, pageTitle, pageSubtitle, logo, 'SFX PLANNER', statsBadge);
+
+      // Draw Table Header (Dark slate with daily headcount badges)
+      doc.setFillColor(15, 23, 42);
+      doc.roundedRect(marginX, y, tableW, headerH, 1.5, 1.5, 'F');
+      doc.rect(marginX, y + 1.5, tableW, headerH - 1.5, 'F');
+
       doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-      doc.text(part === 0 ? "TECHNICIEN" : "TECHNICIEN (suite)", C_MARGIN + 2, y + 5);
-      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.8);
+      doc.text(`TECHNICIEN (${alphaRange})`, marginX + 3, y + 5.3);
+
+      doc.setFontSize(5.6);
+      doc.setTextColor(148, 163, 184);
+      doc.text('JOURS', marginX + colNameW - 2.2, y + 5.3, { align: 'right' });
+
       for (let d = 0; d < 7; d++) {
-        const dx = C_MARGIN + colNameW + d * colDayW;
+        const dx = marginX + colNameW + d * colDayW;
+        // Subtle vertical column divider in header
+        doc.setDrawColor(51, 65, 85);
+        doc.setLineWidth(0.18);
+        doc.line(dx, y + 1.2, dx, y + headerH - 1.2);
+
         if (d < weekDates.length) {
-          doc.text(fmtDateShort(weekDates[d]), dx + colDayW/2, y + 5, {align: 'center'});
+          const dayIso = weekDates[d];
+          const dayPresentCount = new Set(
+            weekRecs.filter(r => r.date === dayIso && r.time !== 'OFF' && !/^off$/i.test(r.time)).map(r => r.employee)
+          ).size;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.6);
+          doc.setTextColor(255, 255, 255);
+          doc.text(fmtDateShort(dayIso).toUpperCase(), dx + colDayW / 2 - 4.5, y + 5.3, { align: 'center' });
+
+          // Daily headcount mini-pill in header
+          const cntLabel = `${dayPresentCount}p`;
+          doc.setFontSize(5.7);
+          const cntW = doc.getTextWidth(cntLabel) + 2.6;
+          const cntH = 3.6;
+          const cntX = dx + colDayW - cntW - 2.2;
+          const cntY = y + (headerH - cntH) / 2;
+          doc.setFillColor(30, 41, 59);
+          doc.setDrawColor(71, 85, 105);
+          doc.setLineWidth(0.2);
+          doc.roundedRect(cntX, cntY, cntW, cntH, 0.9, 0.9, 'FD');
+          doc.setTextColor(56, 189, 248);
+          doc.text(cntLabel, cntX + cntW / 2, cntY + 2.55, { align: 'center' });
         }
       }
       y += headerH;
 
       const availableH = bottom - y;
       let rowH = availableH / emps.length;
-      if (rowH > 14) rowH = 14; // Cap max height so it doesn't stretch to infinity if only 2 people
-      
-      const fName = Math.max(5, Math.min(8.5, rowH * 0.9));
-      const fTime = Math.max(5, Math.min(6.4, rowH * 0.72));
-      const fScene = Math.max(4, Math.min(5.8, rowH * 0.65));
-      const fOff = Math.max(5, Math.min(7.5, rowH * 0.8));
-      const badgeW = 14.2;
+      if (rowH > 12) rowH = 12;
+
+      const fName = Math.max(5.2, Math.min(7.4, rowH * 1.18));
+      const fTime = Math.max(5.0, Math.min(6.3, rowH * 1.02));
+      const fScene = Math.max(4.4, Math.min(5.6, rowH * 0.92));
+      const badgeW = 14.0;
 
       for (let i = 0; i < emps.length; i++) {
         const emp = emps[i];
         const isEven = i % 2 === 0;
-        doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
-        doc.rect(C_MARGIN, y, pageW - C_MARGIN*2, rowH, 'F');
-        
-        doc.setDrawColor(220, 225, 230); doc.setLineWidth(0.1);
-        doc.line(C_MARGIN, y+rowH, pageW-C_MARGIN, y+rowH); // bottom
-        
-        doc.setTextColor(20, 30, 40); doc.setFont('helvetica', 'bold'); doc.setFontSize(fName);
+        const isFifthRow = (i + 1) % 5 === 0 && i < emps.length - 1;
+
+        // Distinct zebra row background across the entire row for effortless horizontal tracking
+        const rowBg: [number, number, number] = isEven ? [255, 255, 255] : [241, 245, 249];
+        doc.setFillColor(...rowBg);
+        doc.rect(marginX, y, tableW, rowH, 'F');
+
+        // Count worked days for this employee in this week
+        let empWorkedDays = 0;
+        for (const dIso of weekDates) {
+          const hasWork = weekRecs.some(r => r.date === dIso && r.employee === emp && r.time !== 'OFF' && !/^off$/i.test(r.time));
+          if (hasWork) empWorkedDays++;
+        }
+
+        //Worked days pill on the right of the name cell
+        const wkPillLabel = `${empWorkedDays}j`;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.3);
+        const wkPillW = 6.2;
+        const wkPillH = Math.min(rowH - 1.1, 3.5);
+        const wkPillX = marginX + colNameW - wkPillW - 1.6;
+        const wkPillY = y + (rowH - wkPillH) / 2;
+        if (empWorkedDays > 0) {
+          doc.setFillColor(226, 232, 240);
+          doc.setDrawColor(148, 163, 184);
+          doc.setLineWidth(0.15);
+          doc.roundedRect(wkPillX, wkPillY, wkPillW, wkPillH, 0.8, 0.8, 'FD');
+          doc.setTextColor(30, 41, 59);
+        } else {
+          doc.setFillColor(248, 250, 252);
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.12);
+          doc.roundedRect(wkPillX, wkPillY, wkPillW, wkPillH, 0.8, 0.8, 'FD');
+          doc.setTextColor(160, 174, 192);
+        }
+        doc.text(wkPillLabel, wkPillX + wkPillW / 2, wkPillY + wkPillH * 0.72, { align: 'center' });
+
+        // Technician Name (dimmed slightly if 0 worked days all week)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(fName);
+        doc.setTextColor(empWorkedDays > 0 ? 15 : 148, empWorkedDays > 0 ? 23 : 163, empWorkedDays > 0 ? 42 : 184);
         let nm = prettyName(emp);
-        if (doc.getTextWidth(nm) > colNameW - 2) nm = doc.splitTextToSize(nm, colNameW - 2)[0] as string;
-        doc.text(nm, C_MARGIN + 2, y + rowH/2 + 1.2);
-        
-        doc.line(C_MARGIN, y, C_MARGIN, y + rowH); // left edge
-        doc.line(C_MARGIN + colNameW, y, C_MARGIN + colNameW, y + rowH); // col edge
-        doc.line(pageW - C_MARGIN, y, pageW - C_MARGIN, y + rowH); // right edge
-        
+        const maxNmW = colNameW - wkPillW - 4.8;
+        while (doc.getTextWidth(nm) > maxNmW && nm.length > 4) {
+          nm = nm.slice(0, -1);
+        }
+        if (nm !== prettyName(emp)) nm = nm.trim() + '…';
+        doc.text(nm, marginX + 2.2, y + rowH / 2 + fName * 0.13);
+
         for (let d = 0; d < 7; d++) {
-          const dx = C_MARGIN + colNameW + d * colDayW;
-          if (d > 0) doc.line(dx, y, dx, y + rowH);
-          
+          const dx = marginX + colNameW + d * colDayW;
           if (d >= weekDates.length) continue;
           const date = weekDates[d];
           const recs = weekRecs.filter(r => r.date === date && r.employee === emp);
           if (recs.length === 0) continue;
-          
+
           const mainRec = recs.find(r => r.time !== 'OFF') || recs[0];
-          
+
           if (mainRec.time === 'OFF' || /^off$/i.test(mainRec.time)) {
-            doc.setFillColor(245, 247, 250);
-            doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
-            doc.setTextColor(148, 163, 184);
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(fOff);
-            doc.text('OFF', dx + colDayW/2, y + rowH/2 + 1.2, {align: 'center'});
+            // Subtle centered dash instead of noisy repeated "OFF" boxes, preserving the zebra stripe
+            doc.setTextColor(186, 196, 210);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.2);
+            doc.text('—', dx + colDayW / 2, y + rowH / 2 + 0.8, { align: 'center' });
           } else {
             const hasFormation = recs.some(r => isTrainingScene(r.scene));
             const nonFoRecs = recs.filter(r => !isTrainingScene(r.scene) && r.time !== 'OFF' && !/^off$/i.test(r.time));
             const isMixedFo = hasFormation && nonFoRecs.length > 0;
             const amplitudeStr = getDailyAmplitude(recs);
+            const isNight = isNightShift(amplitudeStr);
 
             const primaryRec = nonFoRecs[0] || recs[0];
             const cleanScene = cleanSceneName(primaryRec.scene);
             const sc = getSceneColor(cleanScene);
             const foSc = getSceneColor('Formation');
 
+            const cellX = dx + 0.45;
+            const cellY = y + 0.38;
+            const cellW = colDayW - 0.9;
+            const cellH = rowH - 0.76;
+
             if (isMixedFo) {
               // --- MULTICOLORE CELL (FORMATION + SCENE) ---
-              // 1. Two-tone background: Scene tint on left, Formation violet tint on right
-              const cellW = colDayW - 0.8;
-              const cellH = rowH - 0.8;
               const splitW = Math.round(cellW * 0.52 * 10) / 10;
 
-              // Left portion (Scene background tint)
               doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-              doc.rect(dx+0.4, y+0.4, splitW, cellH, 'F');
+              doc.rect(cellX, cellY, splitW, cellH, 'F');
 
-              // Right portion (Formation violet background tint)
               doc.setFillColor(243, 232, 255);
-              doc.rect(dx+0.4 + splitW, y+0.4, cellW - splitW, cellH, 'F');
+              doc.rect(cellX + splitW, cellY, cellW - splitW, cellH, 'F');
 
-              // 3. Two-tone Multi-color Badge: [ SCENE | FO ]
+              doc.setDrawColor(196, 181, 253);
+              doc.setLineWidth(0.18);
+              doc.roundedRect(cellX, cellY, cellW, cellH, 0.7, 0.7, 'S');
+
               const leftBadgeW = 9.2;
-              const rightBadgeW = 5.0;
-              const totalBadgeW = leftBadgeW + rightBadgeW; // 14.2mm
-              const badgeH = rowH - 1.2;
+              const rightBadgeW = 4.8;
+              const totalBadgeW = leftBadgeW + rightBadgeW;
+              const badgeH = cellH - 0.4;
 
-              // Left part (Scene color)
               doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
-              doc.roundedRect(dx+0.6, y+0.6, leftBadgeW, badgeH, 0.8, 0.8, 'F');
-              doc.rect(dx+0.6 + leftBadgeW - 1.5, y+0.6, 1.5, badgeH, 'F');
+              doc.roundedRect(cellX + 0.2, cellY + 0.2, leftBadgeW, badgeH, 0.6, 0.6, 'F');
+              doc.rect(cellX + 0.2 + leftBadgeW - 1.2, cellY + 0.2, 1.2, badgeH, 'F');
 
               doc.setTextColor(255, 255, 255);
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(Math.min(fScene, 5.5));
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(Math.min(fScene, 5.2));
               let sAbbr = shortenSceneName(cleanScene);
               if (sAbbr.length > 5) sAbbr = sAbbr.substring(0, 5);
-              doc.text(sAbbr, dx + 0.6 + leftBadgeW/2, y + rowH/2 + 1, {align: 'center'});
+              doc.text(sAbbr, cellX + 0.2 + leftBadgeW / 2, y + rowH / 2 + 0.85, { align: 'center' });
 
-              // Right part (Formation Purple)
               doc.setFillColor(foSc.rgbAccent[0], foSc.rgbAccent[1], foSc.rgbAccent[2]);
-              doc.roundedRect(dx+0.6 + leftBadgeW, y+0.6, rightBadgeW, badgeH, 0.8, 0.8, 'F');
-              doc.rect(dx+0.6 + leftBadgeW, y+0.6, 1.5, badgeH, 'F');
+              doc.roundedRect(cellX + 0.2 + leftBadgeW, cellY + 0.2, rightBadgeW, badgeH, 0.6, 0.6, 'F');
+              doc.rect(cellX + 0.2 + leftBadgeW, cellY + 0.2, 1.2, badgeH, 'F');
 
               doc.setTextColor(255, 255, 255);
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(Math.min(fScene, 5.5));
-              doc.text('FO', dx + 0.6 + leftBadgeW + rightBadgeW/2, y + rowH/2 + 1, {align: 'center'});
+              doc.text('FO', cellX + 0.2 + leftBadgeW + rightBadgeW / 2, y + rowH / 2 + 0.85, { align: 'center' });
 
-              // 4. White pill with daily amplitude (just amplitude, no +FO)
-              const timeX = dx + 0.6 + totalBadgeW + 0.8;
-              const timeW = colDayW - 0.8 - (totalBadgeW + 1.4);
-              const timeH = Math.min(rowH - 1.4, 5.6);
-              const timeY = y + (rowH - timeH) / 2;
-
-              doc.setFillColor(255, 255, 255);
-              doc.setDrawColor(196, 181, 253);
-              doc.setLineWidth(0.2);
-              doc.roundedRect(timeX, timeY, timeW, timeH, 0.6, 0.6, 'FD');
-
+              const timeCenterX = cellX + totalBadgeW + 0.4 + (cellW - totalBadgeW - 0.6) / 2;
               doc.setTextColor(15, 23, 42);
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(Math.min(fTime, 6.2));
-              doc.text(amplitudeStr, timeX + timeW/2, timeY + timeH/2 + 1.1, {align: 'center'});
-
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(Math.min(fTime, 6.0));
+              doc.text(amplitudeStr, timeCenterX, y + rowH / 2 + 0.9, { align: 'center' });
             } else {
               // --- STANDARD CELL (SINGLE SCENE OR PURE FORMATION) ---
               const sceneAbbr = shortenSceneName(cleanScene);
-              
-              // Soft scene background tint across the cell
-              doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
-              doc.rect(dx+0.4, y+0.4, colDayW-0.8, rowH-0.8, 'F');
-              
-              // Solid scene color badge
+
+              // Soft scene background tint + crisp border so consecutive days don't bleed together
+              if (isNight) {
+                doc.setFillColor(238, 242, 255);
+                doc.setDrawColor(129, 140, 248);
+              } else {
+                doc.setFillColor(sc.rgbBg[0], sc.rgbBg[1], sc.rgbBg[2]);
+                doc.setDrawColor(
+                  Math.round(sc.rgbAccent[0] * 0.45 + 203 * 0.55),
+                  Math.round(sc.rgbAccent[1] * 0.45 + 213 * 0.55),
+                  Math.round(sc.rgbAccent[2] * 0.45 + 225 * 0.55)
+                );
+              }
+              doc.setLineWidth(0.18);
+              doc.roundedRect(cellX, cellY, cellW, cellH, 0.7, 0.7, 'FD');
+
+              // Solid scene color badge on the left
+              const badgeH = cellH - 0.4;
               doc.setFillColor(sc.rgbAccent[0], sc.rgbAccent[1], sc.rgbAccent[2]);
-              doc.roundedRect(dx+0.6, y+0.6, badgeW, rowH-1.2, 0.8, 0.8, 'F');
-              
+              doc.roundedRect(cellX + 0.2, cellY + 0.2, badgeW, badgeH, 0.6, 0.6, 'F');
+
               doc.setTextColor(255, 255, 255);
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(fScene);
-              doc.text(sceneAbbr, dx + 0.6 + badgeW/2, y + rowH/2 + 1, {align: 'center'});
-              
-              // Just the daily amplitude (clean, no +FO)
-              doc.setTextColor(sc.rgbText[0], sc.rgbText[1], sc.rgbText[2]);
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(fTime);
-              const timeCenterX = dx + 0.6 + badgeW + 0.4 + (colDayW - badgeW - 1.4) / 2;
-              doc.text(amplitudeStr, timeCenterX, y + rowH/2 + 1.2, {align: 'center'});
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(fScene);
+              doc.text(sceneAbbr, cellX + 0.2 + badgeW / 2, y + rowH / 2 + 0.85, { align: 'center' });
+
+              // High-contrast dark ink for daytime hours, or deep indigo for night shifts
+              doc.setTextColor(isNight ? 49 : 15, isNight ? 46 : 23, isNight ? 129 : 42);
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(fTime);
+              const timeCenterX = cellX + 0.2 + badgeW + (cellW - badgeW - 0.4) / 2;
+              doc.text(amplitudeStr, timeCenterX, y + rowH / 2 + 0.9, { align: 'center' });
             }
           }
         }
+
+        // Vertical column grid lines
+        doc.setDrawColor(214, 222, 233);
+        doc.setLineWidth(0.12);
+        doc.line(marginX, y, marginX, y + rowH);
+        doc.line(marginX + colNameW, y, marginX + colNameW, y + rowH);
+        for (let d = 1; d < 7; d++) {
+          const dx = marginX + colNameW + d * colDayW;
+          doc.line(dx, y, dx, y + rowH);
+        }
+        doc.line(marginX + tableW, y, marginX + tableW, y + rowH);
+
+        // Row bottom line (stronger guide line every 5 rows for easy horizontal tracking)
+        if (isFifthRow) {
+          doc.setDrawColor(148, 163, 184);
+          doc.setLineWidth(0.24);
+        } else {
+          doc.setDrawColor(220, 226, 234);
+          doc.setLineWidth(0.1);
+        }
+        doc.line(marginX, y + rowH, marginX + tableW, y + rowH);
+
         y += rowH;
       }
     }
-    
-    // Top border of the table is drawn by header.
   }
 
-  if (pageCount > 0) await downloadOrSharePdf(doc, opts.filename);
+  if (pageCount > 0) {
+    drawPremiumFooter(doc, pageW, pageH, marginX);
+    await downloadOrSharePdf(doc, opts.filename);
+  }
 }
 
 export async function exportGlobalRecapPdf(records: PlanningRecord[]): Promise<void> {
