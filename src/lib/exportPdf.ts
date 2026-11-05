@@ -1832,7 +1832,6 @@ async function generateGridGlobalPdf(opts: {
       for (let i = 0; i < emps.length; i++) {
         const emp = emps[i];
         const isEven = i % 2 === 0;
-        const isFifthRow = (i + 1) % 5 === 0 && i < emps.length - 1;
 
         // Distinct zebra row background across the entire row for effortless horizontal tracking
         const rowBg: [number, number, number] = isEven ? [255, 255, 255] : [241, 245, 249];
@@ -2005,14 +2004,9 @@ async function generateGridGlobalPdf(opts: {
         }
         doc.line(marginX + tableW, y, marginX + tableW, y + rowH);
 
-        // Row bottom line (stronger guide line every 5 rows for easy horizontal tracking)
-        if (isFifthRow) {
-          doc.setDrawColor(148, 163, 184);
-          doc.setLineWidth(0.24);
-        } else {
-          doc.setDrawColor(220, 226, 234);
-          doc.setLineWidth(0.1);
-        }
+        // Row bottom line
+        doc.setDrawColor(220, 226, 234);
+        doc.setLineWidth(0.1);
         doc.line(marginX, y + rowH, marginX + tableW, y + rowH);
 
         y += rowH;
