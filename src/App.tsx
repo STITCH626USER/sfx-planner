@@ -530,12 +530,12 @@ function DlpShowsPanel() {
 export default function App() {
 
   const [tab, setTab] = useState<Tab>('daily');
-  
+
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem('sfx_theme') as Theme | null;
       if (saved === 'dark' || saved === 'light') return saved;
-    } catch {}
+    } catch { }
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
@@ -551,7 +551,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.removeAttribute('data-comfort');
-    try { localStorage.removeItem('sfx_comfort_mode'); } catch {}
+    try { localStorage.removeItem('sfx_comfort_mode'); } catch { }
   }, []);
   const [sources, setSources] = useState<SourceFile[]>(() => {
     try {
@@ -659,11 +659,11 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('sfx_theme', theme);
-    } catch {}
+    } catch { }
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.className = theme;
     document.body.className = theme;
-    
+
     // CORRECTION MAJEURE : On force la couleur de fond du site
     // car votre fichier index.css bloque probablement le fond global.
     if (theme === 'light') {
@@ -778,7 +778,7 @@ export default function App() {
     return (
       <div className="apple-landing-wrapper" data-testid="app-root">
         <FireworksCanvas triggerCount={fireworkTrigger} />
-        
+
         {/* Navigation Bar Apple */}
         <header className="apple-navbar">
           <div className="apple-navbar-content">
@@ -914,7 +914,7 @@ export default function App() {
               <div className="export-head" style={{ padding: '12px 18px' }}>
                 <div className="export-title" style={{ fontSize: '16px' }}>Mentions Légales</div>
                 <button className="icon-btn" onClick={() => setShowLegalMentions(false)}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
               </div>
               <div className="export-body" style={{ overflowY: 'auto', padding: '14px 18px', gap: '10px', fontSize: '12.5px', color: 'var(--fg-muted)', lineHeight: '1.4' }}>
@@ -948,24 +948,24 @@ export default function App() {
 
         {showBugModal && <BugReportModal onClose={() => setShowBugModal(false)} />}
 
-      {showSquadPinModal && (
-        <SquadPinModal
-          onClose={() => setShowSquadPinModal(false)}
-          onUnlock={() => {
-            setShowSquadPinModal(false);
-            setFireworkTrigger(t => t + 1);
-            setShowSquadModal(true);
-          }}
-        />
-      )}
+        {showSquadPinModal && (
+          <SquadPinModal
+            onClose={() => setShowSquadPinModal(false)}
+            onUnlock={() => {
+              setShowSquadPinModal(false);
+              setFireworkTrigger(t => t + 1);
+              setShowSquadModal(true);
+            }}
+          />
+        )}
 
-      {showSquadModal && (
-        <SquadMatrixModal
-          records={records}
-          activeDate={dailyDate}
-          onClose={() => setShowSquadModal(false)}
-        />
-      )}
+        {showSquadModal && (
+          <SquadMatrixModal
+            records={records}
+            activeDate={dailyDate}
+            onClose={() => setShowSquadModal(false)}
+          />
+        )}
 
       </div>
     );
@@ -1179,7 +1179,7 @@ export default function App() {
             <div className="export-head">
               <div className="export-title" style={{ color: 'var(--amber)' }}>Réinitialiser ?</div>
               <button className="icon-btn" onClick={() => setShowResetConfirm(false)}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="export-body" style={{ textAlign: 'center', padding: '32px 24px' }}>
@@ -1192,9 +1192,9 @@ export default function App() {
             </div>
             <div className="export-foot" style={{ justifyContent: 'center', gap: '16px' }}>
               <button className="btn btn-secondary" onClick={() => setShowResetConfirm(false)}>Annuler</button>
-              <button 
-                className="btn" 
-                style={{ background: 'var(--amber)', color: '#fff', border: 'none' }} 
+              <button
+                className="btn"
+                style={{ background: 'var(--amber)', color: '#fff', border: 'none' }}
                 onClick={() => {
                   setShowResetConfirm(false);
                   resetAll();
@@ -1213,7 +1213,7 @@ export default function App() {
             <div className="export-head" style={{ padding: '12px 18px' }}>
               <div className="export-title" style={{ fontSize: '16px' }}>Mentions Légales</div>
               <button className="icon-btn" onClick={() => setShowLegalMentions(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="export-body" style={{ overflowY: 'auto', padding: '14px 18px', gap: '10px', fontSize: '12.5px', color: 'var(--fg-muted)', lineHeight: '1.4' }}>
@@ -1633,7 +1633,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 50);
   }, [name]);
-  
+
   const byWeek = useMemo(() => {
     const m = new Map<string, PlanningRecord[]>();
     for (const r of records) {
@@ -1690,7 +1690,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
     if (!openScene || !allRecords) return [];
     if (!openScene.scene) return [];
     const dayRecs = allRecords.filter(r => r.date === openScene.date && r.time !== 'OFF');
-    
+
     return dayRecs
       .filter(r => r.scene === openScene.scene)
       .sort((a, b) => {
@@ -1728,7 +1728,7 @@ function EmployeeDetail({ name, records, allRecords, onBack }: {
     const nextIdx = idx + delta;
     if (nextIdx < 0 || nextIdx >= employeeDates.length) return;
     const nextDate = employeeDates[nextIdx];
-    
+
     // Find what the employee has on this date
     const dayRecs = records.filter(r => r.date === nextDate);
     const workingRecs = dayRecs.filter(r => r.time !== 'OFF');
@@ -2407,84 +2407,84 @@ function SceneDetail({
           {team.length === 0 ? (
             <div className="empty"><div className="empty-title">Personne sur cette scène ce jour.</div></div>
           ) : (
-        <div className="modern-scene-card" data-testid="list-team">
-          {team.map((rec, rIdx) => {
-            const isFOVirtual = (rec as any).isFOVirtual;
-            const assocScenes = (rec as any).assocScenes;
-            const originalScene = (rec as any).originalScene;
-            const isFO = isTrainingScene(rec.scene) || isFOVirtual;
+            <div className="modern-scene-card" data-testid="list-team">
+              {team.map((rec, rIdx) => {
+                const isFOVirtual = (rec as any).isFOVirtual;
+                const assocScenes = (rec as any).assocScenes;
+                const originalScene = (rec as any).originalScene;
+                const isFO = isTrainingScene(rec.scene) || isFOVirtual;
 
-            const range = parseRange(rec.time);
-            const isNight = range ? range.start >= 18 * 60 : false;
-            const prevRange = rIdx > 0 ? parseRange(team[rIdx - 1].time) : null;
-            const prevIsNight = prevRange ? prevRange.start >= 18 * 60 : false;
-            const showNightHeader = isNight && !prevIsNight && rIdx > 0;
+                const range = parseRange(rec.time);
+                const isNight = range ? range.start >= 18 * 60 : false;
+                const prevRange = rIdx > 0 ? parseRange(team[rIdx - 1].time) : null;
+                const prevIsNight = prevRange ? prevRange.start >= 18 * 60 : false;
+                const showNightHeader = isNight && !prevIsNight && rIdx > 0;
 
-            return (
-              <div key={`${rec.employee}-${rec.time}-${rec.scene}`}>
-                {showNightHeader && (
-                  <div className="night-shift-divider">
-                    <span>🌙 Équipe de nuit</span>
-                  </div>
-                )}
-                <div className="compact-team-row" data-testid={`team-${rec.employee}`}>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="team-name compact-name">
-                      {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
-                    </div>
-                    {isFOVirtual && originalScene && (
-                      <div className="team-meta compact-meta">
-                        `En formation (${originalScene})`
+                return (
+                  <div key={`${rec.employee}-${rec.time}-${rec.scene}`}>
+                    {showNightHeader && (
+                      <div className="night-shift-divider">
+                        <span>🌙 Équipe de nuit</span>
                       </div>
                     )}
-                  </div>
-                  <div className="compact-right-group">
-                    <div className="compact-role-cell">
-                      {isFO ? (
-                        <span
-                          className="role-pill"
-                          style={{
-                            background: 'rgba(168, 85, 247, 0.16)',
-                            color: '#c084fc',
-                            borderColor: 'rgba(168, 85, 247, 0.4)',
-                          }}
-                          title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
-                        >
-                          🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
+                    <div className="compact-team-row" data-testid={`team-${rec.employee}`}>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="team-name compact-name">
+                          {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
+                        </div>
+                        {isFOVirtual && originalScene && (
+                          <div className="team-meta compact-meta">
+                            `En formation (${originalScene})`
+                          </div>
+                        )}
+                      </div>
+                      <div className="compact-right-group">
+                        <div className="compact-role-cell">
+                          {isFO ? (
+                            <span
+                              className="role-pill"
+                              style={{
+                                background: 'rgba(168, 85, 247, 0.16)',
+                                color: '#c084fc',
+                                borderColor: 'rgba(168, 85, 247, 0.4)',
+                              }}
+                              title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
+                            >
+                              🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
+                            </span>
+                          ) : rec.role ? (
+                            <span
+                              className="role-pill"
+                              style={{
+                                background: getRoleBadgeStyle(rec.role).bg,
+                                color: getRoleBadgeStyle(rec.role).color,
+                                borderColor: getRoleBadgeStyle(rec.role).border,
+                              }}
+                              title={rec.role}
+                            >
+                              {cleanRoleLabel(rec.role)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
+                          {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
                         </span>
-                      ) : rec.role ? (
-                        <span
-                          className="role-pill"
-                          style={{
-                            background: getRoleBadgeStyle(rec.role).bg,
-                            color: getRoleBadgeStyle(rec.role).color,
-                            borderColor: getRoleBadgeStyle(rec.role).border,
-                          }}
-                          title={rec.role}
+                        <button
+                          type="button"
+                          className="btn-eye compact-eye"
+                          aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
+                          data-testid={`btn-view-employee-${rec.employee}`}
+                          onClick={() => onViewEmployee((rec as any).originalEmployeeName || rec.employee)}
                         >
-                          {cleanRoleLabel(rec.role)}
-                        </span>
-                      ) : null}
+                          <IconEye />
+                        </button>
+                      </div>
                     </div>
-                    <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
-                      {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-eye compact-eye"
-                      aria-label={`Voir le planning de ${prettyName(rec.employee)}`}
-                      data-testid={`btn-view-employee-${rec.employee}`}
-                      onClick={() => onViewEmployee((rec as any).originalEmployeeName || rec.employee)}
-                    >
-                      <IconEye />
-                    </button>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -2590,13 +2590,13 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
   }, [dailySearch, isSearching, searchMatchingEmployees]);
 
   const byScene = useMemo(() => {
-    const dateToScenes = new Map<string, Array<{time: string, clean: string}>>();
+    const dateToScenes = new Map<string, Array<{ time: string, clean: string }>>();
     for (const r of records) {
       if (r.time !== 'OFF' && !isTrainingScene(r.scene)) {
         let clean = cleanSceneName(r.scene);
         if (clean && clean.toLowerCase() !== 'fo' && clean.toLowerCase() !== 'formation') {
           if (!dateToScenes.has(r.date)) dateToScenes.set(r.date, []);
-          dateToScenes.get(r.date)!.push({time: r.time, clean});
+          dateToScenes.get(r.date)!.push({ time: r.time, clean });
         }
       }
     }
@@ -2605,9 +2605,9 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
     for (const rec of allWorkingForDate) {
       let groupName = cleanSceneName(rec.scene);
       let displayName = prettyName(rec.employee);
-      
+
       let assocScenes: string[] | undefined;
-      
+
       if (isTrainingScene(rec.scene)) {
         groupName = 'Formations';
         if (rec.scene.toLowerCase() !== 'formation' && rec.scene.toLowerCase() !== 'fo') {
@@ -2623,7 +2623,7 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         matched.add('Formation autre');
         if (matched.size > 0) assocScenes = Array.from(matched).sort();
       }
-      
+
       if (!groups.has(groupName)) groups.set(groupName, []);
       // We pass a cloned record with the updated display name so the UI shows it
       groups.get(groupName)!.push({ ...rec, employee: displayName, assocScenes, originalEmployeeName: rec.employee } as any);
@@ -2878,193 +2878,193 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
         />
       </div>
       <div data-testid="panel-daily" className="modern-daily-panel">
-          <div className="modern-daily-header">
-            <div className="modern-daily-compact-bar">
-              {(() => {
-                const parts = formatDateParts(date);
-                const isTodayDate = date === getTodayIso();
-                return (
-                  <>
-                    <h1 className="modern-daily-date">
-                      {parts ? (
-                        <>
-                          <span className="modern-daily-weekday">{parts.dayName}</span>{' '}
-                          <span className="modern-daily-daynum">{parts.dayNum}</span>{' '}
-                          <span className="modern-daily-month">{parts.monthName}</span>{' '}
-                          <span className="modern-daily-year">{parts.year}</span>
-                        </>
-                      ) : (
-                        formatDateLong(date)
-                      )}
-                    </h1>
-                    <div className="modern-daily-meta-row">
-                      {isTodayDate && (
-                        <span className="modern-today-live-pill">
-                          <span className="modern-today-live-dot" />
-                          AUJOURD'HUI
-                        </span>
-                      )}
-                      <div className="modern-presence-chip" title="Techniciens présents sur cette journée">
-                        <span className="modern-pulse-dot" />
-                        <span className="modern-presence-count">{uniqueTechs}</span>
-                        <span className="modern-presence-label">présents</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="modern-btn-export"
-                        data-testid="btn-export-pdf"
-                        aria-label="Exporter en PDF"
-                        onClick={() => setShowExport(true)}
-                      >
-                        <IconDownload />
-                        <span className="modern-btn-export-text-full">Exporter PDF</span>
-                        <span className="modern-btn-export-text-short">Export PDF</span>
-                      </button>
+        <div className="modern-daily-header">
+          <div className="modern-daily-compact-bar">
+            {(() => {
+              const parts = formatDateParts(date);
+              const isTodayDate = date === getTodayIso();
+              return (
+                <>
+                  <h1 className="modern-daily-date">
+                    {parts ? (
+                      <>
+                        <span className="modern-daily-weekday">{parts.dayName}</span>{' '}
+                        <span className="modern-daily-daynum">{parts.dayNum}</span>{' '}
+                        <span className="modern-daily-month">{parts.monthName}</span>{' '}
+                        <span className="modern-daily-year">{parts.year}</span>
+                      </>
+                    ) : (
+                      formatDateLong(date)
+                    )}
+                  </h1>
+                  <div className="modern-daily-meta-row">
+                    {isTodayDate && (
+                      <span className="modern-today-live-pill">
+                        <span className="modern-today-live-dot" />
+                        AUJOURD'HUI
+                      </span>
+                    )}
+                    <div className="modern-presence-chip" title="Techniciens présents sur cette journée">
+                      <span className="modern-pulse-dot" />
+                      <span className="modern-presence-count">{uniqueTechs}</span>
+                      <span className="modern-presence-label">présents</span>
                     </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            {timelineData && (
-              <div className="daily-timecode-ruler" aria-label="Amplitude horaire de la journée">
-                <div className="timecode-scale-bar">
-                  <span className={`tc-bound tc-bound-start ${timelineData.startOccluded ? 'is-occluded' : ''}`}>
-                    {timelineData.minLabel}
-                  </span>
-
-                  <div className="tc-ticks-area">
-                    {timelineData.ticks.map((t, idx) => (
-                      <div
-                        key={`${t.label}-${idx}`}
-                        className={`tc-tick-node ${t.isMajor ? 'is-major' : 'is-minor'}`}
-                        style={{ left: `${t.pct}%` }}
-                      >
-                        {t.showLabel && <span className="tc-tick-label">{t.label}</span>}
-                        <span className="tc-tick-mark" />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Bulle de l'heure en direct (affichée uniquement sur la date d'aujourd'hui) */}
-                  {timelineData.isToday && (
-                    <div
-                      className={`tc-playhead-badge ${timelineData.inBounds ? 'is-live' : `is-standby is-standby-${timelineData.standbySide}`}`}
-                      style={
-                        timelineData.inBounds
-                          ? { left: `clamp(30px, ${timelineData.playheadPct}%, calc(100% - 30px))` }
-                          : undefined
-                      }
-                      title={
-                        timelineData.inBounds
-                          ? `Heure actuelle : ${timelineData.nowLabel}`
-                          : `Hors amplitude du jour (en veille) · ${timelineData.nowLabel}`
-                      }
+                    <button
+                      type="button"
+                      className="modern-btn-export"
+                      data-testid="btn-export-pdf"
+                      aria-label="Exporter en PDF"
+                      onClick={() => setShowExport(true)}
                     >
-                      <span className="tc-playhead-badge-dot" />
-                      <span className="tc-playhead-badge-time">{timelineData.nowLabel}</span>
-                    </div>
-                  )}
-
-                  <span className={`tc-bound tc-bound-end ${timelineData.endOccluded ? 'is-occluded' : ''}`}>
-                    {timelineData.maxLabel}
-                  </span>
-                </div>
-
-                {/* Zone des pistes et du métrage pleine largeur */}
-                <div className="timecode-tracks-box">
-                  {/* Lignes de repère verticales */}
-                  {timelineData.ticks.filter((t) => t.showGrid).map((t, idx) => (
-                    <div
-                      key={`grid-${t.label}-${idx}`}
-                      className="tc-grid-line"
-                      style={{ left: `${t.pct}%` }}
-                      aria-hidden="true"
-                    />
-                  ))}
-
-                  {/* Bulles colorées par scène avec le nom intégré dedans */}
-                  <div className="tc-tracks-stack">
-                    {timelineData.spans.map((sp) => (
-                      <div
-                        key={sp.scene}
-                        className="tc-track-row"
-                        onClick={() => {
-                          const el = document.querySelector(`[data-testid="scene-group-${sp.scene}"]`);
-                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}
-                        title={`${sp.cleanName} : ${sp.startLabel} → ${sp.endLabel}`}
-                      >
-                        {sp.segments.map((seg, idx) => {
-                          const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
-                          const widthPct = Math.max(4, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
-                          const isActiveNow =
-                            timelineData.isToday &&
-                            timelineData.inBounds &&
-                            timelineData.effNow >= seg.start &&
-                            timelineData.effNow <= seg.end;
-                          return (
-                            <div
-                              key={idx}
-                              className={`tc-track-segment ${isActiveNow ? 'is-active-now' : ''}`}
-                              style={{
-                                left: `${leftPct}%`,
-                                width: `${widthPct}%`,
-                                '--tc-color': sp.accent,
-                              } as React.CSSProperties}
-                            >
-                              <span className="tc-segment-label">{sp.cleanName}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                      <IconDownload />
+                      <span className="modern-btn-export-text-full">Exporter PDF</span>
+                      <span className="modern-btn-export-text-short">Export PDF</span>
+                    </button>
                   </div>
-
-                  {/* Aiguille Live / Playhead (uniquement sur la journée d'aujourd'hui) */}
-                  {timelineData.isToday && (
-                    <div
-                      className={`tc-playhead ${timelineData.inBounds ? 'is-live' : `is-standby is-standby-${timelineData.standbySide}`}`}
-                      style={{ left: `${timelineData.playheadPct}%` }}
-                      title={
-                        timelineData.inBounds
-                          ? `Heure actuelle : ${timelineData.nowLabel}`
-                          : `Hors amplitude (en veille) : ${timelineData.nowLabel}`
-                      }
-                    >
-                      <div className="tc-playhead-head" />
-                      <div className="tc-playhead-line" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                </>
+              );
+            })()}
           </div>
 
-          {showExport && (
-            <ExportDialog
-              records={records}
-              date={date}
-              onClose={() => setShowExport(false)}
-            />
-          )}
+          {timelineData && (
+            <div className="daily-timecode-ruler" aria-label="Amplitude horaire de la journée">
+              <div className="timecode-scale-bar">
+                <span className={`tc-bound tc-bound-start ${timelineData.startOccluded ? 'is-occluded' : ''}`}>
+                  {timelineData.minLabel}
+                </span>
 
-          {byScene.length === 0 ? (
-            <div className="empty" data-testid="empty-daily">
-              <div className="empty-icon"><IconCalendar /></div>
-              <div className="empty-title">{dailySearch.trim() ? "Aucun technicien trouvé" : "Personne présent ce jour"}</div>
-              <div className="empty-sub">{dailySearch.trim() ? `Aucun technicien ne correspond à la recherche "${dailySearch}".` : "Aucun technicien avec une scène planifiée sur cette date."}</div>
+                <div className="tc-ticks-area">
+                  {timelineData.ticks.map((t, idx) => (
+                    <div
+                      key={`${t.label}-${idx}`}
+                      className={`tc-tick-node ${t.isMajor ? 'is-major' : 'is-minor'}`}
+                      style={{ left: `${t.pct}%` }}
+                    >
+                      {t.showLabel && <span className="tc-tick-label">{t.label}</span>}
+                      <span className="tc-tick-mark" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bulle de l'heure en direct (affichée uniquement sur la date d'aujourd'hui) */}
+                {timelineData.isToday && (
+                  <div
+                    className={`tc-playhead-badge ${timelineData.inBounds ? 'is-live' : `is-standby is-standby-${timelineData.standbySide}`}`}
+                    style={
+                      timelineData.inBounds
+                        ? { left: `clamp(30px, ${timelineData.playheadPct}%, calc(100% - 30px))` }
+                        : undefined
+                    }
+                    title={
+                      timelineData.inBounds
+                        ? `Heure actuelle : ${timelineData.nowLabel}`
+                        : `Hors amplitude du jour (en veille) · ${timelineData.nowLabel}`
+                    }
+                  >
+                    <span className="tc-playhead-badge-dot" />
+                    <span className="tc-playhead-badge-time">{timelineData.nowLabel}</span>
+                  </div>
+                )}
+
+                <span className={`tc-bound tc-bound-end ${timelineData.endOccluded ? 'is-occluded' : ''}`}>
+                  {timelineData.maxLabel}
+                </span>
+              </div>
+
+              {/* Zone des pistes et du métrage pleine largeur */}
+              <div className="timecode-tracks-box">
+                {/* Lignes de repère verticales */}
+                {timelineData.ticks.filter((t) => t.showGrid).map((t, idx) => (
+                  <div
+                    key={`grid-${t.label}-${idx}`}
+                    className="tc-grid-line"
+                    style={{ left: `${t.pct}%` }}
+                    aria-hidden="true"
+                  />
+                ))}
+
+                {/* Bulles colorées par scène avec le nom intégré dedans */}
+                <div className="tc-tracks-stack">
+                  {timelineData.spans.map((sp) => (
+                    <div
+                      key={sp.scene}
+                      className="tc-track-row"
+                      onClick={() => {
+                        const el = document.querySelector(`[data-testid="scene-group-${sp.scene}"]`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      title={`${sp.cleanName} : ${sp.startLabel} → ${sp.endLabel}`}
+                    >
+                      {sp.segments.map((seg, idx) => {
+                        const leftPct = ((seg.start - timelineData.minStart) / timelineData.totalSpan) * 100;
+                        const widthPct = Math.max(4, ((seg.end - seg.start) / timelineData.totalSpan) * 100);
+                        const isActiveNow =
+                          timelineData.isToday &&
+                          timelineData.inBounds &&
+                          timelineData.effNow >= seg.start &&
+                          timelineData.effNow <= seg.end;
+                        return (
+                          <div
+                            key={idx}
+                            className={`tc-track-segment ${isActiveNow ? 'is-active-now' : ''}`}
+                            style={{
+                              left: `${leftPct}%`,
+                              width: `${widthPct}%`,
+                              '--tc-color': sp.accent,
+                            } as React.CSSProperties}
+                          >
+                            <span className="tc-segment-label">{sp.cleanName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Aiguille Live / Playhead (uniquement sur la journée d'aujourd'hui) */}
+                {timelineData.isToday && (
+                  <div
+                    className={`tc-playhead ${timelineData.inBounds ? 'is-live' : `is-standby is-standby-${timelineData.standbySide}`}`}
+                    style={{ left: `${timelineData.playheadPct}%` }}
+                    title={
+                      timelineData.inBounds
+                        ? `Heure actuelle : ${timelineData.nowLabel}`
+                        : `Hors amplitude (en veille) : ${timelineData.nowLabel}`
+                    }
+                  >
+                    <div className="tc-playhead-head" />
+                    <div className="tc-playhead-line" />
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="daily-groups" data-testid="list-daily-scenes">
-              {byScene.map(([scene, sceneRecords], sIndex) => {
-                const scColor = getSceneColor(cleanSceneName(scene));
-                return (
+          )}
+        </div>
+
+        {showExport && (
+          <ExportDialog
+            records={records}
+            date={date}
+            onClose={() => setShowExport(false)}
+          />
+        )}
+
+        {byScene.length === 0 ? (
+          <div className="empty" data-testid="empty-daily">
+            <div className="empty-icon"><IconCalendar /></div>
+            <div className="empty-title">{dailySearch.trim() ? "Aucun technicien trouvé" : "Personne présent ce jour"}</div>
+            <div className="empty-sub">{dailySearch.trim() ? `Aucun technicien ne correspond à la recherche "${dailySearch}".` : "Aucun technicien avec une scène planifiée sur cette date."}</div>
+          </div>
+        ) : (
+          <div className="daily-groups" data-testid="list-daily-scenes">
+            {byScene.map(([scene, sceneRecords], sIndex) => {
+              const scColor = getSceneColor(cleanSceneName(scene));
+              return (
                 <section
                   className="modern-scene-card animate-fade-in"
                   key={scene}
                   data-testid={`scene-group-${scene}`}
-                  style={{ 
+                  style={{
                     animationDelay: `${sIndex * 0.04}s`,
                     '--scene-accent': scColor.accent
                   } as React.CSSProperties}
@@ -3107,170 +3107,170 @@ function DailyPanel({ records, date, onDateChange: _onDateChange }: { records: P
                   </div>
                   <div className="compact-list-wrapper expanded">
                     <div className="compact-list" data-testid={`scene-team-${scene}`}>
-                    {sceneRecords.map((rec, rIdx) => {
-                      const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
-                      const isFOVirtual = extRec.isFOVirtual;
-                      const assocScenes = extRec.assocScenes;
-                      const originalScene = extRec.originalScene;
-                      const isFO = isTrainingScene(rec.scene) || isFOVirtual;
+                      {sceneRecords.map((rec, rIdx) => {
+                        const extRec = rec as PlanningRecord & { isFOVirtual?: boolean; assocScenes?: string[]; originalScene?: string; originalEmployeeName?: string };
+                        const isFOVirtual = extRec.isFOVirtual;
+                        const assocScenes = extRec.assocScenes;
+                        const originalScene = extRec.originalScene;
+                        const isFO = isTrainingScene(rec.scene) || isFOVirtual;
 
-                      const range = parseRange(rec.time);
-                      const isNight = range ? range.start >= 18 * 60 : false;
-                      const prevRange = rIdx > 0 ? parseRange(sceneRecords[rIdx - 1].time) : null;
-                      const prevIsNight = prevRange ? prevRange.start >= 18 * 60 : false;
-                      const showNightHeader = isNight && !prevIsNight && rIdx > 0;
+                        const range = parseRange(rec.time);
+                        const isNight = range ? range.start >= 18 * 60 : false;
+                        const prevRange = rIdx > 0 ? parseRange(sceneRecords[rIdx - 1].time) : null;
+                        const prevIsNight = prevRange ? prevRange.start >= 18 * 60 : false;
+                        const showNightHeader = isNight && !prevIsNight && rIdx > 0;
 
-                      const rawEmp = extRec.originalEmployeeName || rec.employee;
-                      const isMatch = isSearching && searchMatchingEmployees.has(rawEmp);
+                        const rawEmp = extRec.originalEmployeeName || rec.employee;
+                        const isMatch = isSearching && searchMatchingEmployees.has(rawEmp);
 
-                      return (
-                        <div key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}>
-                          {showNightHeader && (
-                            <div className="night-shift-divider">
-                              <span>🌙 Équipe de nuit</span>
-                            </div>
-                          )}
-                          <div
-                            className={`compact-team-row ${isMatch ? 'is-highlighted' : ''} ${isSearching && !isMatch ? 'is-dimmed' : ''}`}
-                            data-testid={`scene-tech-${scene}-${rec.employee}`}
-                          >
-                            <div style={{ minWidth: 0 }}>
-                              <div className="team-name compact-name">
-                                {isMatch && <span className="highlight-ping-dot" aria-hidden="true" />}
-                                {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
+                        return (
+                          <div key={`${rec.employee}-${rec.date}-${rec.time}-${rec.scene}`}>
+                            {showNightHeader && (
+                              <div className="night-shift-divider">
+                                <span>🌙 Équipe de nuit</span>
                               </div>
-                              {isFOVirtual && originalScene && (
-                                <div className="team-meta compact-meta">
-                                  <span style={{ color: 'var(--muted)' }}>En formation ({originalScene})</span>
+                            )}
+                            <div
+                              className={`compact-team-row ${isMatch ? 'is-highlighted' : ''} ${isSearching && !isMatch ? 'is-dimmed' : ''}`}
+                              data-testid={`scene-tech-${scene}-${rec.employee}`}
+                            >
+                              <div style={{ minWidth: 0 }}>
+                                <div className="team-name compact-name">
+                                  {isMatch && <span className="highlight-ping-dot" aria-hidden="true" />}
+                                  {isFOVirtual ? `🎓 ` : ''}{prettyName(rec.employee)}
                                 </div>
-                              )}
-                            </div>
-                            <div className="compact-right-group">
-                              <div className="compact-role-cell">
-                                {isFO ? (
-                                  <span
-                                    className="role-pill"
-                                    style={{
-                                      background: 'rgba(168, 85, 247, 0.16)',
-                                      color: '#c084fc',
-                                      borderColor: 'rgba(168, 85, 247, 0.4)',
-                                    }}
-                                    title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
-                                  >
-                                    🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
-                                  </span>
-                                ) : rec.role ? (
-                                  <span
-                                    className="role-pill"
-                                    style={{
-                                      background: getRoleBadgeStyle(rec.role).bg,
-                                      color: getRoleBadgeStyle(rec.role).color,
-                                      borderColor: getRoleBadgeStyle(rec.role).border,
-                                    }}
-                                    title={rec.role}
-                                  >
-                                    {cleanRoleLabel(rec.role)}
-                                  </span>
-                                ) : null}
+                                {isFOVirtual && originalScene && (
+                                  <div className="team-meta compact-meta">
+                                    <span style={{ color: 'var(--muted)' }}>En formation ({originalScene})</span>
+                                  </div>
+                                )}
                               </div>
-                              <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
-                                {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
-                              </span>
-                              <button
-                                type="button"
-                                className="btn-eye compact-eye"
-                                data-testid={`btn-view-tech-${rec.employee}`}
-                                onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
-                              >
-                                <IconEye />
-                              </button>
+                              <div className="compact-right-group">
+                                <div className="compact-role-cell">
+                                  {isFO ? (
+                                    <span
+                                      className="role-pill"
+                                      style={{
+                                        background: 'rgba(168, 85, 247, 0.16)',
+                                        color: '#c084fc',
+                                        borderColor: 'rgba(168, 85, 247, 0.4)',
+                                      }}
+                                      title={assocScenes && assocScenes.length > 0 ? `Peut correspondre à ${assocScenes.join(', ')}` : undefined}
+                                    >
+                                      🎓 {rec.time && rec.shiftTime && rec.time !== rec.shiftTime ? `Séance ${rec.time}` : 'Formation'}
+                                    </span>
+                                  ) : rec.role ? (
+                                    <span
+                                      className="role-pill"
+                                      style={{
+                                        background: getRoleBadgeStyle(rec.role).bg,
+                                        color: getRoleBadgeStyle(rec.role).color,
+                                        borderColor: getRoleBadgeStyle(rec.role).border,
+                                      }}
+                                      title={rec.role}
+                                    >
+                                      {cleanRoleLabel(rec.role)}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <span className={timePillClass(isFO && rec.shiftTime ? rec.shiftTime : rec.time, rec.scene, isFO)}>
+                                  {isFO && rec.shiftTime ? rec.shiftTime : rec.time}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="btn-eye compact-eye"
+                                  data-testid={`btn-view-tech-${rec.employee}`}
+                                  onClick={() => handleSelectEmployee(extRec.originalEmployeeName || rec.employee)}
+                                >
+                                  <IconEye />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </section>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Capsule de recherche flottante en bas (style Apple Dynamic Island / Spotlight) */}
-          <div className="floating-search-dock">
-            <div
-              className={`floating-search-pill ${searchExpanded || isSearching ? 'is-expanded' : ''}`}
-              onClick={() => {
-                if (!searchExpanded) handleOpenSearch();
-              }}
-              role={!searchExpanded ? 'button' : undefined}
-              tabIndex={!searchExpanded ? 0 : undefined}
-              onKeyDown={(e) => {
-                if (!searchExpanded && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  handleOpenSearch();
-                }
-              }}
-            >
-              <div className="floating-search-icon" aria-hidden="true">
-                <IconSearch />
-              </div>
-
-              {!searchExpanded && !isSearching ? (
-                <span className="floating-search-label">Rechercher</span>
-              ) : (
-                <>
-                  <input
-                    ref={searchInputRef}
-                    id="daily-technician-filter"
-                    name="daily_technician_query"
-                    type="text"
-                    inputMode="text"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="words"
-                    spellCheck={false}
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
-                    data-form-type="other"
-                    data-dashlane-ignore="true"
-                    data-private="true"
-                    placeholder="Rechercher un technicien..."
-                    value={dailySearch}
-                    onChange={(e) => setDailySearch(e.target.value)}
-                    onBlur={() => {
-                      if (!dailySearch.trim()) {
-                        setSearchExpanded(false);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        handleCloseSearch();
-                      }
-                    }}
-                    className="floating-search-input"
-                  />
-                  {dailySearch && (
-                    <span className={searchMatchingEmployees.size > 0 ? 'search-match-badge' : 'search-no-match-badge'}>
-                      {searchMatchingEmployees.size > 0
-                        ? `${searchMatchingEmployees.size} trouvé${searchMatchingEmployees.size > 1 ? 's' : ''}`
-                        : '0'}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    className="floating-search-close"
-                    onClick={handleCloseSearch}
-                    aria-label="Fermer la recherche"
-                  >
-                    ✕
-                  </button>
-                </>
-              )}
-            </div>
+              );
+            })}
           </div>
+        )}
+
+        {/* Capsule de recherche flottante en bas (style Apple Dynamic Island / Spotlight) */}
+        <div className="floating-search-dock">
+          <div
+            className={`floating-search-pill ${searchExpanded || isSearching ? 'is-expanded' : ''}`}
+            onClick={() => {
+              if (!searchExpanded) handleOpenSearch();
+            }}
+            role={!searchExpanded ? 'button' : undefined}
+            tabIndex={!searchExpanded ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (!searchExpanded && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                handleOpenSearch();
+              }
+            }}
+          >
+            <div className="floating-search-icon" aria-hidden="true">
+              <IconSearch />
+            </div>
+
+            {!searchExpanded && !isSearching ? (
+              <span className="floating-search-label">Rechercher</span>
+            ) : (
+              <>
+                <input
+                  ref={searchInputRef}
+                  id="daily-technician-filter"
+                  name="daily_technician_query"
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="words"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                  data-dashlane-ignore="true"
+                  data-private="true"
+                  placeholder="Rechercher un technicien..."
+                  value={dailySearch}
+                  onChange={(e) => setDailySearch(e.target.value)}
+                  onBlur={() => {
+                    if (!dailySearch.trim()) {
+                      setSearchExpanded(false);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      handleCloseSearch();
+                    }
+                  }}
+                  className="floating-search-input"
+                />
+                {dailySearch && (
+                  <span className={searchMatchingEmployees.size > 0 ? 'search-match-badge' : 'search-no-match-badge'}>
+                    {searchMatchingEmployees.size > 0
+                      ? `${searchMatchingEmployees.size} trouvé${searchMatchingEmployees.size > 1 ? 's' : ''}`
+                      : '0'}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="floating-search-close"
+                  onClick={handleCloseSearch}
+                  aria-label="Fermer la recherche"
+                >
+                  ✕
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );
@@ -3344,29 +3344,29 @@ function DatePicker({ dates, date, records, onChange }: {
       <div className="modern-date-divider" aria-hidden="true" />
 
       <div ref={scrollRef} className="date-row modern-date-row" role="tablist" data-testid="date-row">
-      {dates.map(d => {
-        const sel = d === date;
-        const isTodayPill = d === todayIso;
-        const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-        const dn = m ? m[3] : d;
-        const day = records.find(r => r.date === d)?.day ?? '';
-        const dayShort = DAY_FR_SHORT[day] ?? '';
-        return (
-          <button
-            key={d}
-            type="button"
-            role="tab"
-            aria-selected={sel}
-            className={`modern-date-pill ${isTodayPill ? 'is-today-pill' : ''}`}
-            data-testid={`date-pill-${d}`}
-            onClick={() => onChange(d)}
-          >
-            <span className="modern-dp-day">{dayShort}</span>
-            <span className="modern-dp-num">{dn}</span>
-            {isTodayPill && <span className="modern-dp-today-dot" aria-hidden="true" />}
-          </button>
-        );
-      })}
+        {dates.map(d => {
+          const sel = d === date;
+          const isTodayPill = d === todayIso;
+          const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          const dn = m ? m[3] : d;
+          const day = records.find(r => r.date === d)?.day ?? '';
+          const dayShort = DAY_FR_SHORT[day] ?? '';
+          return (
+            <button
+              key={d}
+              type="button"
+              role="tab"
+              aria-selected={sel}
+              className={`modern-date-pill ${isTodayPill ? 'is-today-pill' : ''}`}
+              data-testid={`date-pill-${d}`}
+              onClick={() => onChange(d)}
+            >
+              <span className="modern-dp-day">{dayShort}</span>
+              <span className="modern-dp-num">{dn}</span>
+              {isTodayPill && <span className="modern-dp-today-dot" aria-hidden="true" />}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -3496,7 +3496,7 @@ function IconMoon() {
 function IconSearch() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   );
 }
@@ -3540,14 +3540,14 @@ function IconChevron() {
 function IconArrowLeft() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m15 18-6-6 6-6"/>
+      <path d="m15 18-6-6 6-6" />
     </svg>
   );
 }
 function IconArrowRight() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m9 18 6-6-6-6"/>
+      <path d="m9 18 6-6-6-6" />
     </svg>
   );
 }
@@ -3574,7 +3574,7 @@ function ScrollToTop() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  
+
   if (!visible) return null;
   return (
     <button
@@ -3759,7 +3759,7 @@ function BugReportModal({ onClose }: { onClose: () => void }) {
             )}
           </div>
           <button className="icon-btn" onClick={onClose} aria-label="Fermer">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
 
@@ -4250,12 +4250,12 @@ interface SquadMemberDef {
 }
 
 const SQUAD_MEMBERS: SquadMemberDef[] = [
-  { id: 'al',  name: 'Aurélien Leroy',     short: 'Aurélien L.',  tokens: ['leroy', 'aurelien'],        color: '#38bdf8' },
-  { id: 'ar',  name: 'Alexandre ROUX',     short: 'Alexandre R.', tokens: ['roux', 'alexandre'],        color: '#f59e0b' },
-  { id: 'dl',  name: 'Damien LACOM',       short: 'Damien L.',    tokens: ['lacom', 'damien'],          color: '#10b981' },
-  { id: 'jms', name: 'Jean-Marc SCOLARI',  short: 'Jean-Marc S.', tokens: ['scolari', 'jean', 'marc'],  color: '#a855f7' },
-  { id: 'ed',  name: 'Erwan DESRUELS',     short: 'Erwan D.',     tokens: ['desruels', 'erwan'],        color: '#f43f5e' },
-  { id: 'ac',  name: 'Alexandre CALMETTE', short: 'Alexandre C.', tokens: ['calmette', 'alexandre'],    color: '#06b6d4' },
+  { id: 'al', name: 'Aurélien Leroy', short: 'Aurélien L.', tokens: ['leroy', 'aurelien'], color: '#38bdf8' },
+  { id: 'ar', name: 'Alexandre ROUX', short: 'Alexandre R.', tokens: ['roux', 'alexandre'], color: '#f59e0b' },
+  { id: 'dl', name: 'Damien LACOM', short: 'Damien L.', tokens: ['lacom', 'damien'], color: '#10b981' },
+  { id: 'jms', name: 'Jean-Marc SCOLARI', short: 'Jean-Marc S.', tokens: ['scolari', 'jean', 'marc'], color: '#a855f7' },
+  { id: 'ed', name: 'Erwan DESRUELS', short: 'Erwan D.', tokens: ['desruels', 'erwan'], color: '#f43f5e' },
+  { id: 'ac', name: 'Alexandre CALMETTE', short: 'Alexandre C.', tokens: ['calmette', 'alexandre'], color: '#06b6d4' },
 ];
 
 function normalizeTokens(str: string): string[] {
@@ -4448,7 +4448,7 @@ function SquadMatrixModal({
   activeDate: string;
   onClose: () => void;
 }) {
-  const [filterMode, setFilterMode] = useState<'all' | 'common' | 'samescene'>('all');
+  const [selectedCell, setSelectedCell] = useState<{ techId: string; date: string } | null>(null);
 
   // Group all available dates into weeks
   const weeks = useMemo(() => {
@@ -4569,22 +4569,61 @@ function SquadMatrixModal({
     };
   }, [matrixData]);
 
-  const dayMatchesFilter = useCallback((date: string) => {
-    const stats = getDayStats(date);
-    if (filterMode === 'common') return stats.presentCount >= 3;
-    if (filterMode === 'samescene') return stats.maxSameScene >= 2;
-    return true;
-  }, [getDayStats, filterMode]);
+  // Compute selected cell detail data
+  const selectedData = useMemo(() => {
+    if (!selectedCell) return null;
+    const { techId, date } = selectedCell;
+    const member = SQUAD_MEMBERS.find(m => m.id === techId);
+    if (!member) return null;
+    const dateMap = matrixData.get(date);
+    const cell = dateMap?.get(techId);
+    if (!cell) return null;
+
+    const sameSceneMates = SQUAD_MEMBERS.filter(m => {
+      if (m.id === techId) return false;
+      const other = dateMap?.get(m.id);
+      if (!other) return false;
+      return other.allSceneKeys.some(k => cell.allSceneKeys.includes(k));
+    }).map(m => ({
+      member: m,
+      cell: dateMap!.get(m.id)!,
+    }));
+
+    const otherSceneMates = SQUAD_MEMBERS.filter(m => {
+      if (m.id === techId) return false;
+      const other = dateMap?.get(m.id);
+      if (!other) return false;
+      return !other.allSceneKeys.some(k => cell.allSceneKeys.includes(k));
+    }).map(m => ({
+      member: m,
+      cell: dateMap!.get(m.id)!,
+    }));
+
+    const offMates = SQUAD_MEMBERS.filter(m => m.id !== techId && !dateMap?.has(m.id));
+
+    return {
+      member,
+      date,
+      cell,
+      sameSceneMates,
+      otherSceneMates,
+      offMates,
+    };
+  }, [selectedCell, matrixData]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (selectedCell) {
+          setSelectedCell(null);
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [selectedCell, onClose]);
 
   const todayIso = getTodayIso();
 
@@ -4608,10 +4647,15 @@ function SquadMatrixModal({
       >
         {/* Top Modal Header */}
         <div className="export-head squad-modal-head">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             <span className="squad-badge-0808">0808</span>
-            <div className="export-title" style={{ fontSize: 16 }}>
-              Matrice Escouade · Jours & Scènes en commun
+            <div>
+              <div className="export-title" style={{ fontSize: 16 }}>
+                Matrice Escouade · Plannings & Lieux Communs
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--fg-muted)', marginTop: 1 }}>
+                Cliquez sur une scène pour afficher le détail du jour et des collègues
+              </div>
             </div>
           </div>
           <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
@@ -4656,44 +4700,6 @@ function SquadMatrixModal({
             </div>
           )}
 
-          {/* Filter Bar + Legend */}
-          <div className="squad-toolbar">
-            <div className="squad-filter-group">
-              <button
-                type="button"
-                className={`squad-filter-btn ${filterMode === 'all' ? 'is-active' : ''}`}
-                onClick={() => setFilterMode('all')}
-              >
-                Toute la semaine
-              </button>
-              <button
-                type="button"
-                className={`squad-filter-btn ${filterMode === 'common' ? 'is-active' : ''}`}
-                onClick={() => setFilterMode('common')}
-              >
-                Jours communs (3+)
-              </button>
-              <button
-                type="button"
-                className={`squad-filter-btn ${filterMode === 'samescene' ? 'is-active' : ''}`}
-                onClick={() => setFilterMode('samescene')}
-              >
-                📍 Même scène (2+)
-              </button>
-            </div>
-
-            <div className="squad-legend">
-              <span className="squad-legend-item">
-                <span className="squad-legend-swatch is-shared" />
-                <span>Même scène</span>
-              </span>
-              <span className="squad-legend-item">
-                <span className="squad-legend-swatch is-single" />
-                <span>Autre scène</span>
-              </span>
-            </div>
-          </div>
-
           {/* Matrix Table */}
           <div className="squad-matrix-stage">
             <div className="squad-table-scroll">
@@ -4706,7 +4712,6 @@ function SquadMatrixModal({
                     {visibleDates.map(d => {
                       const { dayShort, ddmm } = formatShortDayHeader(d);
                       const stats = getDayStats(d);
-                      const active = dayMatchesFilter(d);
                       const isTodayCol = d === todayIso;
                       const sharedTitle = stats.sharedScenes
                         .map(([, info]) => `${info.sceneName} (${info.techIds.length})`)
@@ -4715,7 +4720,7 @@ function SquadMatrixModal({
                       return (
                         <th
                           key={d}
-                          className={`squad-th-day ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
+                          className={`squad-th-day ${isTodayCol ? 'is-today' : ''}`}
                         >
                           <div className="squad-th-day-label">
                             <span>{dayShort} {ddmm}</span>
@@ -4753,14 +4758,13 @@ function SquadMatrixModal({
                         </td>
                         {visibleDates.map(d => {
                           const cell = matrixData.get(d)?.get(member.id);
-                          const active = dayMatchesFilter(d);
                           const isTodayCol = d === todayIso;
 
                           if (!cell) {
                             return (
                               <td
                                 key={d}
-                                className={`squad-td-cell is-off ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
+                                className={`squad-td-cell is-off ${isTodayCol ? 'is-today' : ''}`}
                               >
                                 —
                               </td>
@@ -4770,18 +4774,23 @@ function SquadMatrixModal({
                           const stats = getDayStats(d);
                           const sameSceneCount = stats.sceneToTechs.get(cell.sceneKey)?.techIds.length || 1;
                           const isSharedScene = sameSceneCount >= 2;
+                          const scColor = getSceneColor(cell.primaryScene);
 
                           return (
                             <td
                               key={d}
-                              className={`squad-td-cell ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
-                              title={`${member.name} · ${formatDateLong(d)}\n📍 ${cell.primaryScene} (${cell.hours})${cell.role ? ` · ${cell.role}` : ''}`}
+                              className={`squad-td-cell ${isTodayCol ? 'is-today' : ''}`}
+                              onClick={() => setSelectedCell({ techId: member.id, date: d })}
                             >
-                              <div
+                              <button
+                                type="button"
                                 className={`squad-cell-pill ${isSharedScene ? 'is-shared' : 'is-single'}`}
+                                style={{ '--cell-accent': scColor.accent } as React.CSSProperties}
+                                title={`Cliquer pour voir le détail · ${member.name} (${cell.hours})`}
                               >
-                                {isSharedScene ? '📍 ' : ''}{cell.shortScene}
-                              </div>
+                                {isSharedScene && <span className="squad-pin-icon" aria-hidden="true">📍</span>}
+                                <span className="squad-cell-scene-text">{cell.shortScene}</span>
+                              </button>
                             </td>
                           );
                         })}
@@ -4793,6 +4802,140 @@ function SquadMatrixModal({
             </div>
           </div>
         </div>
+
+        {/* Modal Détail au Clic sur une Scène */}
+        {selectedData && (
+          <div className="squad-detail-overlay" onClick={() => setSelectedCell(null)}>
+            <div
+              className="squad-detail-card"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Détail du service"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="squad-detail-head">
+                <div className="squad-detail-head-info">
+                  <div className="squad-detail-tech">
+                    <span className="squad-tech-dot" style={{ background: selectedData.member.color }} />
+                    <span className="squad-detail-tech-name">{selectedData.member.name}</span>
+                  </div>
+                  <div className="squad-detail-date">
+                    {formatDateLong(selectedData.date)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="squad-detail-close"
+                  onClick={() => setSelectedCell(null)}
+                  aria-label="Fermer"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Main Shift Hero */}
+              <div
+                className="squad-detail-hero"
+                style={{ '--scene-accent': getSceneColor(selectedData.cell.primaryScene).accent } as React.CSSProperties}
+              >
+                <div className="squad-detail-hero-top">
+                  <span className="squad-detail-scene-badge">
+                    <span
+                      className="squad-scene-mini-dot"
+                      style={{ background: getSceneColor(selectedData.cell.primaryScene).accent }}
+                    />
+                    <span>{selectedData.cell.primaryScene}</span>
+                  </span>
+                  {selectedData.cell.role && (
+                    <span className="squad-detail-role-badge">{selectedData.cell.role}</span>
+                  )}
+                </div>
+                <div className="squad-detail-hero-hours">
+                  <span className="squad-detail-hours-icon">🕒</span>
+                  <span className="squad-detail-hours-text">{selectedData.cell.hours}</span>
+                </div>
+              </div>
+
+              {/* Body Content */}
+              <div className="squad-detail-body">
+                {/* Même scène */}
+                <div className={`squad-detail-section ${selectedData.sameSceneMates.length > 0 ? 'is-shared' : ''}`}>
+                  <div className="squad-detail-section-title">
+                    <span>📍 Sur la même scène ({selectedData.cell.shortScene})</span>
+                    <span className={`squad-detail-section-count ${selectedData.sameSceneMates.length > 0 ? 'is-shared' : ''}`}>
+                      {selectedData.sameSceneMates.length} collègue{selectedData.sameSceneMates.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  {selectedData.sameSceneMates.length === 0 ? (
+                    <div className="squad-detail-empty">
+                      Aucun autre collègue de l'escouade sur cette scène ce jour-là.
+                    </div>
+                  ) : (
+                    <div className="squad-detail-list">
+                      {selectedData.sameSceneMates.map(({ member, cell }) => (
+                        <div key={member.id} className="squad-detail-item">
+                          <div className="squad-detail-item-left">
+                            <span className="squad-tech-dot" style={{ background: member.color }} />
+                            <span className="squad-detail-item-name">{member.name}</span>
+                            {cell.role && <span className="squad-detail-role-mini">{cell.role}</span>}
+                          </div>
+                          <span className="squad-detail-item-hours">{cell.hours}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Autres scènes le même jour */}
+                {selectedData.otherSceneMates.length > 0 && (
+                  <div className="squad-detail-section">
+                    <div className="squad-detail-section-title">
+                      <span>🕒 En poste sur d'autres scènes</span>
+                      <span className="squad-detail-section-count">
+                        {selectedData.otherSceneMates.length}
+                      </span>
+                    </div>
+                    <div className="squad-detail-list">
+                      {selectedData.otherSceneMates.map(({ member, cell }) => {
+                        const scColor = getSceneColor(cell.primaryScene);
+                        return (
+                          <div key={member.id} className="squad-detail-item">
+                            <div className="squad-detail-item-left">
+                              <span className="squad-tech-dot" style={{ background: member.color }} />
+                              <span className="squad-detail-item-name">{member.name}</span>
+                              <span
+                                className="squad-detail-scene-tag"
+                                style={{
+                                  color: scColor.accent,
+                                  borderColor: `${scColor.accent}55`,
+                                }}
+                              >
+                                {cell.shortScene}
+                              </span>
+                              {cell.role && <span className="squad-detail-role-mini">{cell.role}</span>}
+                            </div>
+                            <span className="squad-detail-item-hours">{cell.hours}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Repos / OFF */}
+                {selectedData.offMates.length > 0 && (
+                  <div className="squad-detail-off">
+                    <span className="squad-detail-off-label">Repos / OFF :</span>
+                    <span className="squad-detail-off-names">
+                      {selectedData.offMates.map(m => m.short).join(', ')}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
