@@ -4439,12 +4439,6 @@ interface SquadCellData {
   role: string;              // Cleaned role if any
 }
 
-type SquadDetailSubModal =
-  | { type: 'day'; date: string }
-  | { type: 'cell'; techId: string; date: string }
-  | { type: 'tech'; techId: string }
-  | null;
-
 function SquadMatrixModal({
   records,
   activeDate,
@@ -4455,8 +4449,6 @@ function SquadMatrixModal({
   onClose: () => void;
 }) {
   const [filterMode, setFilterMode] = useState<'all' | 'common' | 'samescene'>('all');
-  const [requiredTechIds, setRequiredTechIds] = useState<string[]>([]);
-  const [subModal, setSubModal] = useState<SquadDetailSubModal>(null);
 
   // Group all available dates into weeks
   const weeks = useMemo(() => {
@@ -4579,33 +4571,20 @@ function SquadMatrixModal({
 
   const dayMatchesFilter = useCallback((date: string) => {
     const stats = getDayStats(date);
-    for (const reqId of requiredTechIds) {
-      if (!stats.presentIds.includes(reqId)) return false;
-    }
     if (filterMode === 'common') return stats.presentCount >= 3;
     if (filterMode === 'samescene') return stats.maxSameScene >= 2;
     return true;
-  }, [getDayStats, requiredTechIds, filterMode]);
-
-  const toggleRequiredTech = (id: string) => {
-    setRequiredTechIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
+  }, [getDayStats, filterMode]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (subModal) {
-          setSubModal(null);
-        } else {
-          onClose();
-        }
+        onClose();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [subModal, onClose]);
+  }, [onClose]);
 
   const todayIso = getTodayIso();
 
@@ -4631,13 +4610,8 @@ function SquadMatrixModal({
         <div className="export-head squad-modal-head">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
             <span className="squad-badge-0808">0808</span>
-            <div>
-              <div className="export-title" style={{ fontSize: 16 }}>
-                Matrice Escouade · Jours & Scènes en commun
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--fg-muted)', marginTop: 1 }}>
-                Cliquez sur une <strong>date</strong>, une <strong>case scène</strong> ou un <strong>technicien</strong> pour ouvrir les détails
-              </div>
+            <div className="export-title" style={{ fontSize: 16 }}>
+              Matrice Escouade · Jours & Scènes en commun
             </div>
           </div>
           <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
@@ -4711,7 +4685,7 @@ function SquadMatrixModal({
             <div className="squad-legend">
               <span className="squad-legend-item">
                 <span className="squad-legend-swatch is-shared" />
-                <span>📍 Même scène (2+)</span>
+                <span>Même scène</span>
               </span>
               <span className="squad-legend-item">
                 <span className="squad-legend-swatch is-single" />
@@ -4720,35 +4694,7 @@ function SquadMatrixModal({
             </div>
           </div>
 
-          {/* Clickable Tech Filter Chips */}
-          <div className="squad-tech-chips">
-            <span className="squad-chips-label">Exiger la présence :</span>
-            {SQUAD_MEMBERS.map(m => {
-              const isReq = requiredTechIds.includes(m.id);
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`squad-tech-chip ${isReq ? 'is-active' : ''}`}
-                  onClick={() => toggleRequiredTech(m.id)}
-                >
-                  <span className="squad-tech-dot" style={{ background: m.color }} />
-                  <span>{m.short}</span>
-                </button>
-              );
-            })}
-            {requiredTechIds.length > 0 && (
-              <button
-                type="button"
-                className="squad-chip-reset"
-                onClick={() => setRequiredTechIds([])}
-              >
-                Réinitialiser
-              </button>
-            )}
-          </div>
-
-          {/* Matrix Container (with relative overlay for the 3 secondary windows) */}
+          {/* Matrix Table */}
           <div className="squad-matrix-stage">
             <div className="squad-table-scroll">
               <table className="squad-matrix-table">
@@ -4756,7 +4702,6 @@ function SquadMatrixModal({
                   <tr>
                     <th className="squad-th-tech">
                       <div>Techniciens (6)</div>
-                      <div className="squad-th-sub">Clic nom / date / case</div>
                     </th>
                     {visibleDates.map(d => {
                       const { dayShort, ddmm } = formatShortDayHeader(d);
@@ -4770,9 +4715,7 @@ function SquadMatrixModal({
                       return (
                         <th
                           key={d}
-                          onClick={() => setSubModal({ type: 'day', date: d })}
                           className={`squad-th-day ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
-                          title={`Voir le détail complet du ${formatDateLong(d)}`}
                         >
                           <div className="squad-th-day-label">
                             <span>{dayShort} {ddmm}</span>
@@ -4801,11 +4744,7 @@ function SquadMatrixModal({
                     const workedInView = visibleDates.filter(d => matrixData.get(d)?.has(member.id)).length;
                     return (
                       <tr key={member.id}>
-                        <td
-                          onClick={() => setSubModal({ type: 'tech', techId: member.id })}
-                          className="squad-td-tech"
-                          title={`Voir tous les horaires et croisements de ${member.name}`}
-                        >
+                        <td className="squad-td-tech">
                           <div className="squad-td-tech-inner">
                             <span className="squad-tech-dot" style={{ background: member.color }} />
                             <span className="squad-td-tech-name">{member.short}</span>
@@ -4831,34 +4770,17 @@ function SquadMatrixModal({
                           const stats = getDayStats(d);
                           const sameSceneCount = stats.sceneToTechs.get(cell.sceneKey)?.techIds.length || 1;
                           const isSharedScene = sameSceneCount >= 2;
-                          const scColor = getSceneColor(cell.primaryScene);
 
                           return (
                             <td
                               key={d}
-                              onClick={() => setSubModal({ type: 'cell', techId: member.id, date: d })}
                               className={`squad-td-cell ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
                               title={`${member.name} · ${formatDateLong(d)}\n📍 ${cell.primaryScene} (${cell.hours})${cell.role ? ` · ${cell.role}` : ''}`}
                             >
                               <div
-                                className={`squad-cell-box ${isSharedScene ? 'is-shared-scene' : 'is-single-scene'}`}
-                                style={{
-                                  '--cell-scene-accent': scColor.accent,
-                                } as React.CSSProperties}
+                                className={`squad-cell-pill ${isSharedScene ? 'is-shared' : 'is-single'}`}
                               >
-                                <div className="squad-cell-scene">
-                                  {isSharedScene ? (
-                                    <span className="squad-pin-icon" aria-hidden="true">📍</span>
-                                  ) : (
-                                    <span
-                                      className="squad-scene-mini-dot"
-                                      style={{ background: scColor.accent }}
-                                      aria-hidden="true"
-                                    />
-                                  )}
-                                  <span className="squad-cell-scene-text">{cell.shortScene}</span>
-                                </div>
-                                <div className="squad-cell-hours">{cell.hours}</div>
+                                {isSharedScene ? '📍 ' : ''}{cell.shortScene}
                               </div>
                             </td>
                           );
@@ -4869,400 +4791,6 @@ function SquadMatrixModal({
                 </tbody>
               </table>
             </div>
-
-            {/* FENÊTRES SUPPLÉMENTAIRES (1: Détail Jour par Scène, 2: Détail Case, 3: Fiche Technicien) */}
-            {subModal && (
-              <div className="squad-submodal-backdrop" onClick={() => setSubModal(null)}>
-                <div
-                  className="squad-submodal-card animate-fade-in"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {subModal.type === 'day' && (() => {
-                    const d = subModal.date;
-                    const stats = getDayStats(d);
-                    const dateMap = matrixData.get(d);
-                    const sceneGroups = Array.from(stats.sceneToTechs.entries()).sort(
-                      (a, b) => b[1].techIds.length - a[1].techIds.length
-                    );
-                    const offMembers = SQUAD_MEMBERS.filter(m => !dateMap?.has(m.id));
-                    const curIdx = allDates.indexOf(d);
-                    const prevDate = curIdx > 0 ? allDates[curIdx - 1] : null;
-                    const nextDate = curIdx >= 0 && curIdx < allDates.length - 1 ? allDates[curIdx + 1] : null;
-
-                    return (
-                      <>
-                        <div className="squad-submodal-head">
-                          <div>
-                            <div className="squad-submodal-title">
-                              📅 {formatDateLong(d)} — {stats.presentCount}/6 en service
-                            </div>
-                            <div className="squad-submodal-subtitle">
-                              Répartition par scène et horaires de chacun
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {prevDate && (
-                              <button
-                                type="button"
-                                className="squad-submodal-nav"
-                                onClick={() => setSubModal({ type: 'day', date: prevDate })}
-                                title="Jour précédent"
-                              >
-                                ◀
-                              </button>
-                            )}
-                            {nextDate && (
-                              <button
-                                type="button"
-                                className="squad-submodal-nav"
-                                onClick={() => setSubModal({ type: 'day', date: nextDate })}
-                                title="Jour suivant"
-                              >
-                                ▶
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="squad-submodal-close"
-                              onClick={() => setSubModal(null)}
-                            >
-                              ✕ Fermer
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="squad-submodal-content">
-                          {sceneGroups.length === 0 ? (
-                            <div className="squad-empty-box">
-                              Aucun des 6 techniciens n'est en service ce jour.
-                            </div>
-                          ) : (
-                            sceneGroups.map(([sceneKey, group]) => {
-                              const scColor = getSceneColor(group.sceneName);
-                              const isShared = group.techIds.length >= 2;
-                              return (
-                                <div
-                                  key={sceneKey}
-                                  className={`squad-detail-block ${isShared ? 'is-shared' : ''}`}
-                                  style={{ '--block-accent': scColor.accent } as React.CSSProperties}
-                                >
-                                  <div className="squad-detail-block-head">
-                                    <span className="squad-detail-scene-title">
-                                      <span
-                                        className="squad-tech-dot"
-                                        style={{ background: scColor.accent }}
-                                      />
-                                      <span>{isShared ? '📍 ' : ''}{group.sceneName}</span>
-                                    </span>
-                                    <span className={`squad-detail-count-badge ${isShared ? 'is-shared' : ''}`}>
-                                      {group.techIds.length} tech{group.techIds.length > 1 ? 's' : ''}
-                                      {isShared ? ' ensemble' : ''}
-                                    </span>
-                                  </div>
-                                  <div className="squad-detail-rows">
-                                    {group.techIds.map(tid => {
-                                      const m = SQUAD_MEMBERS.find(x => x.id === tid)!;
-                                      const c = dateMap!.get(tid)!;
-                                      return (
-                                        <div key={tid} className="squad-detail-row">
-                                          <div className="squad-detail-person">
-                                            <span className="squad-tech-dot" style={{ background: m.color }} />
-                                            <span className="squad-detail-person-name">{m.name}</span>
-                                            {c.role && (
-                                              <span className="squad-detail-role">{c.role}</span>
-                                            )}
-                                          </div>
-                                          <span className="squad-detail-hours">{c.hours}</span>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-
-                          {offMembers.length > 0 && (
-                            <div className="squad-off-summary">
-                              <strong>Repos / OFF :</strong> {offMembers.map(m => m.name).join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                  {subModal.type === 'cell' && (() => {
-                    const { techId, date } = subModal;
-                    const member = SQUAD_MEMBERS.find(m => m.id === techId)!;
-                    const dateMap = matrixData.get(date);
-                    const cell = dateMap?.get(techId);
-                    if (!cell) return null;
-
-                    const sameSceneMates = SQUAD_MEMBERS.filter(m => {
-                      if (m.id === techId) return false;
-                      const other = dateMap?.get(m.id);
-                      if (!other) return false;
-                      return other.allSceneKeys.some(k => cell.allSceneKeys.includes(k));
-                    });
-
-                    const otherSceneMates = SQUAD_MEMBERS.filter(m => {
-                      if (m.id === techId) return false;
-                      const other = dateMap?.get(m.id);
-                      if (!other) return false;
-                      return !other.allSceneKeys.some(k => cell.allSceneKeys.includes(k));
-                    });
-
-                    const offMates = SQUAD_MEMBERS.filter(m => m.id !== techId && !dateMap?.has(m.id));
-                    const scColor = getSceneColor(cell.primaryScene);
-
-                    return (
-                      <>
-                        <div className="squad-submodal-head">
-                          <div>
-                            <div className="squad-submodal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span className="squad-tech-dot" style={{ background: member.color, width: 10, height: 10 }} />
-                              <span>{member.name} — {formatDateLong(date)}</span>
-                            </div>
-                            <div className="squad-submodal-subtitle" style={{ marginTop: 4 }}>
-                              📍 <strong>{cell.primaryScene}</strong> &nbsp;•&nbsp; 🕒 <strong>{cell.hours}</strong>
-                              {cell.role ? `  •  ${cell.role}` : ''}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            className="squad-submodal-close"
-                            onClick={() => setSubModal(null)}
-                          >
-                            ✕ Fermer
-                          </button>
-                        </div>
-
-                        <div className="squad-submodal-content">
-                          {/* Même scène */}
-                          <div
-                            className="squad-detail-block is-shared"
-                            style={{ '--block-accent': scColor.accent } as React.CSSProperties}
-                          >
-                            <div className="squad-detail-block-head">
-                              <span className="squad-detail-scene-title">
-                                📍 Sur la même scène ({cell.primaryScene}) :
-                              </span>
-                              <span className="squad-detail-count-badge is-shared">
-                                {sameSceneMates.length} collègue{sameSceneMates.length > 1 ? 's' : ''}
-                              </span>
-                            </div>
-                            {sameSceneMates.length === 0 ? (
-                              <div className="squad-detail-empty">
-                                Aucun autre des 6 techniciens sur cette scène ce jour.
-                              </div>
-                            ) : (
-                              <div className="squad-detail-rows">
-                                {sameSceneMates.map(m => {
-                                  const c = dateMap!.get(m.id)!;
-                                  return (
-                                    <div key={m.id} className="squad-detail-row">
-                                      <div className="squad-detail-person">
-                                        <span className="squad-tech-dot" style={{ background: m.color }} />
-                                        <span className="squad-detail-person-name">{m.name}</span>
-                                        {c.role && <span className="squad-detail-role">{c.role}</span>}
-                                      </div>
-                                      <span className="squad-detail-hours">{c.hours}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Même jour mais autre scène */}
-                          <div className="squad-detail-block">
-                            <div className="squad-detail-block-head">
-                              <span className="squad-detail-scene-title">
-                                En service le même jour sur une autre scène :
-                              </span>
-                              <span className="squad-detail-count-badge">
-                                {otherSceneMates.length}
-                              </span>
-                            </div>
-                            {otherSceneMates.length === 0 ? (
-                              <div className="squad-detail-empty">
-                                Personne d'autre en service sur une autre scène ce jour-là.
-                              </div>
-                            ) : (
-                              <div className="squad-detail-rows">
-                                {otherSceneMates.map(m => {
-                                  const c = dateMap!.get(m.id)!;
-                                  const otherColor = getSceneColor(c.primaryScene);
-                                  return (
-                                    <div key={m.id} className="squad-detail-row">
-                                      <div className="squad-detail-person" style={{ flexWrap: 'wrap' }}>
-                                        <span className="squad-tech-dot" style={{ background: m.color }} />
-                                        <span className="squad-detail-person-name">{m.name}</span>
-                                        <span
-                                          className="squad-mini-scene-tag"
-                                          style={{
-                                            borderColor: `${otherColor.accent}66`,
-                                            color: otherColor.accent,
-                                          }}
-                                        >
-                                          {c.primaryScene}
-                                        </span>
-                                        {c.role && <span className="squad-detail-role">{c.role}</span>}
-                                      </div>
-                                      <span className="squad-detail-hours">{c.hours}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-
-                          {offMates.length > 0 && (
-                            <div className="squad-off-summary">
-                              <strong>En repos ce jour :</strong> {offMates.map(m => m.short).join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                  {subModal.type === 'tech' && (() => {
-                    const { techId } = subModal;
-                    const member = SQUAD_MEMBERS.find(m => m.id === techId)!;
-                    const others = SQUAD_MEMBERS.filter(m => m.id !== techId);
-
-                    // Compute global affinities across all loaded dates
-                    const affinities = others.map(other => {
-                      let sameDayCount = 0;
-                      let sameSceneCount = 0;
-                      for (const d of allDates) {
-                        const dm = matrixData.get(d);
-                        const myCell = dm?.get(techId);
-                        const otherCell = dm?.get(other.id);
-                        if (myCell && otherCell) {
-                          sameDayCount++;
-                          if (otherCell.allSceneKeys.some(k => myCell.allSceneKeys.includes(k))) {
-                            sameSceneCount++;
-                          }
-                        }
-                      }
-                      return { other, sameDayCount, sameSceneCount };
-                    });
-
-                    return (
-                      <>
-                        <div className="squad-submodal-head">
-                          <div>
-                            <div className="squad-submodal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span className="squad-tech-dot" style={{ background: member.color, width: 10, height: 10 }} />
-                              <span>👤 Planning & croisements — {member.name}</span>
-                            </div>
-                            <div className="squad-submodal-subtitle">
-                              Scènes, horaires et collègues en commun ({visibleDates.length} jours affichés)
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            className="squad-submodal-close"
-                            onClick={() => setSubModal(null)}
-                          >
-                            ✕ Fermer
-                          </button>
-                        </div>
-
-                        <div className="squad-submodal-content">
-                          {/* Affinities summary bar */}
-                          <div className="squad-affinities-grid">
-                            {affinities.map(({ other, sameDayCount, sameSceneCount }) => (
-                              <div key={other.id} className="squad-affinity-card">
-                                <div className="squad-affinity-name">
-                                  <span className="squad-tech-dot" style={{ background: other.color }} />
-                                  <span>{other.short}</span>
-                                </div>
-                                <div className="squad-affinity-stats">
-                                  <span className="squad-affinity-same-scene" title="Jours sur la même scène">
-                                    📍 {sameSceneCount}j scène
-                                  </span>
-                                  <span className="squad-affinity-same-day" title="Jours travaillés en même temps">
-                                    {sameDayCount}j communs
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Day-by-day rows for this technician */}
-                          <div className="squad-tech-days-list">
-                            {visibleDates.map(d => {
-                              const { dayShort, ddmm } = formatShortDayHeader(d);
-                              const dm = matrixData.get(d);
-                              const myCell = dm?.get(techId);
-                              if (!myCell) {
-                                return (
-                                  <div key={d} className="squad-tech-day-row is-off">
-                                    <span className="squad-tech-day-date">{dayShort} {ddmm}</span>
-                                    <span className="squad-tech-day-off">Repos / OFF</span>
-                                  </div>
-                                );
-                              }
-
-                              const sameSceneMates = others.filter(o => {
-                                const oc = dm?.get(o.id);
-                                return oc && oc.allSceneKeys.some(k => myCell.allSceneKeys.includes(k));
-                              });
-                              const otherSceneMates = others.filter(o => {
-                                const oc = dm?.get(o.id);
-                                return oc && !oc.allSceneKeys.some(k => myCell.allSceneKeys.includes(k));
-                              });
-                              const scColor = getSceneColor(myCell.primaryScene);
-
-                              return (
-                                <div
-                                  key={d}
-                                  className="squad-tech-day-row"
-                                  onClick={() => setSubModal({ type: 'cell', techId, date: d })}
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  <div className="squad-tech-day-main">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                      <span className="squad-tech-day-date">{dayShort} {ddmm}</span>
-                                      <span
-                                        className="squad-tech-day-scene"
-                                        style={{ color: scColor.accent }}
-                                      >
-                                        📍 {myCell.primaryScene}
-                                      </span>
-                                      {myCell.role && (
-                                        <span className="squad-detail-role">{myCell.role}</span>
-                                      )}
-                                    </div>
-                                    <div className="squad-tech-day-mates">
-                                      {sameSceneMates.length > 0 && (
-                                        <span className="squad-mates-same">
-                                          📍 Même scène : {sameSceneMates.map(m => m.short).join(', ')}
-                                        </span>
-                                      )}
-                                      {otherSceneMates.length > 0 && (
-                                        <span className="squad-mates-other">
-                                          Même jour : {otherSceneMates.map(m => `${m.short} (${dm!.get(m.id)!.shortScene})`).join(', ')}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <span className="squad-detail-hours">{myCell.hours}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
