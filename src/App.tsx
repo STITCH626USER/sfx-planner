@@ -587,7 +587,26 @@ export default function App() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLegalMentions, setShowLegalMentions] = useState(false);
   const [showBugModal, setShowBugModal] = useState(false);
+  const [showSquadPinModal, setShowSquadPinModal] = useState(false);
+  const [showSquadModal, setShowSquadModal] = useState(false);
+  const logoTapCountRef = useRef(0);
+  const logoTapTimerRef = useRef<number | null>(null);
   const [previousTab, setPreviousTab] = useState<Tab>('daily');
+
+  const handleHeaderLogoTap = useCallback(() => {
+    if (logoTapTimerRef.current) {
+      window.clearTimeout(logoTapTimerRef.current);
+    }
+    logoTapCountRef.current += 1;
+    if (logoTapCountRef.current >= 5) {
+      logoTapCountRef.current = 0;
+      setShowSquadPinModal(true);
+      return;
+    }
+    logoTapTimerRef.current = window.setTimeout(() => {
+      logoTapCountRef.current = 0;
+    }, 2200);
+  }, []);
 
   // PWA Installation state and hooks
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
@@ -929,6 +948,25 @@ export default function App() {
 
         {showBugModal && <BugReportModal onClose={() => setShowBugModal(false)} />}
 
+      {showSquadPinModal && (
+        <SquadPinModal
+          onClose={() => setShowSquadPinModal(false)}
+          onUnlock={() => {
+            setShowSquadPinModal(false);
+            setFireworkTrigger(t => t + 1);
+            setShowSquadModal(true);
+          }}
+        />
+      )}
+
+      {showSquadModal && (
+        <SquadMatrixModal
+          records={records}
+          activeDate={dailyDate}
+          onClose={() => setShowSquadModal(false)}
+        />
+      )}
+
       </div>
     );
 
@@ -949,8 +987,8 @@ export default function App() {
           <div className="app-header-left">
             <div
               className="app-logo"
-              onClick={() => setShowResetConfirm(true)}
-              style={{ cursor: 'pointer' }}
+              onClick={handleHeaderLogoTap}
+              style={{ cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}
               title="SFX Planner"
             >
               <Logo />
@@ -1208,6 +1246,25 @@ export default function App() {
       )}
 
       {showBugModal && <BugReportModal onClose={() => setShowBugModal(false)} />}
+
+      {showSquadPinModal && (
+        <SquadPinModal
+          onClose={() => setShowSquadPinModal(false)}
+          onUnlock={() => {
+            setShowSquadPinModal(false);
+            setFireworkTrigger(t => t + 1);
+            setShowSquadModal(true);
+          }}
+        />
+      )}
+
+      {showSquadModal && (
+        <SquadMatrixModal
+          records={records}
+          activeDate={dailyDate}
+          onClose={() => setShowSquadModal(false)}
+        />
+      )}
 
       {showPwaBanner && (
         <div className="pwa-install-banner animate-slide-up">
@@ -4183,4 +4240,1034 @@ function FireworksCanvas({ triggerCount }: { triggerCount: number }) {
     />
   );
 }
+
+interface SquadMemberDef {
+  id: string;
+  name: string;
+  short: string;
+  tokens: string[];
+  color: string;
+}
+
+const SQUAD_MEMBERS: SquadMemberDef[] = [
+  { id: 'al',  name: 'Aurélien Leroy',     short: 'Aurélien L.',  tokens: ['leroy', 'aurelien'],        color: '#38bdf8' },
+  { id: 'ar',  name: 'Alexandre ROUX',     short: 'Alexandre R.', tokens: ['roux', 'alexandre'],        color: '#f59e0b' },
+  { id: 'dl',  name: 'Damien LACOM',       short: 'Damien L.',    tokens: ['lacom', 'damien'],          color: '#10b981' },
+  { id: 'jms', name: 'Jean-Marc SCOLARI',  short: 'Jean-Marc S.', tokens: ['scolari', 'jean', 'marc'],  color: '#a855f7' },
+  { id: 'ed',  name: 'Erwan DESRUELS',     short: 'Erwan D.',     tokens: ['desruels', 'erwan'],        color: '#f43f5e' },
+  { id: 'ac',  name: 'Alexandre CALMETTE', short: 'Alexandre C.', tokens: ['calmette', 'alexandre'],    color: '#06b6d4' },
+];
+
+function normalizeTokens(str: string): string[] {
+  return (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function recordMatchesSquadMember(employeeRaw: string, member: SquadMemberDef): boolean {
+  const words = new Set(normalizeTokens(`${employeeRaw} ${prettyName(employeeRaw)}`));
+  return member.tokens.every(t => words.has(t));
+}
+
+function formatSquadSceneShort(sceneRaw: string): string {
+  const clean = cleanSceneName(sceneRaw);
+  const lower = clean.toLowerCase();
+  if (isTrainingScene(sceneRaw) || lower === 'fo' || lower.includes('formation')) return 'Formation';
+  if (lower.includes('cascade')) return 'Cascade';
+  if (lower.includes('illumination')) return 'Illuminations';
+  if (lower.includes('arendelle')) return 'Arendelle';
+  if (lower.includes('marvel')) return 'Marvel';
+  if (lower.includes('pooltechn')) return 'Pool SFX';
+  if (lower.includes('studiotsh')) return 'Studio T';
+  if (lower.includes('matmops')) return 'MATM';
+  if (lower.includes('dfact')) return 'DFact S6';
+  if (lower.includes('lionking')) return 'Lion King';
+  if (lower.includes('xmas')) return 'Xmas';
+  if (lower.includes('halloween')) return 'Halloween';
+  if (lower.includes('castle')) return 'Castle';
+  if (lower.includes('videopolis')) return 'Videopolis';
+  return clean;
+}
+
+function canonicalSceneKey(sceneRaw: string): string {
+  const clean = cleanSceneName(sceneRaw).trim();
+  if (isTrainingScene(sceneRaw)) return 'formations';
+  return clean.toLowerCase();
+}
+
+function SquadPinModal({ onClose, onUnlock }: { onClose: () => void; onUnlock: () => void }) {
+  const [pin, setPin] = useState('');
+  const [shake, setShake] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+
+  const handleDigit = useCallback((digit: string) => {
+    setPin(prev => {
+      if (prev.length >= 4) return prev;
+      const next = prev + digit;
+      if (next.length === 4) {
+        if (next === '0808') {
+          setUnlocked(true);
+          window.setTimeout(() => {
+            onUnlock();
+          }, 180);
+        } else {
+          setShake(true);
+          window.setTimeout(() => {
+            setShake(false);
+            setPin('');
+          }, 460);
+        }
+      }
+      return next;
+    });
+  }, [onUnlock]);
+
+  const handleClear = useCallback(() => {
+    setPin('');
+  }, []);
+
+  const handleBackspace = useCallback(() => {
+    setPin(prev => prev.slice(0, -1));
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        handleDigit(e.key);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleBackspace();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose, handleDigit, handleBackspace]);
+
+  return (
+    <div className="export-overlay" data-testid="squad-pin-overlay" onClick={onClose}>
+      <div
+        className={`export-modal squad-pin-modal ${shake ? 'is-shaking' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Accès restreint"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '340px' }}
+      >
+        <div className="export-head" style={{ padding: '14px 18px' }}>
+          <div className="export-title" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15 }}>
+            <span>🔒 Accès restreint</span>
+          </div>
+          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
+        </div>
+
+        <div className="export-body" style={{ padding: '18px 20px 22px 20px', gap: 16 }}>
+          <div style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--fg-muted)' }}>
+            Composez le code d'accès
+          </div>
+
+          <div className={`squad-pin-slots ${shake ? 'squad-shake' : ''}`}>
+            {[0, 1, 2, 3].map(idx => {
+              const filled = idx < pin.length;
+              return (
+                <div
+                  key={idx}
+                  className={`squad-pin-slot ${filled ? 'is-filled' : ''} ${unlocked ? 'is-unlocked' : ''} ${shake ? 'is-error' : ''}`}
+                >
+                  {filled ? '•' : ''}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="squad-pin-grid">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => (
+              <button
+                key={d}
+                type="button"
+                className="squad-pin-key"
+                onClick={() => handleDigit(d)}
+              >
+                {d}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="squad-pin-key squad-pin-key-action"
+              onClick={handleClear}
+            >
+              Effacer
+            </button>
+            <button
+              type="button"
+              className="squad-pin-key"
+              onClick={() => handleDigit('0')}
+            >
+              0
+            </button>
+            <button
+              type="button"
+              className="squad-pin-key squad-pin-key-action"
+              onClick={handleBackspace}
+              aria-label="Corriger"
+            >
+              ⌫
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SquadCellData {
+  techId: string;
+  date: string;
+  records: PlanningRecord[];
+  primaryScene: string;      // Full clean scene name e.g. "CascadeofLights"
+  shortScene: string;        // Short table label e.g. "Cascade"
+  sceneKey: string;          // Canonical lowercase key for matching
+  allSceneKeys: string[];    // All canonical scene keys worked that day
+  hours: string;             // Shift hours e.g. "14:00-23:03"
+  role: string;              // Cleaned role if any
+}
+
+type SquadDetailSubModal =
+  | { type: 'day'; date: string }
+  | { type: 'cell'; techId: string; date: string }
+  | { type: 'tech'; techId: string }
+  | null;
+
+function SquadMatrixModal({
+  records,
+  activeDate,
+  onClose,
+}: {
+  records: PlanningRecord[];
+  activeDate: string;
+  onClose: () => void;
+}) {
+  const [filterMode, setFilterMode] = useState<'all' | 'common' | 'samescene'>('all');
+  const [requiredTechIds, setRequiredTechIds] = useState<string[]>([]);
+  const [subModal, setSubModal] = useState<SquadDetailSubModal>(null);
+
+  // Group all available dates into weeks
+  const weeks = useMemo(() => {
+    const weekMap = new Map<string, Set<string>>();
+    for (const r of records) {
+      if (!r.date) continue;
+      const wl = r.weekLabel || 'Période';
+      if (!weekMap.has(wl)) weekMap.set(wl, new Set());
+      weekMap.get(wl)!.add(r.date);
+    }
+    const entries = Array.from(weekMap.entries())
+      .map(([label, dSet]) => {
+        const dates = Array.from(dSet).sort();
+        return { label, dates, firstDate: dates[0] || '' };
+      })
+      .filter(w => w.dates.length > 0)
+      .sort((a, b) => a.firstDate.localeCompare(b.firstDate));
+    return entries;
+  }, [records]);
+
+  const allDates = useMemo(() => {
+    const s = new Set<string>();
+    for (const r of records) if (r.date) s.add(r.date);
+    return Array.from(s).sort();
+  }, [records]);
+
+  const [selectedWeekIdx, setSelectedWeekIdx] = useState<number | 'ALL'>(() => {
+    if (weeks.length === 0) return 'ALL';
+    const target = activeDate || getTodayIso();
+    const foundIdx = weeks.findIndex(w => w.dates.includes(target));
+    return foundIdx >= 0 ? foundIdx : 0;
+  });
+
+  const visibleDates = useMemo(() => {
+    if (selectedWeekIdx === 'ALL' || !weeks[selectedWeekIdx]) return allDates;
+    return weeks[selectedWeekIdx].dates;
+  }, [selectedWeekIdx, weeks, allDates]);
+
+  // Build lookup: date -> techId -> SquadCellData
+  const matrixData = useMemo(() => {
+    const byDateTech = new Map<string, Map<string, SquadCellData>>();
+
+    for (const r of records) {
+      if (!r.date || r.time === 'OFF') continue;
+      const matchedMember = SQUAD_MEMBERS.find(m => recordMatchesSquadMember(r.employee, m));
+      if (!matchedMember) continue;
+
+      if (!byDateTech.has(r.date)) {
+        byDateTech.set(r.date, new Map());
+      }
+      const dateMap = byDateTech.get(r.date)!;
+      const existing = dateMap.get(matchedMember.id);
+      const recs = existing ? [...existing.records, r] : [r];
+
+      // Pick primary non-training scene if available, otherwise first scene
+      const primaryRec = recs.find(x => !isTrainingScene(x.scene)) || recs[0];
+      const cleanPrimary = isTrainingScene(primaryRec.scene)
+        ? 'Formations'
+        : cleanSceneName(primaryRec.scene);
+      const shortScene = formatSquadSceneShort(primaryRec.scene);
+      const sceneKey = canonicalSceneKey(primaryRec.scene);
+      const allSceneKeys = Array.from(new Set(recs.map(x => canonicalSceneKey(x.scene))));
+      const hours = primaryRec.shiftTime || primaryRec.time;
+      const role = cleanRoleLabel(primaryRec.role || '');
+
+      dateMap.set(matchedMember.id, {
+        techId: matchedMember.id,
+        date: r.date,
+        records: recs,
+        primaryScene: cleanPrimary,
+        shortScene,
+        sceneKey,
+        allSceneKeys,
+        hours,
+        role,
+      });
+    }
+
+    return byDateTech;
+  }, [records]);
+
+  // Helper to get scene counts on a given date among the 6 squad members
+  const getDayStats = useCallback((date: string) => {
+    const dateMap = matrixData.get(date);
+    const presentIds: string[] = [];
+    const sceneToTechs = new Map<string, { sceneName: string; shortScene: string; techIds: string[] }>();
+
+    if (dateMap) {
+      for (const m of SQUAD_MEMBERS) {
+        const cell = dateMap.get(m.id);
+        if (cell) {
+          presentIds.push(m.id);
+          const key = cell.sceneKey;
+          if (!sceneToTechs.has(key)) {
+            sceneToTechs.set(key, {
+              sceneName: cell.primaryScene,
+              shortScene: cell.shortScene,
+              techIds: [],
+            });
+          }
+          sceneToTechs.get(key)!.techIds.push(m.id);
+        }
+      }
+    }
+
+    const sharedScenes = Array.from(sceneToTechs.entries())
+      .filter(([, info]) => info.techIds.length >= 2)
+      .sort((a, b) => b[1].techIds.length - a[1].techIds.length);
+
+    const maxSameScene = sharedScenes.length > 0 ? sharedScenes[0][1].techIds.length : 0;
+
+    return {
+      presentCount: presentIds.length,
+      presentIds,
+      sceneToTechs,
+      sharedScenes,
+      maxSameScene,
+    };
+  }, [matrixData]);
+
+  const dayMatchesFilter = useCallback((date: string) => {
+    const stats = getDayStats(date);
+    for (const reqId of requiredTechIds) {
+      if (!stats.presentIds.includes(reqId)) return false;
+    }
+    if (filterMode === 'common') return stats.presentCount >= 3;
+    if (filterMode === 'samescene') return stats.maxSameScene >= 2;
+    return true;
+  }, [getDayStats, requiredTechIds, filterMode]);
+
+  const toggleRequiredTech = (id: string) => {
+    setRequiredTechIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (subModal) {
+          setSubModal(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [subModal, onClose]);
+
+  const todayIso = getTodayIso();
+
+  const formatShortDayHeader = (iso: string) => {
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return { dayShort: iso, ddmm: '' };
+    const dObj = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+    const dayName = DAY_FR_FULL_MAP[dObj.getDay()]?.toLowerCase() || '';
+    const dayShort = DAY_FR_SHORT[dayName] || dayName.slice(0, 3).toUpperCase();
+    return { dayShort, ddmm: `${m[3]}/${m[2]}` };
+  };
+
+  return (
+    <div className="export-overlay" data-testid="squad-matrix-overlay" onClick={onClose}>
+      <div
+        className="export-modal squad-matrix-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Matrice Escouade 0808"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Modal Header */}
+        <div className="export-head squad-modal-head">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
+            <span className="squad-badge-0808">0808</span>
+            <div>
+              <div className="export-title" style={{ fontSize: 16 }}>
+                Matrice Escouade · Jours & Scènes en commun
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--fg-muted)', marginTop: 1 }}>
+                Cliquez sur une <strong>date</strong>, une <strong>case scène</strong> ou un <strong>technicien</strong> pour ouvrir les détails
+              </div>
+            </div>
+          </div>
+          <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
+        </div>
+
+        {/* Body */}
+        <div className="export-body squad-modal-body">
+          {/* Week Switcher */}
+          {weeks.length > 1 && (
+            <div className="squad-week-bar">
+              <div className="squad-week-pills">
+                {weeks.map((w, idx) => {
+                  const firstParts = w.dates[0]?.split('-');
+                  const lastParts = w.dates[w.dates.length - 1]?.split('-');
+                  const rangeStr =
+                    firstParts?.length === 3 && lastParts?.length === 3
+                      ? `${firstParts[2]}/${firstParts[1]} → ${lastParts[2]}/${lastParts[1]}`
+                      : w.label;
+                  const semMatch = w.label.match(/(\d+)/);
+                  const shortSem = semMatch ? `Sem. ${semMatch[1]}` : `Sem. ${idx + 1}`;
+                  const active = selectedWeekIdx === idx;
+                  return (
+                    <button
+                      key={w.label}
+                      type="button"
+                      className={`squad-week-pill ${active ? 'is-active' : ''}`}
+                      onClick={() => setSelectedWeekIdx(idx)}
+                    >
+                      <strong>{shortSem}</strong>
+                      <span className="squad-week-range">{rangeStr}</span>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  className={`squad-week-pill ${selectedWeekIdx === 'ALL' ? 'is-active' : ''}`}
+                  onClick={() => setSelectedWeekIdx('ALL')}
+                >
+                  <strong>Toutes ({allDates.length}j)</strong>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Filter Bar + Legend */}
+          <div className="squad-toolbar">
+            <div className="squad-filter-group">
+              <button
+                type="button"
+                className={`squad-filter-btn ${filterMode === 'all' ? 'is-active' : ''}`}
+                onClick={() => setFilterMode('all')}
+              >
+                Toute la semaine
+              </button>
+              <button
+                type="button"
+                className={`squad-filter-btn ${filterMode === 'common' ? 'is-active' : ''}`}
+                onClick={() => setFilterMode('common')}
+              >
+                Jours communs (3+)
+              </button>
+              <button
+                type="button"
+                className={`squad-filter-btn ${filterMode === 'samescene' ? 'is-active' : ''}`}
+                onClick={() => setFilterMode('samescene')}
+              >
+                📍 Même scène (2+)
+              </button>
+            </div>
+
+            <div className="squad-legend">
+              <span className="squad-legend-item">
+                <span className="squad-legend-swatch is-shared" />
+                <span>📍 Même scène (2+)</span>
+              </span>
+              <span className="squad-legend-item">
+                <span className="squad-legend-swatch is-single" />
+                <span>Autre scène</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Clickable Tech Filter Chips */}
+          <div className="squad-tech-chips">
+            <span className="squad-chips-label">Exiger la présence :</span>
+            {SQUAD_MEMBERS.map(m => {
+              const isReq = requiredTechIds.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={`squad-tech-chip ${isReq ? 'is-active' : ''}`}
+                  onClick={() => toggleRequiredTech(m.id)}
+                >
+                  <span className="squad-tech-dot" style={{ background: m.color }} />
+                  <span>{m.short}</span>
+                </button>
+              );
+            })}
+            {requiredTechIds.length > 0 && (
+              <button
+                type="button"
+                className="squad-chip-reset"
+                onClick={() => setRequiredTechIds([])}
+              >
+                Réinitialiser
+              </button>
+            )}
+          </div>
+
+          {/* Matrix Container (with relative overlay for the 3 secondary windows) */}
+          <div className="squad-matrix-stage">
+            <div className="squad-table-scroll">
+              <table className="squad-matrix-table">
+                <thead>
+                  <tr>
+                    <th className="squad-th-tech">
+                      <div>Techniciens (6)</div>
+                      <div className="squad-th-sub">Clic nom / date / case</div>
+                    </th>
+                    {visibleDates.map(d => {
+                      const { dayShort, ddmm } = formatShortDayHeader(d);
+                      const stats = getDayStats(d);
+                      const active = dayMatchesFilter(d);
+                      const isTodayCol = d === todayIso;
+                      const sharedTitle = stats.sharedScenes
+                        .map(([, info]) => `${info.sceneName} (${info.techIds.length})`)
+                        .join(', ');
+
+                      return (
+                        <th
+                          key={d}
+                          onClick={() => setSubModal({ type: 'day', date: d })}
+                          className={`squad-th-day ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
+                          title={`Voir le détail complet du ${formatDateLong(d)}`}
+                        >
+                          <div className="squad-th-day-label">
+                            <span>{dayShort} {ddmm}</span>
+                            {isTodayCol && <span className="squad-today-dot" title="Aujourd'hui" />}
+                          </div>
+                          <div className="squad-th-badges">
+                            <span className={`squad-count-pill ${stats.presentCount >= 4 ? 'is-high' : ''}`}>
+                              {stats.presentCount}/6
+                            </span>
+                            {stats.sharedScenes.length > 0 && (
+                              <span
+                                className="squad-shared-pill"
+                                title={`Même scène : ${sharedTitle}`}
+                              >
+                                📍{stats.maxSameScene}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {SQUAD_MEMBERS.map(member => {
+                    const workedInView = visibleDates.filter(d => matrixData.get(d)?.has(member.id)).length;
+                    return (
+                      <tr key={member.id}>
+                        <td
+                          onClick={() => setSubModal({ type: 'tech', techId: member.id })}
+                          className="squad-td-tech"
+                          title={`Voir tous les horaires et croisements de ${member.name}`}
+                        >
+                          <div className="squad-td-tech-inner">
+                            <span className="squad-tech-dot" style={{ background: member.color }} />
+                            <span className="squad-td-tech-name">{member.short}</span>
+                            <span className="squad-td-tech-days">{workedInView}j</span>
+                          </div>
+                        </td>
+                        {visibleDates.map(d => {
+                          const cell = matrixData.get(d)?.get(member.id);
+                          const active = dayMatchesFilter(d);
+                          const isTodayCol = d === todayIso;
+
+                          if (!cell) {
+                            return (
+                              <td
+                                key={d}
+                                className={`squad-td-cell is-off ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
+                              >
+                                —
+                              </td>
+                            );
+                          }
+
+                          const stats = getDayStats(d);
+                          const sameSceneCount = stats.sceneToTechs.get(cell.sceneKey)?.techIds.length || 1;
+                          const isSharedScene = sameSceneCount >= 2;
+                          const scColor = getSceneColor(cell.primaryScene);
+
+                          return (
+                            <td
+                              key={d}
+                              onClick={() => setSubModal({ type: 'cell', techId: member.id, date: d })}
+                              className={`squad-td-cell ${!active ? 'is-dimmed' : ''} ${isTodayCol ? 'is-today' : ''}`}
+                              title={`${member.name} · ${formatDateLong(d)}\n📍 ${cell.primaryScene} (${cell.hours})${cell.role ? ` · ${cell.role}` : ''}`}
+                            >
+                              <div
+                                className={`squad-cell-box ${isSharedScene ? 'is-shared-scene' : 'is-single-scene'}`}
+                                style={{
+                                  '--cell-scene-accent': scColor.accent,
+                                } as React.CSSProperties}
+                              >
+                                <div className="squad-cell-scene">
+                                  {isSharedScene ? (
+                                    <span className="squad-pin-icon" aria-hidden="true">📍</span>
+                                  ) : (
+                                    <span
+                                      className="squad-scene-mini-dot"
+                                      style={{ background: scColor.accent }}
+                                      aria-hidden="true"
+                                    />
+                                  )}
+                                  <span className="squad-cell-scene-text">{cell.shortScene}</span>
+                                </div>
+                                <div className="squad-cell-hours">{cell.hours}</div>
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* FENÊTRES SUPPLÉMENTAIRES (1: Détail Jour par Scène, 2: Détail Case, 3: Fiche Technicien) */}
+            {subModal && (
+              <div className="squad-submodal-backdrop" onClick={() => setSubModal(null)}>
+                <div
+                  className="squad-submodal-card animate-fade-in"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {subModal.type === 'day' && (() => {
+                    const d = subModal.date;
+                    const stats = getDayStats(d);
+                    const dateMap = matrixData.get(d);
+                    const sceneGroups = Array.from(stats.sceneToTechs.entries()).sort(
+                      (a, b) => b[1].techIds.length - a[1].techIds.length
+                    );
+                    const offMembers = SQUAD_MEMBERS.filter(m => !dateMap?.has(m.id));
+                    const curIdx = allDates.indexOf(d);
+                    const prevDate = curIdx > 0 ? allDates[curIdx - 1] : null;
+                    const nextDate = curIdx >= 0 && curIdx < allDates.length - 1 ? allDates[curIdx + 1] : null;
+
+                    return (
+                      <>
+                        <div className="squad-submodal-head">
+                          <div>
+                            <div className="squad-submodal-title">
+                              📅 {formatDateLong(d)} — {stats.presentCount}/6 en service
+                            </div>
+                            <div className="squad-submodal-subtitle">
+                              Répartition par scène et horaires de chacun
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {prevDate && (
+                              <button
+                                type="button"
+                                className="squad-submodal-nav"
+                                onClick={() => setSubModal({ type: 'day', date: prevDate })}
+                                title="Jour précédent"
+                              >
+                                ◀
+                              </button>
+                            )}
+                            {nextDate && (
+                              <button
+                                type="button"
+                                className="squad-submodal-nav"
+                                onClick={() => setSubModal({ type: 'day', date: nextDate })}
+                                title="Jour suivant"
+                              >
+                                ▶
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="squad-submodal-close"
+                              onClick={() => setSubModal(null)}
+                            >
+                              ✕ Fermer
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="squad-submodal-content">
+                          {sceneGroups.length === 0 ? (
+                            <div className="squad-empty-box">
+                              Aucun des 6 techniciens n'est en service ce jour.
+                            </div>
+                          ) : (
+                            sceneGroups.map(([sceneKey, group]) => {
+                              const scColor = getSceneColor(group.sceneName);
+                              const isShared = group.techIds.length >= 2;
+                              return (
+                                <div
+                                  key={sceneKey}
+                                  className={`squad-detail-block ${isShared ? 'is-shared' : ''}`}
+                                  style={{ '--block-accent': scColor.accent } as React.CSSProperties}
+                                >
+                                  <div className="squad-detail-block-head">
+                                    <span className="squad-detail-scene-title">
+                                      <span
+                                        className="squad-tech-dot"
+                                        style={{ background: scColor.accent }}
+                                      />
+                                      <span>{isShared ? '📍 ' : ''}{group.sceneName}</span>
+                                    </span>
+                                    <span className={`squad-detail-count-badge ${isShared ? 'is-shared' : ''}`}>
+                                      {group.techIds.length} tech{group.techIds.length > 1 ? 's' : ''}
+                                      {isShared ? ' ensemble' : ''}
+                                    </span>
+                                  </div>
+                                  <div className="squad-detail-rows">
+                                    {group.techIds.map(tid => {
+                                      const m = SQUAD_MEMBERS.find(x => x.id === tid)!;
+                                      const c = dateMap!.get(tid)!;
+                                      return (
+                                        <div key={tid} className="squad-detail-row">
+                                          <div className="squad-detail-person">
+                                            <span className="squad-tech-dot" style={{ background: m.color }} />
+                                            <span className="squad-detail-person-name">{m.name}</span>
+                                            {c.role && (
+                                              <span className="squad-detail-role">{c.role}</span>
+                                            )}
+                                          </div>
+                                          <span className="squad-detail-hours">{c.hours}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+
+                          {offMembers.length > 0 && (
+                            <div className="squad-off-summary">
+                              <strong>Repos / OFF :</strong> {offMembers.map(m => m.name).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+
+                  {subModal.type === 'cell' && (() => {
+                    const { techId, date } = subModal;
+                    const member = SQUAD_MEMBERS.find(m => m.id === techId)!;
+                    const dateMap = matrixData.get(date);
+                    const cell = dateMap?.get(techId);
+                    if (!cell) return null;
+
+                    const sameSceneMates = SQUAD_MEMBERS.filter(m => {
+                      if (m.id === techId) return false;
+                      const other = dateMap?.get(m.id);
+                      if (!other) return false;
+                      return other.allSceneKeys.some(k => cell.allSceneKeys.includes(k));
+                    });
+
+                    const otherSceneMates = SQUAD_MEMBERS.filter(m => {
+                      if (m.id === techId) return false;
+                      const other = dateMap?.get(m.id);
+                      if (!other) return false;
+                      return !other.allSceneKeys.some(k => cell.allSceneKeys.includes(k));
+                    });
+
+                    const offMates = SQUAD_MEMBERS.filter(m => m.id !== techId && !dateMap?.has(m.id));
+                    const scColor = getSceneColor(cell.primaryScene);
+
+                    return (
+                      <>
+                        <div className="squad-submodal-head">
+                          <div>
+                            <div className="squad-submodal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span className="squad-tech-dot" style={{ background: member.color, width: 10, height: 10 }} />
+                              <span>{member.name} — {formatDateLong(date)}</span>
+                            </div>
+                            <div className="squad-submodal-subtitle" style={{ marginTop: 4 }}>
+                              📍 <strong>{cell.primaryScene}</strong> &nbsp;•&nbsp; 🕒 <strong>{cell.hours}</strong>
+                              {cell.role ? `  •  ${cell.role}` : ''}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="squad-submodal-close"
+                            onClick={() => setSubModal(null)}
+                          >
+                            ✕ Fermer
+                          </button>
+                        </div>
+
+                        <div className="squad-submodal-content">
+                          {/* Même scène */}
+                          <div
+                            className="squad-detail-block is-shared"
+                            style={{ '--block-accent': scColor.accent } as React.CSSProperties}
+                          >
+                            <div className="squad-detail-block-head">
+                              <span className="squad-detail-scene-title">
+                                📍 Sur la même scène ({cell.primaryScene}) :
+                              </span>
+                              <span className="squad-detail-count-badge is-shared">
+                                {sameSceneMates.length} collègue{sameSceneMates.length > 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            {sameSceneMates.length === 0 ? (
+                              <div className="squad-detail-empty">
+                                Aucun autre des 6 techniciens sur cette scène ce jour.
+                              </div>
+                            ) : (
+                              <div className="squad-detail-rows">
+                                {sameSceneMates.map(m => {
+                                  const c = dateMap!.get(m.id)!;
+                                  return (
+                                    <div key={m.id} className="squad-detail-row">
+                                      <div className="squad-detail-person">
+                                        <span className="squad-tech-dot" style={{ background: m.color }} />
+                                        <span className="squad-detail-person-name">{m.name}</span>
+                                        {c.role && <span className="squad-detail-role">{c.role}</span>}
+                                      </div>
+                                      <span className="squad-detail-hours">{c.hours}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Même jour mais autre scène */}
+                          <div className="squad-detail-block">
+                            <div className="squad-detail-block-head">
+                              <span className="squad-detail-scene-title">
+                                En service le même jour sur une autre scène :
+                              </span>
+                              <span className="squad-detail-count-badge">
+                                {otherSceneMates.length}
+                              </span>
+                            </div>
+                            {otherSceneMates.length === 0 ? (
+                              <div className="squad-detail-empty">
+                                Personne d'autre en service sur une autre scène ce jour-là.
+                              </div>
+                            ) : (
+                              <div className="squad-detail-rows">
+                                {otherSceneMates.map(m => {
+                                  const c = dateMap!.get(m.id)!;
+                                  const otherColor = getSceneColor(c.primaryScene);
+                                  return (
+                                    <div key={m.id} className="squad-detail-row">
+                                      <div className="squad-detail-person" style={{ flexWrap: 'wrap' }}>
+                                        <span className="squad-tech-dot" style={{ background: m.color }} />
+                                        <span className="squad-detail-person-name">{m.name}</span>
+                                        <span
+                                          className="squad-mini-scene-tag"
+                                          style={{
+                                            borderColor: `${otherColor.accent}66`,
+                                            color: otherColor.accent,
+                                          }}
+                                        >
+                                          {c.primaryScene}
+                                        </span>
+                                        {c.role && <span className="squad-detail-role">{c.role}</span>}
+                                      </div>
+                                      <span className="squad-detail-hours">{c.hours}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {offMates.length > 0 && (
+                            <div className="squad-off-summary">
+                              <strong>En repos ce jour :</strong> {offMates.map(m => m.short).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+
+                  {subModal.type === 'tech' && (() => {
+                    const { techId } = subModal;
+                    const member = SQUAD_MEMBERS.find(m => m.id === techId)!;
+                    const others = SQUAD_MEMBERS.filter(m => m.id !== techId);
+
+                    // Compute global affinities across all loaded dates
+                    const affinities = others.map(other => {
+                      let sameDayCount = 0;
+                      let sameSceneCount = 0;
+                      for (const d of allDates) {
+                        const dm = matrixData.get(d);
+                        const myCell = dm?.get(techId);
+                        const otherCell = dm?.get(other.id);
+                        if (myCell && otherCell) {
+                          sameDayCount++;
+                          if (otherCell.allSceneKeys.some(k => myCell.allSceneKeys.includes(k))) {
+                            sameSceneCount++;
+                          }
+                        }
+                      }
+                      return { other, sameDayCount, sameSceneCount };
+                    });
+
+                    return (
+                      <>
+                        <div className="squad-submodal-head">
+                          <div>
+                            <div className="squad-submodal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span className="squad-tech-dot" style={{ background: member.color, width: 10, height: 10 }} />
+                              <span>👤 Planning & croisements — {member.name}</span>
+                            </div>
+                            <div className="squad-submodal-subtitle">
+                              Scènes, horaires et collègues en commun ({visibleDates.length} jours affichés)
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="squad-submodal-close"
+                            onClick={() => setSubModal(null)}
+                          >
+                            ✕ Fermer
+                          </button>
+                        </div>
+
+                        <div className="squad-submodal-content">
+                          {/* Affinities summary bar */}
+                          <div className="squad-affinities-grid">
+                            {affinities.map(({ other, sameDayCount, sameSceneCount }) => (
+                              <div key={other.id} className="squad-affinity-card">
+                                <div className="squad-affinity-name">
+                                  <span className="squad-tech-dot" style={{ background: other.color }} />
+                                  <span>{other.short}</span>
+                                </div>
+                                <div className="squad-affinity-stats">
+                                  <span className="squad-affinity-same-scene" title="Jours sur la même scène">
+                                    📍 {sameSceneCount}j scène
+                                  </span>
+                                  <span className="squad-affinity-same-day" title="Jours travaillés en même temps">
+                                    {sameDayCount}j communs
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Day-by-day rows for this technician */}
+                          <div className="squad-tech-days-list">
+                            {visibleDates.map(d => {
+                              const { dayShort, ddmm } = formatShortDayHeader(d);
+                              const dm = matrixData.get(d);
+                              const myCell = dm?.get(techId);
+                              if (!myCell) {
+                                return (
+                                  <div key={d} className="squad-tech-day-row is-off">
+                                    <span className="squad-tech-day-date">{dayShort} {ddmm}</span>
+                                    <span className="squad-tech-day-off">Repos / OFF</span>
+                                  </div>
+                                );
+                              }
+
+                              const sameSceneMates = others.filter(o => {
+                                const oc = dm?.get(o.id);
+                                return oc && oc.allSceneKeys.some(k => myCell.allSceneKeys.includes(k));
+                              });
+                              const otherSceneMates = others.filter(o => {
+                                const oc = dm?.get(o.id);
+                                return oc && !oc.allSceneKeys.some(k => myCell.allSceneKeys.includes(k));
+                              });
+                              const scColor = getSceneColor(myCell.primaryScene);
+
+                              return (
+                                <div
+                                  key={d}
+                                  className="squad-tech-day-row"
+                                  onClick={() => setSubModal({ type: 'cell', techId, date: d })}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <div className="squad-tech-day-main">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                      <span className="squad-tech-day-date">{dayShort} {ddmm}</span>
+                                      <span
+                                        className="squad-tech-day-scene"
+                                        style={{ color: scColor.accent }}
+                                      >
+                                        📍 {myCell.primaryScene}
+                                      </span>
+                                      {myCell.role && (
+                                        <span className="squad-detail-role">{myCell.role}</span>
+                                      )}
+                                    </div>
+                                    <div className="squad-tech-day-mates">
+                                      {sameSceneMates.length > 0 && (
+                                        <span className="squad-mates-same">
+                                          📍 Même scène : {sameSceneMates.map(m => m.short).join(', ')}
+                                        </span>
+                                      )}
+                                      {otherSceneMates.length > 0 && (
+                                        <span className="squad-mates-other">
+                                          Même jour : {otherSceneMates.map(m => `${m.short} (${dm!.get(m.id)!.shortScene})`).join(', ')}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <span className="squad-detail-hours">{myCell.hours}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
