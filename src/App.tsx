@@ -4642,21 +4642,13 @@ function SquadMatrixModal({
         className="export-modal squad-matrix-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Matrice Escouade 0808"
+        aria-label="Planning Escouade Spéciale"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Modal Header */}
         <div className="export-head squad-modal-head">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <span className="squad-badge-0808">0808</span>
-            <div>
-              <div className="export-title" style={{ fontSize: 16 }}>
-                Matrice Escouade · Plannings & Lieux Communs
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--fg-muted)', marginTop: 1 }}>
-                Cliquez sur une scène pour afficher le détail du jour et des collègues
-              </div>
-            </div>
+          <div className="export-title" style={{ fontSize: 16 }}>
+            Planning Escouade Spéciale
           </div>
           <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
         </div>

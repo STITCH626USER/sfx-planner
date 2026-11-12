@@ -8735,22 +8735,6 @@ nav.seg button[aria-selected="true"] {
   gap: 12px;
 }
 
-.squad-badge-0808 {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 9px;
-  border-radius: 7px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #0c0f15;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
-  flex-shrink: 0;
-}
-
 .squad-modal-body {
   padding: 14px 18px 18px;
   gap: 12px;
