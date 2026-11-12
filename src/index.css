@@ -8903,10 +8903,17 @@ nav.seg button[aria-selected="true"] {
 .squad-shared-pill {
   padding: 1.5px 6px;
   border-radius: 5px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #0c0f15;
-  font-weight: 800;
-  box-shadow: 0 1px 6px rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #f59e0b;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .squad-shared-pill {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.25);
+  color: #b45309;
 }
 
 /* Matrix Body Rows */
@@ -8986,7 +8993,7 @@ nav.seg button[aria-selected="true"] {
   user-select: none;
 }
 
-/* Scene Pill Buttons */
+/* Scene Pill Buttons — Uniform, sleek dark card with scene color bar */
 .squad-cell-pill {
   appearance: none;
   -webkit-appearance: none;
@@ -9006,47 +9013,36 @@ nav.seg button[aria-selected="true"] {
   box-sizing: border-box;
   cursor: pointer;
   touch-action: manipulation;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-left: 3.5px solid var(--cell-accent, var(--line-strong));
+  color: var(--fg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
   transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+:root[data-theme="light"] .squad-cell-pill {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  border-left: 3.5px solid var(--cell-accent, #94a3b8);
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .squad-cell-pill:hover {
   transform: translateY(-1.5px);
   filter: brightness(1.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .squad-cell-pill:active {
   transform: scale(0.96);
 }
 
-.squad-cell-pill.is-shared {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.28) 0%, rgba(245, 158, 11, 0.42) 100%);
-  border: 1.5px solid #fbbf24;
-  color: #fffbeb;
-  font-weight: 800;
-  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.28);
-}
-
-:root[data-theme="light"] .squad-cell-pill.is-shared {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1.5px solid #d97706;
-  color: #78350f;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
-}
-
-.squad-cell-pill.is-single {
-  background: var(--bg-2);
-  border: 1px solid var(--line-strong);
-  border-left: 3.5px solid var(--cell-accent, var(--line-strong));
-  color: var(--fg);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-}
-
-:root[data-theme="light"] .squad-cell-pill.is-single {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  border-left: 3.5px solid var(--cell-accent, #94a3b8);
-  color: #0f172a;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+.squad-pin-icon {
+  font-size: 10.5px;
+  line-height: 1;
+  opacity: 0.9;
 }
 
 .squad-cell-scene-text {
