@@ -588,11 +588,23 @@ export default function App() {
         try {
           const resp = await fetch(url, { cache: 'no-store' });
           if (resp.ok) {
-            const data = await resp.json();
-            if (isMounted && typeof data === 'object' && typeof data.standby === 'boolean') {
-              setStandbyConfig(data);
+            const rawText = await resp.text();
+            // Tolérance automatique pour les claviers mobiles (True / False avec majuscule, ou guillemets)
+            const sanitized = rawText
+              .replace(/:\s*True\b/gi, ': true')
+              .replace(/:\s*False\b/gi, ': false');
+            const data = JSON.parse(sanitized);
+            if (isMounted && typeof data === 'object' && data !== null) {
+              const standbyBool = typeof data.standby === 'boolean'
+                ? data.standby
+                : String(data.standby).trim().toLowerCase() === 'true';
+              const cleanConfig: StandbyConfig = {
+                ...data,
+                standby: standbyBool
+              };
+              setStandbyConfig(cleanConfig);
               try {
-                localStorage.setItem('sfx_standby_config', JSON.stringify(data));
+                localStorage.setItem('sfx_standby_config', JSON.stringify(cleanConfig));
               } catch {}
               return;
             }
