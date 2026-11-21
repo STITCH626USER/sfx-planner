@@ -9588,3 +9588,42 @@ nav.seg button[aria-selected="true"] {
     font-size: 12.5px;
   }
 }
+
+.standby-admin-banner {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(239, 68, 68, 0.12);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1000;
+}
+
+:root[data-theme="light"] .standby-admin-banner {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.standby-admin-banner-btn {
+  appearance: none;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.standby-admin-banner-btn:hover {
+  filter: brightness(1.15);
+}

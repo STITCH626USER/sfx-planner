@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/generate-sw.mjs",
+    "build": "node scripts/copy-status.mjs && tsc -b && vite build && node scripts/generate-sw.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -527,10 +527,87 @@ function DlpShowsPanel() {
 
 
 
-// STANDBY MODE FLAG — Passer à false pour réactiver l'application quand les nouveaux exports seront prêts
-const APP_STANDBY_MODE = true;
+// STANDBY CONFIG & TÉLÉCOMMANDE À DISTANCE (via app-status.json sur GitHub)
+export interface StandbyConfig {
+  standby: boolean;
+  title?: string;
+  message?: string;
+  reactivationNotice?: string;
+}
+
+const DEFAULT_STANDBY_CONFIG: StandbyConfig = {
+  standby: true,
+  title: "Mauvais format de planning",
+  message: "Les plannings récemment exportés par le management ne sont actuellement pas au bon format pour l'analyseur automatique. L'application est mise en veille temporaire le temps de rétablir la compatibilité.",
+  reactivationNotice: "Dès que le format d'export sera opérationnel, l'application sera réactivée sur ce même lien sans aucune action requise de votre part."
+};
 
 export default function App() {
+
+  const [standbyConfig, setStandbyConfig] = useState<StandbyConfig>(() => {
+    try {
+      const cached = localStorage.getItem('sfx_standby_config');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (typeof parsed.standby === 'boolean') return parsed;
+      }
+    } catch {}
+    return DEFAULT_STANDBY_CONFIG;
+  });
+
+  const [adminBypass, setAdminBypass] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('sfx_admin_bypass') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleAdminBypass = useCallback((newVal: boolean) => {
+    setAdminBypass(newVal);
+    try {
+      if (newVal) {
+        localStorage.setItem('sfx_admin_bypass', 'true');
+      } else {
+        localStorage.removeItem('sfx_admin_bypass');
+      }
+    } catch {}
+  }, []);
+
+  // Synchronisation distante du statut de veille (télécommande via GitHub app-status.json)
+  useEffect(() => {
+    let isMounted = true;
+    async function checkRemoteStatus() {
+      const timestamp = Date.now();
+      // 1. Dépôt distant GitHub raw (effet immédiat dès le commit sur GitHub)
+      const rawUrl = `https://raw.githubusercontent.com/STITCH626USER/sfx-planner/main/app-status.json?_t=${timestamp}`;
+      // 2. Fichier local déployé sur GitHub Pages
+      const localUrl = `./app-status.json?_t=${timestamp}`;
+
+      for (const url of [rawUrl, localUrl]) {
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (isMounted && typeof data === 'object' && typeof data.standby === 'boolean') {
+              setStandbyConfig(data);
+              try {
+                localStorage.setItem('sfx_standby_config', JSON.stringify(data));
+              } catch {}
+              return;
+            }
+          }
+        } catch {
+          // Continuer avec l'URL suivante en cas d'échec
+        }
+      }
+    }
+
+    checkRemoteStatus();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [tab, setTab] = useState<Tab>('daily');
 
@@ -777,7 +854,9 @@ export default function App() {
     setSources([]);
   }, []);
 
-  if (APP_STANDBY_MODE) {
+  const isStandbyActive = standbyConfig.standby && !adminBypass;
+
+  if (isStandbyActive) {
     return (
       <div className="apple-landing-wrapper" data-testid="app-root">
         <FireworksCanvas triggerCount={fireworkTrigger} />
@@ -835,16 +914,16 @@ export default function App() {
             </div>
 
             <div className="standby-card-body">
-              <h2 className="standby-card-title">Mauvais format de planning</h2>
+              <h2 className="standby-card-title">{standbyConfig.title || "Mauvais format de planning"}</h2>
               <p className="standby-card-text">
-                Les plannings récemment exportés par le management ne sont actuellement pas au bon format pour l'analyseur automatique. L'application est mise en veille temporaire le temps de rétablir la compatibilité.
+                {standbyConfig.message || "Les plannings récemment exportés par le management ne sont actuellement pas au bon format pour l'analyseur automatique. L'application est mise en veille temporaire le temps de rétablir la compatibilité."}
               </p>
 
               <div className="standby-info-box">
                 <div className="standby-info-item">
                   <span className="standby-info-icon">🔄</span>
                   <div>
-                    <strong>Réactivation prochaine :</strong> Dès que le format d'export sera opérationnel, l'application sera réactivée sur ce même lien sans aucune action requise de votre part.
+                    <strong>Réactivation prochaine :</strong> {standbyConfig.reactivationNotice || "Dès que le format d'export sera opérationnel, l'application sera réactivée sur ce même lien sans aucune action requise de votre part."}
                   </div>
                 </div>
                 <div className="standby-info-item">
@@ -923,6 +1002,9 @@ export default function App() {
             records={records}
             activeDate={dailyDate}
             onClose={() => setShowSquadModal(false)}
+            isStandby={standbyConfig.standby}
+            isAdminBypass={adminBypass}
+            onToggleAdminBypass={toggleAdminBypass}
           />
         )}
       </div>
@@ -932,6 +1014,18 @@ export default function App() {
   if (records.length === 0) {
     return (
       <div className="apple-landing-wrapper" data-testid="app-root">
+        {adminBypass && (
+          <div className="standby-admin-banner">
+            <span>⚠️ <strong>Mode Dérogation Admin</strong> · L'application est en veille pour les autres utilisateurs</span>
+            <button
+              type="button"
+              className="standby-admin-banner-btn"
+              onClick={() => toggleAdminBypass(false)}
+            >
+              Rétablir la veille
+            </button>
+          </div>
+        )}
         <FireworksCanvas triggerCount={fireworkTrigger} />
 
         {/* Navigation Bar Apple */}
@@ -1119,6 +1213,9 @@ export default function App() {
             records={records}
             activeDate={dailyDate}
             onClose={() => setShowSquadModal(false)}
+            isStandby={standbyConfig.standby}
+            isAdminBypass={adminBypass}
+            onToggleAdminBypass={toggleAdminBypass}
           />
         )}
 
@@ -1131,6 +1228,18 @@ export default function App() {
 
   return (
     <div className="app-shell" data-testid="app-root">
+      {adminBypass && (
+        <div className="standby-admin-banner">
+          <span>⚠️ <strong>Mode Dérogation Admin</strong> · L'application est en veille pour les autres utilisateurs</span>
+          <button
+            type="button"
+            className="standby-admin-banner-btn"
+            onClick={() => toggleAdminBypass(false)}
+          >
+            Rétablir la veille
+          </button>
+        </div>
+      )}
       <div className="smoke-bg" aria-hidden="true">
         <div className="smoke-cloud smoke-cloud-1" />
         <div className="smoke-cloud smoke-cloud-2" />
@@ -1418,6 +1527,9 @@ export default function App() {
           records={records}
           activeDate={dailyDate}
           onClose={() => setShowSquadModal(false)}
+          isStandby={standbyConfig.standby}
+          isAdminBypass={adminBypass}
+          onToggleAdminBypass={toggleAdminBypass}
         />
       )}
 
@@ -4598,10 +4710,16 @@ function SquadMatrixModal({
   records,
   activeDate,
   onClose,
+  isStandby,
+  isAdminBypass,
+  onToggleAdminBypass,
 }: {
   records: PlanningRecord[];
   activeDate: string;
   onClose: () => void;
+  isStandby?: boolean;
+  isAdminBypass?: boolean;
+  onToggleAdminBypass?: (newVal: boolean) => void;
 }) {
   const [selectedCell, setSelectedCell] = useState<{ techId: string; date: string } | null>(null);
 
@@ -4805,6 +4923,33 @@ function SquadMatrixModal({
           <div className="export-title" style={{ fontSize: 16 }}>
             Planning Escouade Spéciale
           </div>
+          {onToggleAdminBypass && (isStandby || isAdminBypass) && (
+            <button
+              type="button"
+              className="squad-admin-toggle-btn"
+              style={{
+                marginLeft: 'auto',
+                marginRight: '12px',
+                fontSize: 11.5,
+                fontWeight: 600,
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: isAdminBypass ? '1px solid #ef4444' : '1px solid #10b981',
+                background: isAdminBypass ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                color: isAdminBypass ? '#f87171' : '#34d399',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                onToggleAdminBypass(!isAdminBypass);
+                if (!isAdminBypass) {
+                  onClose();
+                }
+              }}
+              title={isAdminBypass ? "Rétablir le mode veille sur cet appareil" : "Déverrouiller l'accès sur cet appareil sans modifier GitHub"}
+            >
+              {isAdminBypass ? '🔒 Rétablir la veille locale' : '🔓 Déverrouiller sur cet appareil'}
+            </button>
+          )}
           <button type="button" className="export-close" aria-label="Fermer" onClick={onClose}>×</button>
         </div>
 
