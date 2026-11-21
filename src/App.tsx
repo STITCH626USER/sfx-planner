@@ -835,16 +835,16 @@ export default function App() {
             </div>
 
             <div className="standby-card-body">
-              <h2 className="standby-card-title">Évolution du format des plannings</h2>
+              <h2 className="standby-card-title">Mauvais format de planning</h2>
               <p className="standby-card-text">
-                Les plannings récemment exportés par le management ne sont actuellement plus compatibles avec l'analyseur automatique. L'application est mise en veille le temps d'adapter les outils de lecture.
+                Les plannings récemment exportés par le management ne sont actuellement pas au bon format pour l'analyseur automatique. L'application est mise en veille temporaire le temps de rétablir la compatibilité.
               </p>
 
               <div className="standby-info-box">
                 <div className="standby-info-item">
                   <span className="standby-info-icon">🔄</span>
                   <div>
-                    <strong>Réactivation prochaine :</strong> Dès que le nouveau format d'export sera pris en charge, l'application sera réactivée sur ce même lien sans aucune action requise de votre part.
+                    <strong>Réactivation prochaine :</strong> Dès que le format d'export sera opérationnel, l'application sera réactivée sur ce même lien sans aucune action requise de votre part.
                   </div>
                 </div>
                 <div className="standby-info-item">
