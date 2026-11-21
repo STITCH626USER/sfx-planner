@@ -1,5 +1,5 @@
 {
-  "standby": true,
+  "standby": True,
   "title": "Mauvais format de planning",
   "message": "Les plannings récemment exportés par le management ne sont actuellement pas au bon format pour l'analyseur automatique. L'application est mise en veille temporaire le temps de rétablir la compatibilité.",
   "reactivationNotice": "Dès que le format d'export sera opérationnel, l'application sera réactivée sur ce même lien sans aucune action requise de votre part."
