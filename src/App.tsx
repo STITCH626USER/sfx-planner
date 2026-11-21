@@ -527,6 +527,9 @@ function DlpShowsPanel() {
 
 
 
+// STANDBY MODE FLAG — Passer à false pour réactiver l'application quand les nouveaux exports seront prêts
+const APP_STANDBY_MODE = true;
+
 export default function App() {
 
   const [tab, setTab] = useState<Tab>('daily');
@@ -773,6 +776,158 @@ export default function App() {
     setRecords([]);
     setSources([]);
   }, []);
+
+  if (APP_STANDBY_MODE) {
+    return (
+      <div className="apple-landing-wrapper" data-testid="app-root">
+        <FireworksCanvas triggerCount={fireworkTrigger} />
+
+        {/* Navigation Bar Apple */}
+        <header className="apple-navbar">
+          <div className="apple-navbar-content">
+            <div className="apple-brand">
+              <button
+                type="button"
+                className="apple-logo-btn"
+                aria-label="SFX Planner"
+                title="SFX Planner"
+                data-testid="btn-theme-toggle"
+                onClick={handleHeaderLogoTap}
+              >
+                <Logo />
+              </button>
+              <div className="apple-brand-text">
+                <span className="apple-brand-title">SFX Planner</span>
+              </div>
+            </div>
+
+            <div className="apple-nav-actions">
+              <button
+                type="button"
+                className="apple-theme-btn"
+                onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+                title="Basculer thème sombre / clair"
+              >
+                {theme === 'dark' ? '☀️ Mode Clair' : '🌙 Mode Sombre'}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Standby Hero Container */}
+        <main className="apple-hero-container standby-hero-container">
+          <div className="standby-status-pill animate-fade-in">
+            <span className="standby-status-dot" />
+            <span>STAND-BY TECHNIQUE · APPLICATION EN PAUSE</span>
+          </div>
+
+          <h1 className="apple-hero-h1 standby-title">
+            SFX Planner est temporairement <br />
+            <span className="apple-gradient-text">en veille</span>
+          </h1>
+
+          <div className="standby-card animate-slide-up">
+            <div className="standby-icon-wrap">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+
+            <div className="standby-card-body">
+              <h2 className="standby-card-title">Évolution du format des plannings</h2>
+              <p className="standby-card-text">
+                Les plannings récemment exportés par le management ne sont actuellement plus compatibles avec l'analyseur automatique. L'application est mise en veille le temps d'adapter les outils de lecture.
+              </p>
+
+              <div className="standby-info-box">
+                <div className="standby-info-item">
+                  <span className="standby-info-icon">🔄</span>
+                  <div>
+                    <strong>Réactivation prochaine :</strong> Dès que le nouveau format d'export sera pris en charge, l'application sera réactivée sur ce même lien sans aucune action requise de votre part.
+                  </div>
+                </div>
+                <div className="standby-info-item">
+                  <span className="standby-info-icon">📅</span>
+                  <div>
+                    <strong>Plannings officiels :</strong> En attendant, merci de vous référer exclusivement à vos plannings sur votre <strong>UKG Chronos personnel</strong>.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="apple-legal-notice" style={{ marginTop: '28px' }}>
+            <span>⚠️ Contrôle obligatoire sur UKG personnel. Se rapprocher de la coordination pour les formations.</span>
+            <div style={{ marginTop: '8px', fontSize: '12px', textAlign: 'center' }}>
+              <button onClick={() => setShowLegalMentions(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Mentions Légales</button>
+              <span style={{ color: 'var(--fg-dim)', margin: '0 8px' }}>·</span>
+              <button onClick={() => setShowBugModal(true)} style={{ background: 'none', border: 'none', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>Signaler un bug</button>
+            </div>
+          </div>
+        </main>
+
+        {showLegalMentions && (
+          <div className="export-overlay" data-testid="legal-mentions-overlay" onClick={() => setShowLegalMentions(false)}>
+            <div className="export-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+              <div className="export-head" style={{ padding: '12px 18px' }}>
+                <div className="export-title" style={{ fontSize: '16px' }}>Mentions Légales</div>
+                <button className="icon-btn" onClick={() => setShowLegalMentions(false)}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="export-body" style={{ overflowY: 'auto', padding: '14px 18px', gap: '10px', fontSize: '12.5px', color: 'var(--fg-muted)', lineHeight: '1.4' }}>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>1. Éditeur du site</h3>
+                  <p style={{ margin: 0 }}>L'application web <strong>SFX Planner</strong> est un outil interne développé à titre privé pour faciliter la visualisation des plannings.</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>2. Hébergement</h3>
+                  <p style={{ margin: 0 }}>Le site est hébergé par <strong>GitHub Pages</strong> — GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>3. Propriété intellectuelle</h3>
+                  <p style={{ margin: 0 }}>L'ensemble du code source, des graphismes, textes, et autres éléments du site sont la propriété exclusive de leur auteur. Toute reproduction, même partielle, est strictement interdite sans accord préalable.</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>4. Données personnelles et Cookies</h3>
+                  <p style={{ margin: 0 }}>Cette application fonctionne <strong>100% en local</strong> sur votre appareil (navigateur). Aucune donnée personnelle n'est collectée, stockée sur un serveur distant, ni partagée à des tiers. Aucun cookie de traçage n'est utilisé (stockage local uniquement pour vos paramètres et plannings importés).</p>
+                </div>
+                <div>
+                  <h3 style={{ color: 'var(--fg)', fontSize: '13.5px', margin: '0 0 2px 0' }}>5. Responsabilité</h3>
+                  <p style={{ margin: 0 }}>L'auteur décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations extraites de cette application. En cas de doute, seul le planning officiel (UKG) fait foi.</p>
+                </div>
+              </div>
+              <div className="export-foot" style={{ justifyContent: 'flex-end', padding: '10px 18px' }}>
+                <button className="btn btn-secondary" style={{ padding: '7px 16px', fontSize: '13px' }} onClick={() => setShowLegalMentions(false)}>Fermer</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showBugModal && <BugReportModal onClose={() => setShowBugModal(false)} />}
+
+        {showSquadPinModal && (
+          <SquadPinModal
+            onClose={() => setShowSquadPinModal(false)}
+            onUnlock={() => {
+              setShowSquadPinModal(false);
+              setFireworkTrigger(t => t + 1);
+              setShowSquadModal(true);
+            }}
+          />
+        )}
+
+        {showSquadModal && (
+          <SquadMatrixModal
+            records={records}
+            activeDate={dailyDate}
+            onClose={() => setShowSquadModal(false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (records.length === 0) {
     return (
